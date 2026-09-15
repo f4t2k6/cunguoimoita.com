@@ -1,0 +1,50 @@
+/*MÀU NỀN*/
+body{
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+/*ẢNH LOGO*/
+.logo{
+    height: 100px;
+    width: auto;
+    position: absolute;
+    top: 10px;
+    left: 30px;
+}
+/*CLASS THANH TÌM KIẾM*/
+.search-bar{
+    display: flex;
+    align-items: center;
+    width: 480px;
+    height: 42px;           /* ngắn lại theo chiều cao */
+    background-color: #ffffff;
+    border: 1.5px solid #000000;
+    border-radius: 21px;    /* = height / 2, giữ bo tròn hoàn toàn */
+    padding: 0 18px;
+    position: absolute;
+    top: 35px;
+    left: 240px;             /* kéo sát logo hơn (giảm từ 340px) */
+    box-sizing: border-box;
+}
+.search-icon {
+    width: 25px;
+    height: 25px;
+    margin-right: 12px;
+    opacity: 0.5;            /* làm icon hơi mờ giống trong thiết kế */
+}
+
+.search-input {
+    font-family: 'Poppins', sans-serif;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    width: 420px;
+    color: #333;
+}
+
+.search-input::placeholder {
+    color: #999;             /* màu chữ placeholder nhạt hơn */
+}
