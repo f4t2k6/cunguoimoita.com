@@ -17,48 +17,92 @@
 **Cấu trúc thư mục:**
 
 cunguoimoita.com/
+
 ├── pom.xml
+
 ├── .gitignore
+
 ├── docs/
+
 │   ├── CAU-TRUC-THU-MUC.md            ← file này
+
 │   ├── diagrams/Cunguoimoita_revised.drawio
+
 │   └── prototype/test.html            ← bản HTML tĩnh cũ (giữ để tham khảo)
+
 └── src/
+
     ├── main/
+    
     │   ├── java/org/example/cunguoimoita/
+    
     │   │   ├── common/                 ← DÙNG CHUNG (cả nhóm, sửa phải báo)
+    
     │   │   │   ├── config/             (AppContextListener, hằng số)
+    
     │   │   │   ├── db/                 (DBConnection)
+    
     │   │   │   ├── filter/             (EncodingFilter, AuthFilter, AdminFilter)
+    
     │   │   │   ├── model/              (BaseEntity, enum dùng chung)
+    
     │   │   │   ├── util/               (PasswordUtil, DateUtil, UploadUtil, JsonUtil)
+    
     │   │   │   └── HomeServlet.java    (thay HelloServlet cũ)
+    
     │   │   ├── account/      F1  TV1   User, Customer, Guest, Address
+    
     │   │   ├── admin/        F10 TV1   Admin, Report
+    
     │   │   ├── product/      F2  TV2   Product, Category
+    
     │   │   ├── feed/         F3  TV2   Wishlist (Bucket List), tìm kiếm
+    
     │   │   ├── order/        F4  TV3   Cart, CartItem, Order, OrderItem, Voucher
+    
     │   │   ├── review/       F8  TV3   Review, MemberTier
+    
     │   │   ├── payment/      F5  TV4   Payment
+    
     │   │   ├── dispute/      F9  TV4   Dispute, Refund, Payout
+    
     │   │   ├── shipping/     F6  TV5   Shipment, ShippingCarrier
+    
     │   │   ├── chat/         F7  TV5   Conversation, Message, PriceOffer
+    
     │   │   └── notification/ F7  TV5   Notification
+    
     │   ├── resources/
+    
     │   │   ├── db.properties.example   (mỗi người copy thành db.properties, không commit)
+    
     │   │   └── sql/                    (00_common.sql, 01_account.sql … mỗi chức năng 1 file)
+    
     │   └── webapp/
+    
     │       ├── index.jsp               (trang chủ, chuyển sang bảng tin)
+    
     │       ├── assets/
+    
     │       │   ├── css/style.css       (CSS chung)  + css/<chức năng>.css
+    
     │       │   ├── js/                 (common.js + js/<chức năng>.js)
+    
     │       │   └── images/             (logo, icon)
+    
+    
     │       └── WEB-INF/
+    
     │           ├── web.xml
+    
     │           └── views/
+    
     │               ├── common/         (header.jsp, footer.jsp, layout)
+    
     │               ├── account/  admin/  product/  feed/  order/
+    
     │               └── review/  payment/  dispute/  shipping/  chat/
+    
     └── test/java/org/example/cunguoimoita/   (cùng cấu trúc như main)
 
 3. **Phân chia công việc**
