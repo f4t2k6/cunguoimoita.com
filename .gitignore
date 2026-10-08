@@ -31,7 +31,7 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-nb-configuration/xml
+
 
 ### VS Code ###
 .vscode/
@@ -44,4 +44,7 @@ nb-configuration/xml
 
 ###bai giang tren lop###
 ppt/
+
+nb-configuration.xml
+
 
