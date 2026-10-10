@@ -1,38 +1,118 @@
-/*MÀU NỀN*/
-body{
+/* ==========================================================================
+   CUNGUOIMOITA.COM — NEO-BRUTALIST ECO DESIGN SYSTEM
+   Font: 'Poppins' (Body) + 'Bungee' (Display/Headings/Numbers)
+   Palette: Paper #F4F4F0, Ink #111111, Eco Green #16A34A, Swap Amber #F59E0B
+   ========================================================================== */
+
+:root {
+    --bg-canvas: #f4f4f0;
+    --bg-surface: #ffffff;
+    --bg-muted: #eaeae4;
+    --ink: #111111;
+    --ink-secondary: #4b5563;
+    --ink-muted: #71717a;
+    --eco-green: #16a34a;
+    --eco-green-hover: #15803d;
+    --eco-soft: #dcfce7;
+    --swap-amber: #f59e0b;
+    --swap-soft: #fef3c7;
+    --danger-red: #dc2626;
+    --danger-soft: #fee2e2;
+    --info-blue: #0284c7;
+    --info-soft: #e0f2fe;
+    --border-strong: 1.5px solid #111111;
+    --border-thick: 2px solid #111111;
+    --shadow-brutal: 4px 4px 0px #111111;
+    --shadow-brutal-sm: 2px 2px 0px #111111;
+    --shadow-brutal-lg: 6px 6px 0px #111111;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* MÀU NỀN CHUNG */
+body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: var(--bg-canvas);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100vh;
 }
-/*ẢNH LOGO*/
-.logo{
-    height: 120px;
-    width: auto;
-    position: absolute;
-    top: 10px;
-    left: 30px;
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
-/*CLASS THANH TÌM KIẾM*/
-.search-bar{
+
+/* ==========================================================================
+   1. APP SHELL LAYOUT (HEADER + SIDEBAR + MAIN CONTENT)
+   ========================================================================== */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-surface);
+    border-bottom: var(--border-thick);
+    padding: 10px 28px;
     display: flex;
     align-items: center;
-    width: 480px;
-    height: 42px;           /* ngắn lại theo chiều cao */
-    background-color: #ffffff;
-    border: 1.5px solid #000000;
-    border-radius: 21px;    /* = height / 2, giữ bo tròn hoàn toàn */
-    padding: 0 18px;
-    position: absolute;
-    top: 35px;
-    left: 260px;             /* kéo sát logo hơn (giảm từ 340px) */
-    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 20px;
 }
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+/* ẢNH LOGO */
+.logo {
+    height: 58px;
+    width: auto;
+    display: block;
+    transition: transform 0.15s ease;
+}
+
+.logo:hover {
+    transform: scale(1.03);
+}
+
+/* CLASS THANH TÌM KIẾM */
+.search-bar {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 520px;
+    height: 44px;
+    background-color: var(--bg-surface);
+    border: var(--border-strong);
+    border-radius: 22px;
+    padding: 0 16px;
+    box-shadow: var(--shadow-brutal-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-bar:focus-within {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-brutal);
+    border-color: var(--eco-green);
+}
+
 .search-icon {
-    width: 25px;
-    height: 25px;
-    margin-right: 12px;
-    opacity: 0.5;            /* làm icon hơi mờ giống trong thiết kế */
+    width: 22px;
+    height: 22px;
+    margin-right: 10px;
+    opacity: 0.65;
+    flex-shrink: 0;
 }
 
 .search-input {
@@ -40,131 +120,899 @@ body{
     border: none;
     outline: none;
     background: transparent;
-    font-size: 16px;
-    width: 420px;
-    color: #333;
+    font-size: 14px;
+    width: 100%;
+    color: var(--ink);
 }
 
 .search-input::placeholder {
-    color: #999;             /* màu chữ placeholder nhạt hơn */
+    color: #888;
 }
 
-/*KHỐI MENU BÊN TRÁI (Giỏ hàng, Tin nhắn, Đã lưu, Hội nhóm)*/
-.sidebar-menu{
-    position: absolute;
-    top: 150px;
-    left: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.menu-item{
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    font-size: 17px;
-    color: #000000;
-    padding: 8px 6px;
-    border-radius: 8px;
-    text-align: left;
-}
-
-.menu-item:hover{
-    background-color: #e9e9e9;
-}
-
-.menu-icon{
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-}
-
-/*KHỐI PROFILE (avatar + username)*/
-.profile-block{
+.header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
-    position: absolute;    /* nếu muốn cố định luôn khi cuộn trang thì đổi thành fixed */
-    bottom: 40px;
-    left: 30px;
-    width: 220px;          /* chiều dài box bị lock, đổi tùy layout */
-}
-
-.profile-avatar{
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: #e0e0e0;   /* nền tạm khi chưa có ảnh */
     flex-shrink: 0;
-    border: 1px solid #ccc;
 }
 
-.username-box{
-    flex: 1;
-    min-width: 0;           /* bắt buộc để flex item co lại được, không thì overflow không hoạt động */
-    overflow: hidden;
+.eco-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background-color: var(--eco-soft);
+    border: var(--border-strong);
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    font-size: 13px;
+    color: #065f46;
+    box-shadow: var(--shadow-brutal-sm);
 }
 
-.username{
-    font-family: "Bungee", sans-serif;
-    color: #000000;
+.tier-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--swap-soft);
+    border: var(--border-strong);
+    border-radius: var(--radius-pill);
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: #92400e;
+    box-shadow: var(--shadow-brutal-sm);
+}
+
+/* MODULE QUICK BAR (DÀNH CHO DEMO NHÓM F1 -> F10) */
+.module-switcher {
+    background-color: #111111;
+    color: #ffffff;
+    padding: 8px 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    border-bottom: var(--border-thick);
+    font-size: 12px;
+}
+
+.module-switcher-label {
+    font-family: 'Bungee', sans-serif;
+    color: #4ade80;
+    font-size: 11px;
+    margin-right: 6px;
     white-space: nowrap;
-    display: inline-block;
-    max-width: 100%;
 }
 
-/* KHỐI DANH MỤC (Điện thoại, Laptop, Máy tính bảng, Phụ kiện) */
-.category-bar{
+.module-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
+    background-color: #27272a;
+    color: #f4f4f5;
+    border: 1px solid #3f3f46;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.module-chip:hover {
+    background-color: #3f3f46;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.module-chip.active {
+    background-color: var(--eco-green);
+    color: #ffffff;
+    border-color: #ffffff;
+    font-weight: 700;
+}
+
+.module-chip.highlight-ta {
+    border-color: #facc15;
+    color: #fef08a;
+}
+
+.module-chip.highlight-ta.active {
+    background-color: #eab308;
+    color: #111111;
+    border-color: #111111;
+}
+
+/* KHUNG CHÍNH (SIDEBAR + NỘI DUNG) */
+.app-layout {
+    display: grid;
+    grid-template-columns: 255px 1fr;
+    gap: 24px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 28px 60px;
+    align-items: start;
+}
+
+/* KHỐI MENU BÊN TRÁI */
+.sidebar-panel {
+    position: sticky;
+    top: 86px;
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-brutal);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar-section-title {
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    color: var(--ink-muted);
+    padding: 8px 8px 2px;
+    letter-spacing: 0.05em;
+}
+
+.menu-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
-    position: absolute;
-    top: 90px;
-    left: 260px;
-    width: 620px;              /* tăng bề rộng để chứa hết 9 item */
-    background-color: #ffffff;
-    border: 1.5px solid #000000;
-    border-radius: 30px;
-    padding: 10px 16px;
-    box-sizing: border-box;
-    overflow: hidden;          /* bỏ scroll ngang */
+    gap: 12px;
+    background: transparent;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 9px 12px;
+    border-radius: 10px;
+    text-align: left;
+    transition: all 0.15s ease;
+    width: 100%;
 }
 
-.category-item{
+.menu-item-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.menu-item:hover {
+    background-color: var(--bg-canvas);
+    border-color: var(--ink);
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-brutal-sm);
+}
+
+.menu-item.active {
+    background-color: var(--eco-soft);
+    border-color: var(--ink);
+    box-shadow: var(--shadow-brutal-sm);
+    color: #065f46;
+}
+
+.menu-item.ta-task {
+    background-color: #fef9c3;
+    border: 1.5px dashed #ca8a04;
+}
+
+.menu-item.ta-task.active {
+    background-color: #fde047;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+}
+
+.menu-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.menu-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    background-color: var(--ink);
+    color: #fff;
+}
+
+.menu-badge.ta {
+    background-color: #ca8a04;
+    color: #fff;
+}
+
+/* KHỐI PROFILE DƯỚI CÙNG SIDEBAR */
+.profile-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--bg-canvas);
+    border: var(--border-strong);
+    border-radius: var(--radius-md);
+    margin-top: 4px;
+}
+
+.profile-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e0e0e0;
+    flex-shrink: 0;
+    border: var(--border-strong);
+}
+
+.username-box {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.username {
+    font-family: 'Bungee', sans-serif;
+    color: var(--ink);
+    white-space: nowrap;
+    display: block;
+    font-size: 14px;
+}
+
+.user-subtext {
+    font-size: 11px;
+    color: var(--ink-secondary);
+    display: block;
+}
+
+/* ==========================================================================
+   2. KHỐI DANH MỤC & HERO BANNER
+   ========================================================================== */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+.category-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-brutal);
+    overflow-x: auto;
+}
+
+.category-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     background: transparent;
-    border: none;
+    border: 1.5px solid transparent;
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
-    flex: 1;                   /* chia đều chỗ cho mỗi item */
-    min-width: 0;
-    padding: 4px 2px;
-    border-radius: 10px;
+    flex: 1;
+    min-width: 78px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    transition: all 0.15s ease;
 }
 
-.category-item:hover{
-    background-color: #e9e9e9;
+.category-item:hover,
+.category-item.active {
+    background-color: var(--eco-soft);
+    border-color: var(--ink);
+    transform: translateY(-2px);
 }
 
-.category-item img{
+.category-item img {
     width: 26px;
     height: 26px;
     object-fit: contain;
 }
 
-.category-item span{
-    font-size: 10px;
-    color: #000000;
+.category-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-color: var(--bg-canvas);
+    border: 1.5px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.category-item span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
     white-space: nowrap;
     text-align: center;
+}
+
+/* HERO BANNER */
+.hero-banner {
+    background: linear-gradient(135deg, #dcfce7 0%, #fef9c3 100%);
+    border: var(--border-thick);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    box-shadow: var(--shadow-brutal-lg);
+    display: grid;
+    grid-template-columns: 1.35fr 0.65fr;
+    gap: 24px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-eyebrow {
+    display: inline-block;
+    background-color: var(--ink);
+    color: #4ade80;
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    margin-bottom: 10px;
+}
+
+.hero-title {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 10px;
+    color: var(--ink);
+}
+
+.hero-desc {
+    font-size: 14px;
+    color: #1f2937;
+    margin: 0 0 18px;
+    max-width: 58ch;
+}
+
+.hero-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hero-stat-card {
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    box-shadow: var(--shadow-brutal);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ==========================================================================
+   3. BUTTONS, BADGES, CARDS & TABLES (NEO-BRUTALIST COMPONENTS)
+   ========================================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: var(--border-strong);
+    box-shadow: var(--shadow-brutal-sm);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-brutal);
+}
+
+.btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #111111;
+}
+
+.btn-primary {
+    background-color: var(--eco-green);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--eco-green-hover);
+}
+
+.btn-amber {
+    background-color: var(--swap-amber);
+    color: var(--ink);
+}
+
+.btn-danger {
+    background-color: var(--danger-red);
+    color: #ffffff;
+}
+
+.btn-dark {
+    background-color: var(--ink);
+    color: #ffffff;
+}
+
+.btn-outline {
+    background-color: var(--bg-surface);
+    color: var(--ink);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+/* BADGES / STICKERS */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--ink);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge-sale {
+    background-color: #dcfce7;
+    color: #14532d;
+}
+
+.badge-swap {
+    background-color: #fef3c7;
+    color: #78350f;
+}
+
+.badge-both {
+    background-color: #e0f2fe;
+    color: #0c4a6e;
+}
+
+.badge-verified {
+    background-color: #111111;
+    color: #4ade80;
+}
+
+.badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-pending {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* CARDS & PANELS */
+.brutal-card {
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-brutal);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.section-title {
+    font-family: 'Bungee', sans-serif;
+    font-size: 20px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-subtitle {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    margin: 4px 0 0;
+}
+
+/* PRODUCT GRID */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-brutal);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--shadow-brutal-lg);
+}
+
+.product-thumb {
+    position: relative;
+    height: 195px;
+    background-color: #e5e7eb;
+    border-bottom: var(--border-strong);
+    overflow: hidden;
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-stickers {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.product-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.product-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin: 0;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-price {
+    font-family: 'Bungee', sans-serif;
+    font-size: 18px;
+    color: var(--eco-green);
+}
+
+.swap-note-box {
+    background-color: var(--swap-soft);
+    border: 1px dashed #b45309;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #78350f;
+}
+
+.product-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-secondary);
+    padding-top: 8px;
+    border-top: 1px dashed #d4d4d8;
+    margin-top: auto;
+}
+
+/* KPI GRID */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+}
+
+.kpi-card {
+    background-color: var(--bg-surface);
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    box-shadow: var(--shadow-brutal);
+}
+
+.kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--ink-secondary);
+}
+
+.kpi-value {
+    font-family: 'Bungee', sans-serif;
+    font-size: 24px;
+    margin: 6px 0 4px;
+    color: var(--ink);
+}
+
+/* TABLES */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+}
+
+.brutal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.brutal-table th {
+    background-color: #111111;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 14px;
+    white-space: nowrap;
+}
+
+.brutal-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e4e4e7;
+    vertical-align: middle;
+}
+
+.brutal-table tr:last-child td {
+    border-bottom: none;
+}
+
+.brutal-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* FORMS */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.form-control {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    border: var(--border-strong);
+    border-radius: 10px;
+    background-color: var(--bg-surface);
+    color: var(--ink);
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: var(--eco-green);
+    box-shadow: var(--shadow-brutal-sm);
+}
+
+/* ==========================================================================
+   4. SPECIALIZED MODULE COMPONENTS (F5 ESCROW, F9 DISPUTE/PAYOUT, F6 TIMELINE)
+   ========================================================================== */
+.split-2col {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 22px;
+    align-items: start;
+}
+
+.split-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* F5: ESCROW RECEIPT TICKET */
+.receipt-ticket {
+    background-color: #fffef8;
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    box-shadow: var(--shadow-brutal);
+    position: relative;
+}
+
+.receipt-header {
+    border-bottom: 2px dashed var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: 14px;
+}
+
+.receipt-total {
+    border-top: 2px dashed var(--ink);
+    margin-top: 12px;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Bungee', sans-serif;
+    font-size: 20px;
+    color: var(--eco-green);
+}
+
+/* GATEWAY SELECTOR CARDS */
+.gateway-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: var(--border-strong);
+    border-radius: 12px;
+    background-color: var(--bg-surface);
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.15s ease;
+}
+
+.gateway-option:hover,
+.gateway-option.selected {
+    background-color: var(--eco-soft);
+    box-shadow: var(--shadow-brutal-sm);
+    transform: translate(-1px, -1px);
+}
+
+.gateway-option.disabled {
+    background-color: #fee2e2;
+    border-style: dashed;
+    border-color: var(--danger-red);
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+/* TIMELINE (F6 SHIPMENT & F9 DISPUTE) */
+.step-timeline {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.step-node {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px;
+    border: var(--border-strong);
+    border-radius: 12px;
+    background-color: var(--bg-canvas);
+    text-align: center;
+}
+
+.step-node.done {
+    background-color: var(--eco-soft);
+    border-color: var(--ink);
+    box-shadow: var(--shadow-brutal-sm);
+}
+
+.step-node.active {
+    background-color: var(--swap-soft);
+    border-color: var(--ink);
+    box-shadow: var(--shadow-brutal);
+    font-weight: 700;
+}
+
+/* DEMO TOOLBAR (CHO TUẤN ANH BẤM TEST KỊCH BẢN TRÊN LỚP) */
+.demo-toolbar {
+    background-color: #18181b;
+    color: #fafafa;
+    border: var(--border-thick);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.demo-toolbar-title {
+    font-family: 'Bungee', sans-serif;
+    font-size: 12px;
+    color: #facc15;
+}
+
+/* FOOTER */
+.app-footer {
+    background-color: #111111;
+    color: #f4f4f0;
+    border-top: var(--border-thick);
+    padding: 32px 28px;
+    margin-top: 40px;
+}
+
+.footer-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+@media (max-width: 992px) {
+    .app-layout {
+        grid-template-columns: 1fr;
+    }
+    .sidebar-panel {
+        position: static;
+    }
+    .hero-banner,
+    .split-2col,
+    .split-equal,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }
