@@ -1,170 +1,262 @@
+/* ============ CSS DÙNG CHUNG (cả nhóm) – tông trắng đen ============ */
+:root {
+    --bg: #f4f4f4;
+    --card: #ffffff;
+    --ink: #000000;
+    --muted: #666666;
+    --line: 1.5px solid #000000;
+    --main-width: 720px;     /* bề rộng tối đa của cột nội dung giữa */
+    --side: 200px;           /* chừa chỗ cho menu trái (và đối xứng bên phải) */
+}
+
 /*MÀU NỀN*/
-body{
+body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: var(--bg);
+    color: var(--ink);
 }
+a { color: inherit; text-decoration: none; }
+
+/*THANH TRÊN: logo, tìm kiếm, thông báo – luôn dính trên cùng khi cuộn trang*/
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    height: 100px;
+    background-color: var(--bg);
+    transition: box-shadow .2s;
+}
+.topbar.scrolled { box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.logo-link { position: absolute; top: 4px; left: 12px; }
 /*ẢNH LOGO*/
-.logo{
-    height: 120px;
-    width: auto;
-    position: absolute;
-    top: 10px;
-    left: 30px;
-}
+.logo { height: 124px; width: auto; display: block; }
+
 /*CLASS THANH TÌM KIẾM*/
-.search-bar{
+.search-bar {
     display: flex;
     align-items: center;
-    width: 480px;
-    height: 42px;           /* ngắn lại theo chiều cao */
+    width: 362px;
+    height: 52px;
     background-color: #ffffff;
-    border: 1.5px solid #000000;
-    border-radius: 21px;    /* = height / 2, giữ bo tròn hoàn toàn */
-    padding: 0 18px;
+    border: var(--line);
+    border-radius: 26px;
+    padding: 0 20px;
     position: absolute;
-    top: 35px;
-    left: 260px;             /* kéo sát logo hơn (giảm từ 340px) */
+    top: 38px;
+    left: 249px;
     box-sizing: border-box;
 }
-.search-icon {
-    width: 25px;
-    height: 25px;
-    margin-right: 12px;
-    opacity: 0.5;            /* làm icon hơi mờ giống trong thiết kế */
-}
-
+.search-icon { width: 25px; height: 25px; margin-right: 12px; opacity: 0.5; }
 .search-input {
     font-family: 'Poppins', sans-serif;
     border: none;
     outline: none;
     background: transparent;
     font-size: 16px;
-    width: 420px;
+    width: 100%;
     color: #333;
 }
+.search-input::placeholder { color: #999; }
 
-.search-input::placeholder {
-    color: #999;             /* màu chữ placeholder nhạt hơn */
-}
-
-/*KHỐI MENU BÊN TRÁI (Giỏ hàng, Tin nhắn, Đã lưu, Hội nhóm)*/
-.sidebar-menu{
-    position: absolute;
-    top: 150px;
-    left: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.menu-item{
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    font-size: 17px;
-    color: #000000;
-    padding: 8px 6px;
-    border-radius: 8px;
-    text-align: left;
-}
-
-.menu-item:hover{
-    background-color: #e9e9e9;
-}
-
-.menu-icon{
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-}
-
-/*KHỐI PROFILE (avatar + username)*/
-.profile-block{
+/*NÚT THÔNG BÁO GÓC PHẢI*/
+.notify-btn {
+    position: fixed;
+    top: 12px;
+    right: 18px;
+    z-index: 20;
     display: flex;
     align-items: center;
     gap: 12px;
-    position: absolute;    /* nếu muốn cố định luôn khi cuộn trang thì đổi thành fixed */
-    bottom: 40px;
-    left: 30px;
-    width: 220px;          /* chiều dài box bị lock, đổi tùy layout */
+    height: 52px;
+    padding: 0 12px 0 18px;
+    background: #ffffff;
+    border: var(--line);
+    border-radius: 26px;
+    font-size: 17px;
 }
+.bell-icon { width: 40px; height: 40px; }
 
-.profile-avatar{
-    width: 48px;
-    height: 48px;
+/*SỐ ĐỎ (thông báo, tin nhắn chưa đọc)*/
+.count-badge {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: 13px;
+    background: #d80000;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.count-badge[hidden] { display: none; }
+.notify-badge { position: absolute; right: 52px; bottom: -12px; border: 2px solid #fff; }
+
+/*KHỐI MENU BÊN TRÁI (Giỏ hàng, Tin nhắn, Đã lưu, Hội nhóm, Reels)*/
+.sidebar-menu {
+    position: fixed;
+    top: 172px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 17px;
+    padding: 6px 10px 6px 4px;
+    border-radius: 10px;
+}
+.menu-item:hover { background-color: #e9e9e9; }
+.menu-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+
+/*KHỐI PROFILE (avatar + username) góc trái dưới*/
+.profile-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    bottom: 16px;
+    left: 12px;
+    width: 240px;
+}
+.profile-avatar {
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
-    background-color: #e0e0e0;   /* nền tạm khi chưa có ảnh */
+    background-color: #e0e0e0;
     flex-shrink: 0;
     border: 1px solid #ccc;
 }
+.username-box { flex: 1; min-width: 0; overflow: hidden; }
+.username { font-family: "Bungee", sans-serif; white-space: nowrap; display: inline-block; max-width: 100%; }
 
-.username-box{
-    flex: 1;
-    min-width: 0;           /* bắt buộc để flex item co lại được, không thì overflow không hoạt động */
-    overflow: hidden;
+/*CỘT NỘI DUNG GIỮA*/
+/* Luôn căn giữa màn hình; màn hẹp thì cột co lại để không lấn vào menu trái */
+.page-main {
+    width: min(var(--main-width), calc(100% - 2 * var(--side)));
+    margin: 0 auto;
+    padding: 8px 0 40px;
 }
 
-.username{
-    font-family: "Bungee", sans-serif;
-    color: #000000;
-    white-space: nowrap;
-    display: inline-block;
-    max-width: 100%;
-}
-
-/* KHỐI DANH MỤC (Điện thoại, Laptop, Máy tính bảng, Phụ kiện) */
-.category-bar{
+/* KHỐI DANH MỤC */
+.category-bar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 4px;
-    position: absolute;
-    top: 90px;
-    left: 260px;
-    width: 620px;              /* tăng bề rộng để chứa hết 9 item */
+    align-items: stretch;
+    justify-content: safe center;
+    gap: 2px;
+    overflow-x: auto;          /* màn hẹp: vuốt ngang để xem hết danh mục */
+    scrollbar-width: none;
     background-color: #ffffff;
-    border: 1.5px solid #000000;
-    border-radius: 30px;
-    padding: 10px 16px;
+    border: var(--line);
+    border-radius: 38px;
+    padding: 10px 24px;
     box-sizing: border-box;
-    overflow: hidden;          /* bỏ scroll ngang */
 }
-
-.category-item{
+.category-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    flex: 1;                   /* chia đều chỗ cho mỗi item */
-    min-width: 0;
+    flex: 0 0 68px;
     padding: 4px 2px;
     border-radius: 10px;
 }
+.category-item:hover { background-color: #e9e9e9; }
+.category-item .cat-icon { font-size: 26px; line-height: 32px; }
+.category-item span:last-child { font-size: 9.5px; text-align: center; line-height: 1.25; }
 
-.category-item:hover{
-    background-color: #e9e9e9;
+/* THẺ BÀI ĐĂNG (dạng post) */
+.post-card {
+    background: var(--card);
+    border: var(--line);
+    border-radius: 40px;
+    padding: 16px 20px 18px;
+    margin-top: 20px;
+    overflow: hidden;
 }
-
-.category-item img{
-    width: 26px;
-    height: 26px;
-    object-fit: contain;
+.post-head { display: flex; align-items: center; gap: 12px; }
+.post-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+.post-author { font-family: "Bungee", sans-serif; font-size: 18px; letter-spacing: 1px; display: block; }
+.post-date { font-size: 13px; display: block; margin-left: 4px; }
+.post-caption { font-size: 17px; margin: 14px 0 10px -6px; }
+.tag {
+    display: inline-block;
+    padding: 1px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 6px;
+    vertical-align: 2px;
 }
+.tag-new { background: #6fcf63; }
+.tag-used { background: #8a8a8a; }
+.tag-damaged { background: #e3a13b; }
+.post-photos { display: flex; gap: 0; margin: 0 -20px -18px 22px; overflow: hidden; }
+.post-photo {
+    flex: 0 1 205px;
+    min-width: 0;
+    height: 272px;
+    object-fit: cover;
+    background: linear-gradient(160deg, #d9d9d9, #b9b9b9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+}
+.post-footer { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.post-price { font-weight: 600; font-size: 18px; margin-right: auto; }
+.btn {
+    font: inherit;
+    font-size: 14px;
+    padding: 6px 14px;
+    border: var(--line);
+    border-radius: 20px;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+}
+.btn-dark { background: #000; color: #fff; }
 
-.category-item span{
-    font-size: 10px;
-    color: #000000;
-    white-space: nowrap;
-    text-align: center;
+/* DẢI REELS */
+.reel-strip { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 0 2px; scrollbar-width: none; }
+.reel-card {
+    flex: 0 0 196px;
+    height: 300px;
+    border-radius: 14px;
+    position: relative;
+    background: linear-gradient(170deg, #cfcfcf, #8f8f8f);
+    color: #fff;
+}
+.reel-card span { position: absolute; top: 40px; left: 0; right: 0; text-align: center; font-weight: 600; font-size: 17px; }
+.reel-card::after { content: '⋮'; position: absolute; top: 8px; right: 12px; font-size: 20px; }
+
+/* Màn hình vừa: menu trái chỉ còn icon */
+@media (max-width: 1150px) {
+    :root { --side: 84px; }
+    .sidebar-menu .menu-item span:not(.count-badge), .username-box { display: none; }
+    .profile-block { width: auto; }
+    .search-bar { width: 260px; }
+}
+/* Điện thoại: ẩn menu trái, cột chiếm gần hết bề ngang */
+@media (max-width: 760px) {
+    :root { --side: 12px; }
+    .logo { height: 80px; }
+    .topbar { height: auto; padding: 70px 12px 10px; }
+    .search-bar { position: static; width: auto; }
+    .sidebar-menu, .profile-block { display: none; }
+    .page-main { padding-top: 8px; }
+    .notify-btn span:first-child { display: none; }
+    .post-card { border-radius: 28px; }
+    .post-photos { margin-left: 0; }
+    .post-footer { flex-wrap: wrap; }
 }

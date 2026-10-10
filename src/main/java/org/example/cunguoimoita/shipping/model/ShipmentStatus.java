@@ -1,0 +1,35 @@
+package org.example.cunguoimoita.shipping.model;
+
+/** Shipment.status: enum {created, picked_up, in_transit, delivered, returned} */
+public enum ShipmentStatus {
+    CREATED, PICKED_UP, IN_TRANSIT, DELIVERED, RETURNED;
+
+    /** Giá trị lưu trong DB (chữ thường như class diagram). */
+    public String dbValue() {
+        return name().toLowerCase();
+    }
+
+    public static ShipmentStatus fromDb(String value) {
+        return valueOf(value.toUpperCase());
+    }
+
+    /** Chuỗi hợp lệ: created → picked_up → in_transit → delivered, hoặc chuyển returned khi chưa giao xong. */
+    public boolean canMoveTo(ShipmentStatus next) {
+        switch (this) {
+            case CREATED:    return next == PICKED_UP || next == RETURNED;
+            case PICKED_UP:  return next == IN_TRANSIT || next == RETURNED;
+            case IN_TRANSIT: return next == DELIVERED || next == RETURNED;
+            default:         return false;
+        }
+    }
+
+    public String label() {
+        switch (this) {
+            case CREATED:    return "Đã tạo vận đơn";
+            case PICKED_UP:  return "Đã lấy hàng";
+            case IN_TRANSIT: return "Đang giao";
+            case DELIVERED:  return "Đã giao";
+            default:         return "Hoàn hàng";
+        }
+    }
+}

@@ -37,3 +37,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
+### Cấu hình DB riêng từng máy ###
+src/main/webapp/META-INF/context.xml

@@ -1,0 +1,38 @@
+package org.example.cunguoimoita.chat.controller;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.chat.service.ChatService;
+import org.example.cunguoimoita.common.util.CurrentUser;
+
+import java.io.IOException;
+import java.sql.SQLException;
+
+/**
+ * GET /chat/inbox → hộp thư.
+ *     Attribute gửi sang JSP: conversations (List&lt;Conversation&gt;, có lastMessagePreview, unreadCount), userId
+ */
+@WebServlet("/chat/inbox")
+public class InboxServlet extends HttpServlet {
+
+    private final ChatService chatService = new ChatService();
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String userId = CurrentUser.id(req);
+        if (userId == null) {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập (tạm thời thêm ?as=<userId>)");
+            return;
+        }
+        try {
+            req.setAttribute("conversations", chatService.inbox(userId));
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
+        req.setAttribute("userId", userId);
+        req.getRequestDispatcher("/WEB-INF/views/chat/inbox.jsp").forward(req, resp);
+    }
+}
