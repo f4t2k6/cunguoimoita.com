@@ -1,0 +1,62 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="vi_VN"/>
+<c:set var="pageTitle" value="Đơn vị vận chuyển"/>
+<c:set var="pageCss" value="shipping.css"/>
+<%@ include file="/WEB-INF/views/common/header.jsp" %>
+<main class="shipping-page">
+  <h1>Đơn vị vận chuyển</h1>
+
+  <c:if test="${not empty error}"><p class="ship-error">${error}</p></c:if>
+
+  <form class="ship-form-inline" method="get">
+    <label>Gửi từ <input name="from" value="${from}" placeholder="VD: Hà Nội"></label>
+    <label>Giao tới <input name="to" value="${to}" placeholder="VD: TP.HCM"></label>
+    <button type="submit">Tính phí</button>
+  </form>
+
+  <table class="ship-table">
+    <thead>
+    <tr><th>Đơn vị</th><th>Hotline</th><th>Phí cơ bản</th><th>Phí cho tuyến này</th><th>Dự kiến</th></tr>
+    </thead>
+    <tbody>
+    <c:forEach var="carrier" items="${carriers}">
+      <tr>
+        <td><strong>${carrier.name}</strong></td>
+        <td>${carrier.hotline}</td>
+        <td><fmt:formatNumber value="${carrier.baseFee}" pattern="#,##0"/> đ</td>
+        <td>
+          <c:choose>
+            <c:when test="${not empty from and not empty to}">
+              <fmt:formatNumber value="${carrier.calculateFee(from, to)}" pattern="#,##0"/> đ
+            </c:when>
+            <c:otherwise>–</c:otherwise>
+          </c:choose>
+        </td>
+        <td>${carrier.estimatedDays} ngày</td>
+      </tr>
+    </c:forEach>
+    </tbody>
+  </table>
+
+  <%-- TẠM: tạo vận đơn thử trong lúc F4 (TV3) chưa có đơn hàng thật. Xoá khi ghép với trang thanh toán. --%>
+  <section class="ship-card">
+    <h2>Tạo vận đơn thử</h2>
+    <form method="post">
+      <label>Mã đơn <input name="orderId" required placeholder="VD: TEST-001"></label>
+      <label>Đơn vị
+        <select name="carrierId">
+          <c:forEach var="carrier" items="${carriers}">
+            <option value="${carrier.id}">${carrier.name}</option>
+          </c:forEach>
+        </select>
+      </label>
+      <label>Gửi từ <input name="from" value="${from}" required></label>
+      <label>Giao tới <input name="to" value="${to}" required></label>
+      <label>Tiền thu hộ COD <input name="codAmount" type="number" min="0" value="0"></label>
+      <button type="submit">Tạo vận đơn</button>
+    </form>
+  </section>
+</section>
+<%@ include file="/WEB-INF/views/common/footer.jsp" %>

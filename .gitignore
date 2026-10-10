@@ -32,12 +32,13 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-
 ### VS Code ###
 .vscode/
 
 ### Mac OS ###
 .DS_Store
+### Cấu hình DB riêng từng máy ###
+src/main/webapp/META-INF/context.xml
 
 ### agents kit###
 .agents/
@@ -46,5 +47,3 @@ build/
 ppt/
 
 nb-configuration.xml
-
-
