@@ -48,7 +48,7 @@ public class HomeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        CurrentUser.id(req); // để ?as=<userId> (đăng nhập tạm) có tác dụng cả ở trang chủ
+        CurrentUser.id(req); // đọc người dùng từ session nếu đã đăng nhập
         req.setAttribute("categories", CATEGORIES);
         req.setAttribute("posts", SAMPLE_POSTS);
         req.setAttribute("reels", SAMPLE_REELS);

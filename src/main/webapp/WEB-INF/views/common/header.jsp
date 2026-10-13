@@ -67,10 +67,12 @@
   </a>
 </nav>
 
-<%-- TODO TV1: thay sessionScope.userId bằng tên và avatar thật khi có đăng nhập --%>
 <a class="profile-block" href="${ctx}/account/profile">
-  <img src="${ctx}/assets/images/avt.png" alt="avatar" class="profile-avatar">
-  <span class="username-box"><span class="username" id="usernameText">${empty sessionScope.userId ? 'Khách' : sessionScope.userId}</span></span>
+  <c:choose>
+    <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}${sessionScope.avatarPath}" alt="avatar" class="profile-avatar"></c:when>
+    <c:otherwise><img src="${ctx}/assets/images/avt.png" alt="avatar" class="profile-avatar"></c:otherwise>
+  </c:choose>
+  <span class="username-box"><span class="username" id="usernameText"><c:out value="${empty sessionScope.fullName ? 'Khách' : sessionScope.fullName}" /></span></span>
 </a>
 
 <main class="page-main">

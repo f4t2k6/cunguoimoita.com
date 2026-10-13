@@ -1,0 +1,381 @@
+.account-page {
+    max-width: 1050px;
+    margin: 28px auto 56px;
+}
+
+.account-heading,
+.account-card-heading,
+.address-item-heading,
+.address-actions,
+.avatar-input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.account-heading {
+    margin-bottom: 22px;
+}
+
+.account-heading h1,
+.account-card h2 {
+    margin: 0;
+    font-family: 'Bungee', sans-serif;
+}
+
+.account-heading h1 {
+    font-size: clamp(24px, 3vw, 34px);
+}
+
+.account-eyebrow {
+    margin: 0 0 6px;
+    color: #666;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .12em;
+}
+
+.account-subtitle,
+.account-card > p,
+.account-card-heading p {
+    margin: 8px 0 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.account-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 18px;
+}
+
+.account-card {
+    padding: 22px;
+    background: #fff;
+    border: 1.5px solid #111;
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 #111;
+}
+
+.account-profile-card,
+.account-address-card {
+    grid-column: 1 / -1;
+}
+
+.account-card h2 {
+    font-size: 17px;
+}
+
+.account-card-heading {
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.account-avatar {
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+    object-fit: cover;
+    border: 2px solid #111;
+    border-radius: 50%;
+    background: #eee;
+}
+
+.account-form {
+    display: grid;
+    gap: 9px;
+}
+
+.account-form label {
+    display: grid;
+    gap: 6px;
+    color: #333;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.account-form input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    color: #111;
+    background: #fff;
+    border: 1px solid #999;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 400;
+}
+
+.account-form input:focus {
+    outline: 2px solid #111;
+    outline-offset: 1px;
+}
+
+.account-form input[readonly] {
+    color: #777;
+    background: #f3f3f3;
+}
+
+.account-button {
+    width: fit-content;
+    min-height: 40px;
+    margin-top: 8px;
+    padding: 9px 16px;
+    color: #fff;
+    background: #111;
+    border: 1px solid #111;
+    border-radius: 22px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.account-button:hover {
+    background: #333;
+}
+
+.account-button-light {
+    color: #111;
+    background: #fff;
+}
+
+.account-button-light:hover {
+    color: #fff;
+}
+
+.avatar-form {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #ddd;
+}
+
+.avatar-input-row {
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.avatar-input-row input {
+    max-width: 420px;
+    border: 0;
+    padding-left: 0;
+}
+
+.account-alert {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border: 1px solid;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.account-alert-success {
+    color: #14532d;
+    background: #dcfce7;
+    border-color: #86c99a;
+}
+
+.account-alert-error {
+    color: #991b1b;
+    background: #fee2e2;
+    border-color: #f2a3a3;
+}
+
+.account-empty {
+    padding: 18px;
+    color: #666;
+    background: #f7f7f7;
+    border-radius: 10px;
+}
+
+.public-profile-page {
+    max-width: 720px;
+}
+
+.public-seller-card {
+    text-align: center;
+}
+
+.public-seller-card h1 {
+    margin: 12px 0 0;
+    font-family: 'Bungee', sans-serif;
+    font-size: 24px;
+}
+
+.public-avatar {
+    width: 104px;
+    height: 104px;
+}
+
+.public-seller-id,
+.public-profile-note {
+    color: #666;
+    font-size: 13px;
+}
+
+.seller-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.seller-stat {
+    min-height: 92px;
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    background: #f4f4f0;
+    border: 1px solid #bbb;
+    border-radius: 12px;
+}
+
+.seller-stat-value {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.seller-stat-label {
+    color: #666;
+    font-size: 12px;
+}
+
+.public-profile-note {
+    margin: 18px 0 0;
+}
+
+.address-list {
+    display: grid;
+    gap: 12px;
+}
+
+.address-item {
+    padding: 16px;
+    border: 1px solid #bbb;
+    border-radius: 12px;
+}
+
+.address-item.is-default {
+    background: #effaf1;
+    border-color: #61a875;
+}
+
+.address-item-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.address-item-heading > span {
+    color: #555;
+    font-size: 13px;
+}
+
+.default-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 4px 8px;
+    color: #14532d;
+    background: #d6f5dd;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.address-text {
+    margin: 10px 0;
+    color: #444;
+    line-height: 1.5;
+}
+
+.address-edit,
+.add-address {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.address-edit summary,
+.add-address summary {
+    width: fit-content;
+    color: #111;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.compact-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 12px;
+}
+
+.compact-form button {
+    align-self: end;
+}
+
+.address-actions {
+    justify-content: flex-start;
+    margin-top: 12px;
+}
+
+.address-actions form {
+    margin: 0;
+}
+
+.text-button {
+    padding: 4px 0;
+    color: #111;
+    background: none;
+    border: 0;
+    font: inherit;
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.danger-text {
+    color: #a11;
+}
+
+.add-address {
+    margin-top: 20px;
+}
+
+@media (max-width: 760px) {
+    .account-page {
+        width: calc(100% - 32px);
+        margin-top: 18px;
+    }
+
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .account-profile-card,
+    .account-address-card {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .account-heading,
+    .account-card-heading {
+        align-items: flex-start;
+    }
+
+    .account-card {
+        padding: 16px;
+    }
+
+    .compact-form {
+        grid-template-columns: 1fr;
+    }
+
+    .avatar-input-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
