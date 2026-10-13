@@ -80,9 +80,8 @@ public class DemoUiServlet extends HttpServlet {
                 pageTitle = "F9: Ví Bán Hàng & Giải Ngân Payout (Tuấn Anh) — Cũ Người Mới Ta";
                 break;
             case "admin":
-                viewPath = "/WEB-INF/views/admin/dashboard.jsp";
-                pageTitle = "F10: Quản Trị Hệ Thống & Trọng Tài — Cũ Người Mới Ta";
-                break;
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                return;
             case "home":
             default:
                 page = "home";
