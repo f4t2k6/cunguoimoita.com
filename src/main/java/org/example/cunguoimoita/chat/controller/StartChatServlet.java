@@ -14,9 +14,8 @@ import java.sql.SQLException;
 
 /**
  * POST /chat/start  — nút "Nhắn tin" trên trang chi tiết bài đăng (F3 của TV2 đặt form này).
- *      Field: productId, sellerId
+ *      Field: productId (người bán lấy từ bài đăng)
  *      → chuyển tới /chat/conversation?id=...
- * TODO: khi có ProductService (TV2) thì tự lấy sellerId từ productId thay vì nhận từ form.
  */
 @WebServlet("/chat/start")
 public class StartChatServlet extends HttpServlet {
@@ -31,7 +30,7 @@ public class StartChatServlet extends HttpServlet {
             return;
         }
         try {
-            Conversation conv = chatService.start(req.getParameter("productId"), userId, req.getParameter("sellerId"));
+            Conversation conv = chatService.start(req.getParameter("productId"), userId);
             resp.sendRedirect(req.getContextPath() + "/chat/conversation?id=" + conv.getId());
         } catch (IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());

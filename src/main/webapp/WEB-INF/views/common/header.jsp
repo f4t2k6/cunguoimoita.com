@@ -11,6 +11,8 @@
     <%@ include file="/WEB-INF/views/common/footer.jsp" %>
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
+<c:set var="assetVer" value="20261013b"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -20,8 +22,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="${ctx}/assets/css/style.css">
-  <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}"></c:if>
+  <link rel="stylesheet" href="${ctx}/assets/css/style.css?v=${assetVer}">
+  <c:if test="${not empty pageCss}"><link rel="stylesheet" href="${ctx}/assets/css/${pageCss}?v=${assetVer}"></c:if>
 </head>
 <body data-ctx="${ctx}">
 
@@ -33,7 +35,7 @@
     <input type="text" name="q" class="search-input" value="${fn:escapeXml(param.q)}" placeholder="Tìm kiếm trên cunguoimoita...">
   </form>
 
-  <a href="${ctx}/notifications" class="notify-btn">
+  <button type="button" class="notify-btn" id="notifyBtn" aria-haspopup="true" aria-expanded="false" aria-controls="notifyPanel">
     <span>Thông báo</span>
     <svg class="bell-icon" viewBox="0 0 48 48" fill="none" stroke="#000" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
       <path d="M24 5v4M15 30V20a9 9 0 0 1 18 0v10l5 6H10l5-6z"/>
@@ -41,7 +43,17 @@
       <path d="M10 36l4 5h20l4-5"/>
     </svg>
     <span class="count-badge notify-badge" id="notifyBadge" hidden></span>
-  </a>
+  </button>
+
+  <%-- Danh sách thông báo xổ xuống khi bấm nút Thông báo (common.js tải qua /notifications/list) --%>
+  <div class="notify-panel" id="notifyPanel" hidden>
+    <div class="notify-panel-head">
+      <strong>Thông báo</strong>
+      <button type="button" class="notify-link" id="notifyReadAll">Đánh dấu tất cả đã đọc</button>
+    </div>
+    <ul class="notify-list" id="notifyList"></ul>
+    <a class="notify-all" href="${ctx}/notifications">Xem tất cả</a>
+  </div>
 </header>
 
 <nav class="sidebar-menu">
@@ -73,4 +85,4 @@
   <span class="username-box"><span class="username" id="usernameText">${empty sessionScope.userId ? 'Khách' : sessionScope.userId}</span></span>
 </a>
 
-<main class="page-main">
+<main class="page-main ${pageMainClass}">

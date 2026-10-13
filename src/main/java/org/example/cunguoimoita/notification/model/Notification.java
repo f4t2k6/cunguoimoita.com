@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.notification.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /** Class Notification trong class diagram. send() nằm trong NotificationService.send(). */
 public class Notification {
@@ -27,4 +28,9 @@ public class Notification {
     public void setRead(boolean read) { isRead = read; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+
+    /** Mốc thời gian dạng số (ms) để JS hiển thị "5 phút trước". */
+    public long getCreatedEpochMs() {
+        return createdDate == null ? 0 : createdDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
 }

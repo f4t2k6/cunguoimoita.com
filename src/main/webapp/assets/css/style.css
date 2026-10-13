@@ -74,9 +74,68 @@ a { color: inherit; text-decoration: none; }
     background: #ffffff;
     border: var(--line);
     border-radius: 26px;
+    font-family: inherit;
     font-size: 17px;
+    color: var(--ink);
+    cursor: pointer;
 }
+.notify-btn[aria-expanded="true"] { background: #000; color: #fff; }
+.notify-btn[aria-expanded="true"] .bell-icon { stroke: #fff; }
 .bell-icon { width: 40px; height: 40px; }
+
+/*DANH SÁCH THÔNG BÁO XỔ XUỐNG (bấm nút Thông báo)*/
+.notify-panel {
+    position: fixed;
+    top: 74px;
+    right: 18px;
+    z-index: 30;
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    max-height: min(560px, calc(100vh - 90px));
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: var(--line);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    overflow: hidden;
+}
+.notify-panel[hidden] { display: none; }
+.notify-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 8px; }
+.notify-panel-head strong { font-size: 22px; }
+.notify-link { border: none; background: none; padding: 0; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; color: var(--ink); }
+.notify-list { list-style: none; margin: 0; padding: 0 8px; overflow-y: auto; }
+.notify-empty { padding: 20px 8px; color: var(--muted); text-align: center; }
+.notify-item { position: relative; border-radius: 12px; }
+.notify-item:hover { background: #f2f2f2; }
+.notify-main { display: flex; align-items: center; gap: 12px; padding: 10px 44px 10px 8px; }
+.notify-icon { flex: 0 0 48px; height: 48px; border-radius: 50%; border: var(--line); background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.notify-icon::before { content: '🔔'; }
+.notify-icon.type-order::before { content: '🛒'; }
+.notify-icon.type-payment::before { content: '💳'; }
+.notify-icon.type-shipment::before { content: '🚚'; }
+.notify-icon.type-review::before { content: '⭐'; }
+.notify-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notify-content { font-size: 15px; line-height: 1.35; color: #444; }
+.notify-time { font-size: 13px; color: var(--muted); }
+.notify-item.unread .notify-content { color: var(--ink); font-weight: 600; }
+.notify-item.unread .notify-time { color: var(--ink); font-weight: 600; }
+.notify-dot { flex: 0 0 12px; height: 12px; border-radius: 50%; }
+.notify-item.unread .notify-dot { background: #d80000; }
+.notify-more { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 34px; height: 34px;
+    border-radius: 50%; border: var(--line); background: #fff; font-size: 18px; line-height: 1; cursor: pointer;
+    opacity: 0; transition: opacity .15s; }
+.notify-item:hover .notify-more, .notify-more:focus, .notify-item:has(.notify-menu:not([hidden])) .notify-more { opacity: 1; }
+.notify-menu { position: absolute; top: calc(50% + 20px); right: 6px; z-index: 2; min-width: 190px; padding: 6px;
+    background: #fff; border: var(--line); border-radius: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, .15); }
+.notify-menu[hidden] { display: none; }
+.notify-menu a, .notify-menu button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none;
+    background: none; font: inherit; font-size: 15px; border-radius: 8px; cursor: pointer; color: var(--ink); }
+.notify-menu a:hover, .notify-menu button:hover { background: #f2f2f2; }
+.notify-all { display: block; padding: 12px; text-align: center; border-top: 1px solid #ddd; font-weight: 600; }
+.notify-all:hover { background: #f2f2f2; }
+@media (hover: none) { .notify-more { opacity: 1; } }
 
 /*SỐ ĐỎ (thông báo, tin nhắn chưa đọc)*/
 .count-badge {
@@ -145,6 +204,8 @@ a { color: inherit; text-decoration: none; }
     margin: 0 auto;
     padding: 8px 0 40px;
 }
+/* Trang cần rộng hơn (tin nhắn 2 cột): đặt <c:set var="pageMainClass" value="page-wide"/> trước khi include header */
+.page-main.page-wide { width: min(1100px, calc(100% - 2 * var(--side))); }
 
 /* KHỐI DANH MỤC */
 .category-bar {
@@ -256,6 +317,7 @@ a { color: inherit; text-decoration: none; }
     .sidebar-menu, .profile-block { display: none; }
     .page-main { padding-top: 8px; }
     .notify-btn span:first-child { display: none; }
+    .notify-panel { right: 12px; top: 72px; }
     .post-card { border-radius: 28px; }
     .post-photos { margin-left: 0; }
     .post-footer { flex-wrap: wrap; }

@@ -7,18 +7,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.JsonUtil;
+import org.example.cunguoimoita.notification.model.Notification;
 import org.example.cunguoimoita.notification.service.NotificationService;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  *  GET  /notifications             danh sách thông báo. Attribute gửi sang JSP: notifications (List&lt;Notification&gt;)
  *  GET  /notifications/open?id=    đánh dấu đã đọc rồi chuyển tới linkUrl của thông báo
  *  GET  /notifications/count       JSON số chưa đọc (chuông trên header)
- *  POST /notifications/read-all    đánh dấu đã đọc tất cả
+ *  GET  /notifications/list        JSON 20 thông báo mới nhất (danh sách xổ xuống ở nút Thông báo)
+ *  POST /notifications/read?id=    đánh dấu đã đọc 1 thông báo (JSON)
+ *  POST /notifications/read-all    đánh dấu đã đọc tất cả (JSON nếu gọi bằng fetch, còn lại quay về /notifications)
  */
-@WebServlet(urlPatterns = {"/notifications", "/notifications/open", "/notifications/count", "/notifications/read-all"})
+@WebServlet(urlPatterns = {"/notifications", "/notifications/open", "/notifications/count", "/notifications/list",
+        "/notifications/read", "/notifications/read-all"})
 public class NotificationServlet extends HttpServlet {
 
     private final NotificationService notificationService = new NotificationService();
@@ -34,6 +39,9 @@ public class NotificationServlet extends HttpServlet {
             switch (req.getServletPath()) {
                 case "/notifications/count":
                     JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + notificationService.unreadCount(userId) + "}");
+                    return;
+                case "/notifications/list":
+                    JsonUtil.write(resp, 200, listJson(notificationService.list(userId)));
                     return;
                 case "/notifications/open":
                     String link = notificationService.open(userId, req.getParameter("id"));
@@ -56,10 +64,36 @@ public class NotificationServlet extends HttpServlet {
             return;
         }
         try {
-            notificationService.markAllRead(userId);
+            if ("/notifications/read".equals(req.getServletPath())) {
+                notificationService.markRead(userId, req.getParameter("id"));
+            } else {
+                notificationService.markAllRead(userId);
+            }
         } catch (SQLException e) {
             throw new ServletException(e);
         }
-        resp.sendRedirect(req.getContextPath() + "/notifications");
+        String accept = req.getHeader("Accept");
+        if (accept != null && accept.contains("application/json")) {
+            JsonUtil.write(resp, 200, "{\"ok\":true}");
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/notifications");
+        }
+    }
+
+    private static String listJson(List<Notification> list) {
+        StringBuilder json = new StringBuilder("{\"ok\":true,\"items\":[");
+        for (int i = 0; i < Math.min(list.size(), 20); i++) {
+            Notification n = list.get(i);
+            if (i > 0) {
+                json.append(',');
+            }
+            json.append("{\"id\":").append(JsonUtil.quote(n.getId()))
+                .append(",\"type\":").append(JsonUtil.quote(n.getType().dbValue()))
+                .append(",\"content\":").append(JsonUtil.quote(n.getContent()))
+                .append(",\"read\":").append(n.isRead())
+                .append(",\"createdAt\":").append(n.getCreatedEpochMs())
+                .append('}');
+        }
+        return json.append("]}").toString();
     }
 }

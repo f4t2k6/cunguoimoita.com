@@ -14,6 +14,14 @@ import java.util.List;
 /** Các hàm nhận Connection từ ChatService để chạy chung một transaction khi cần. */
 public class ConversationDAO {
 
+    /** Kèm tên 2 người (users) và tên, giá món (products) để hiển thị. */
+    private static final String SELECT = "SELECT cv.*, ua.fullname AS asker_name, us.fullname AS seller_name,"
+            + " p.name AS product_name, p.price AS product_price"
+            + " FROM conversations cv"
+            + " LEFT JOIN users ua ON ua.id = cv.asker_id"
+            + " LEFT JOIN users us ON us.id = cv.seller_id"
+            + " LEFT JOIN products p ON p.id = cv.product_id";
+
     public void insert(Connection c, Conversation conv) throws SQLException {
         String sql = "INSERT INTO conversations (id, product_id, asker_id, seller_id, status, created_at, last_message_at) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -30,7 +38,7 @@ public class ConversationDAO {
     }
 
     public Conversation findById(Connection c, String id) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("SELECT * FROM conversations WHERE id = ?")) {
+        try (PreparedStatement ps = c.prepareStatement(SELECT + " WHERE cv.id = ?")) {
             ps.setString(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
@@ -39,7 +47,7 @@ public class ConversationDAO {
     }
 
     public Conversation findByProductAndAsker(Connection c, String productId, String askerId) throws SQLException {
-        String sql = "SELECT * FROM conversations WHERE product_id = ? AND asker_id = ?";
+        String sql = SELECT + " WHERE cv.product_id = ? AND cv.asker_id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, productId);
             ps.setString(2, askerId);
@@ -51,12 +59,17 @@ public class ConversationDAO {
 
     /** Hộp thư: các cuộc trò chuyện của user, mới nhất trước, kèm tin cuối và số tin chưa đọc. */
     public List<Conversation> findInbox(Connection c, String userId) throws SQLException {
-        String sql = "SELECT cv.*, "
+        String sql = "SELECT x.* FROM (SELECT cv.*, ua.fullname AS asker_name, us.fullname AS seller_name,"
+                + " p.name AS product_name, p.price AS product_price,"
                 + " (SELECT m.content FROM messages m WHERE m.conversation_id = cv.id ORDER BY m.sent_at DESC LIMIT 1) AS last_content, "
                 + " (SELECT m.type FROM messages m WHERE m.conversation_id = cv.id ORDER BY m.sent_at DESC LIMIT 1) AS last_type, "
                 + " (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = cv.id AND m.sender_id <> ? AND NOT m.is_read) AS unread "
-                + "FROM conversations cv WHERE cv.asker_id = ? OR cv.seller_id = ? "
-                + "ORDER BY COALESCE(cv.last_message_at, cv.created_at) DESC";
+                + "FROM conversations cv"
+                + " LEFT JOIN users ua ON ua.id = cv.asker_id"
+                + " LEFT JOIN users us ON us.id = cv.seller_id"
+                + " LEFT JOIN products p ON p.id = cv.product_id"
+                + " WHERE cv.asker_id = ? OR cv.seller_id = ?) x"
+                + " ORDER BY COALESCE(x.last_message_at, x.created_at) DESC";
         List<Conversation> list = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, userId);
@@ -103,6 +116,11 @@ public class ConversationDAO {
         conv.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         Timestamp last = rs.getTimestamp("last_message_at");
         conv.setLastMessageAt(last == null ? null : last.toLocalDateTime());
+        conv.setAskerName(rs.getString("asker_name"));
+        conv.setSellerName(rs.getString("seller_name"));
+        conv.setProductName(rs.getString("product_name"));
+        double price = rs.getDouble("product_price");
+        conv.setProductPrice(rs.wasNull() ? null : price);
         return conv;
     }
 }
