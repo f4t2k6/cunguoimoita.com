@@ -40,11 +40,11 @@
     </tbody>
   </table>
 
-  <%-- TẠM: tạo vận đơn thử trong lúc F4 (TV3) chưa có đơn hàng thật. Xoá khi ghép với trang thanh toán. --%>
+  <%-- TẠM: tạo vận đơn thử trong lúc F4 (TV3) chưa có trang thanh toán. Xoá khi ghép với trang thanh toán. --%>
   <section class="ship-card">
     <h2>Tạo vận đơn thử</h2>
     <form method="post">
-      <label>Mã đơn <input name="orderId" required placeholder="VD: TEST-001"></label>
+      <label>Mã đơn (id) <input name="orderId" required placeholder="VD: O1"></label>
       <label>Đơn vị
         <select name="carrierId">
           <c:forEach var="carrier" items="${carriers}">
@@ -52,8 +52,8 @@
           </c:forEach>
         </select>
       </label>
-      <label>Gửi từ <input name="from" value="${from}" required></label>
-      <label>Giao tới <input name="to" value="${to}" required></label>
+      <label>Gửi từ <input name="from" value="${from}" placeholder="Để trống: theo địa chỉ người bán"></label>
+      <label>Giao tới <input name="to" value="${to}" placeholder="Để trống: theo địa chỉ giao của đơn"></label>
       <label>Tiền thu hộ COD <input name="codAmount" type="number" min="0" value="0"></label>
       <button type="submit">Tạo vận đơn</button>
     </form>

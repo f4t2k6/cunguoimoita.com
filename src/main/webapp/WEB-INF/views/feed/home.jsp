@@ -32,7 +32,6 @@
         <button class="btn" type="submit">Lưu</button></form>
       <form method="post" action="${ctx}/chat/start">
         <input type="hidden" name="productId" value="${post.id}">
-        <input type="hidden" name="sellerId" value="${post.sellerId}">
         <button class="btn" type="submit">Nhắn tin</button>
       </form>
       <form method="post" action="${ctx}/order/cart"><input type="hidden" name="productId" value="${post.id}">

@@ -7,7 +7,12 @@ import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.MessageType;
 import org.example.cunguoimoita.chat.model.PriceOffer;
+import org.example.cunguoimoita.common.dao.OrderRefDAO;
+import org.example.cunguoimoita.common.dao.ProductRefDAO;
+import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.notification.model.NotificationType;
+import org.example.cunguoimoita.notification.service.NotificationService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -31,13 +36,25 @@ public class ChatService {
     private final ConversationDAO conversationDAO = new ConversationDAO();
     private final MessageDAO messageDAO = new MessageDAO();
     private final PriceOfferDAO offerDAO = new PriceOfferDAO();
+    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final NotificationService notificationService = new NotificationService();
 
-    /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán cho một bài. */
-    public Conversation start(String productId, String askerId, String sellerId) throws SQLException {
-        if (askerId.equals(sellerId)) {
-            throw new IllegalArgumentException("Bạn không thể nhắn tin với chính mình");
-        }
+    /** Kết quả khi chấp nhận giá: offer đã accepted và đơn hàng vừa tạo. */
+    public record AcceptResult(PriceOffer offer, String orderId, String orderCode) {
+    }
+
+    /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán (lấy từ bài đăng) cho một bài. */
+    public Conversation start(String productId, String askerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            ProductRef product = productDAO.find(c, productId);
+            if (product == null || !product.isOpenForChat()) {
+                throw new IllegalArgumentException("Bài đăng không tồn tại hoặc đã ngừng bán");
+            }
+            String sellerId = product.sellerId();
+            if (askerId.equals(sellerId)) {
+                throw new IllegalArgumentException("Bạn không thể nhắn tin với chính mình");
+            }
             Conversation conv = conversationDAO.findByProductAndAsker(c, productId, askerId);
             if (conv == null) {
                 conv = new Conversation();
@@ -109,6 +126,7 @@ public class ChatService {
         return inTransaction(c -> {
             Conversation conv = requireParticipant(c, conversationId, proposerId);
             requireOpen(conv);
+            requireAvailable(c, conv);
             offerDAO.expireDue(c);
             boolean hasPending = offerDAO.findByConversation(c, conversationId).stream().anyMatch(PriceOffer::isPending);
             if (hasPending) {
@@ -121,26 +139,43 @@ public class ChatService {
     }
 
     /**
-     * PriceOffer.accept(): offer chuyển accepted, các offer pending khác của cùng Product chuyển declined.
-     * @return offer đã accept (sau này kèm Order khi ghép với F4)
+     * PriceOffer.accept(): Order. Trong cùng một transaction:
+     * offer chuyển accepted, các offer pending khác của cùng Product chuyển declined,
+     * Product chuyển reserved, và tạo Order (offerId = offer này) với giá đã chốt.
+     * Sau đó báo cho người còn lại qua Notification.
      */
-    public PriceOffer acceptOffer(String offerId, String userId) throws SQLException {
-        PriceOffer accepted = inTransaction(c -> {
+    public AcceptResult acceptOffer(String offerId, String userId) throws SQLException {
+        Conversation[] convHolder = new Conversation[1];
+        AcceptResult result = inTransaction(c -> {
             PriceOffer offer = requireOffer(c, offerId);
             Conversation conv = requireParticipant(c, offer.getConversationId(), userId);
             requireOpen(conv);
+            ProductRef product = productDAO.findForUpdate(c, conv.getProductId());
+            if (product == null || !product.isAvailable()) {
+                throw new IllegalStateException("Món này đã được chốt với người khác hoặc đã ngừng bán");
+            }
             offer.accept(userId);
             offerDAO.updateStatus(c, offer);
             for (PriceOffer other : offerDAO.findPendingOfSameProduct(c, conv.getProductId(), offer.getId())) {
                 other.autoDecline();
                 offerDAO.updateStatus(c, other);
             }
-            insertMessage(c, conv.getId(), userId, MessageType.TEXT, "Đã chấp nhận giá " + money(offer.getAmount()));
-            return offer;
+            productDAO.updateStatus(c, product.id(), "reserved");
+            String orderId = orderDAO.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
+                    product.id(), offer.getAmount());
+            String orderCode = orderDAO.findCode(c, orderId);
+            insertMessage(c, conv.getId(), userId, MessageType.TEXT,
+                    "Đã chấp nhận giá " + money(offer.getAmount()) + ". Đơn " + orderCode + " đã được tạo.");
+            convHolder[0] = conv;
+            return new AcceptResult(offer, orderId, orderCode);
         });
-        // TODO F2 (TV2): ProductService.reserve(productId) để món chuyển reserved
-        // TODO F4 (TV3): Order order = OrderService.createFromOffer(offer) rồi đưa người mua sang trang thanh toán
-        return accepted;
+        Conversation conv = convHolder[0];
+        String other = userId.equals(conv.getAskerId()) ? conv.getSellerId() : conv.getAskerId();
+        notificationService.send(other, NotificationType.ORDER,
+                "Giá " + money(result.offer().getAmount()) + " đã được chấp nhận, đơn " + result.orderCode() + " đã được tạo",
+                "/chat/conversation?id=" + conv.getId());
+        // TODO F4 (TV3): đưa người mua sang trang thanh toán của đơn result.orderId()
+        return result;
     }
 
     /** PriceOffer.decline() */
@@ -161,6 +196,7 @@ public class ChatService {
             PriceOffer offer = requireOffer(c, offerId);
             Conversation conv = requireParticipant(c, offer.getConversationId(), userId);
             requireOpen(conv);
+            requireAvailable(c, conv);
             PriceOffer counter = offer.counter(userId, amount);
             offerDAO.updateStatus(c, offer);
             saveOffer(c, counter);
@@ -211,6 +247,14 @@ public class ChatService {
     private void requireOpen(Conversation conv) {
         if (!conv.isOpen()) {
             throw new IllegalStateException("Cuộc trò chuyện đã đóng vì món đã bán");
+        }
+    }
+
+    /** Chỉ trả giá được khi món còn available (chưa ai chốt). */
+    private void requireAvailable(Connection c, Conversation conv) throws SQLException {
+        ProductRef product = productDAO.find(c, conv.getProductId());
+        if (product == null || !product.isAvailable()) {
+            throw new IllegalStateException("Món này đã được chốt với người khác hoặc đã ngừng bán");
         }
     }
 

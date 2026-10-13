@@ -49,6 +49,11 @@ public class NotificationService {
         return n.getLinkUrl();
     }
 
+    /** Notification.markAsRead(): chỉ đánh dấu đã đọc, không chuyển trang. */
+    public void markRead(String userId, String notificationId) throws SQLException {
+        open(userId, notificationId);
+    }
+
     public void markAllRead(String userId) throws SQLException {
         notificationDAO.markRead(userId, null);
     }

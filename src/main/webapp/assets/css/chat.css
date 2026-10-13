@@ -1,33 +1,117 @@
-/* F7 Tin nhắn, trả giá, thông báo (TV5). Tông trắng đen theo style.css chung. */
-.chat-page { margin: 0; font-family: 'Poppins', sans-serif; color: #111; }
-.chat-page h1 { font-size: 24px; margin: 8px 0; }
-.chat-sub, .chat-empty { color: #666; }
-.chat-back { color: #000; text-decoration: none; }
-.chat-page button { font: inherit; padding: 8px 16px; border: 1.5px solid #000; border-radius: 20px; background: #000; color: #fff; cursor: pointer; }
-.chat-page button.secondary { background: #fff; color: #000; }
-.chat-page input { font: inherit; padding: 8px 12px; border: 1.5px solid #000; border-radius: 20px; }
+/* F7 Tin nhắn kiểu Messenger + trang Thông báo (TV5). Tông trắng đen theo style.css chung. */
 
-.inbox-list { list-style: none; padding: 0; }
-.inbox-list li a { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 16px; border: 1.5px solid #ddd;
-  border-radius: 14px; margin-bottom: 8px; background: #fff; color: #111; text-decoration: none; }
-.inbox-list li.unread a { border-color: #000; }
-.inbox-list li.unread .inbox-who { font-weight: 600; }
-.inbox-product, .inbox-last { grid-column: 1; color: #666; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.badge { grid-column: 2; grid-row: 1 / span 3; align-self: center; background: #000; color: #fff; border-radius: 12px; padding: 2px 9px; font-size: 13px; }
+/* ===== Khung 2 cột: danh sách đoạn chat | khung chat ===== */
+.msgr {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  height: calc(100vh - 140px);
+  min-height: 460px;
+  background: #fff;
+  border: 1.5px solid #000;
+  border-radius: 22px;
+  overflow: hidden;
+}
+.msgr [hidden] { display: none !important; }
 
-.chat-box { height: calc(100vh - 330px); min-height: 280px; overflow-y: auto; border: 1.5px solid #000; border-radius: 16px; background: #fff; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.msg { display: flex; flex-direction: column; max-width: 75%; }
-.msg.mine { align-self: flex-end; align-items: flex-end; }
-.msg.theirs { align-self: flex-start; align-items: flex-start; }
-.bubble { padding: 8px 14px; border-radius: 16px; white-space: pre-wrap; word-break: break-word; }
-.msg.mine .bubble { background: #000; color: #fff; }
-.msg.theirs .bubble { background: #eee; }
-.bubble.offer { background: #fff !important; color: #000 !important; border: 2px solid #000; display: flex; flex-direction: column; gap: 4px; }
-.offer-status { font-size: 13px; color: #555; }
-.offer-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-.offer-actions button { padding: 4px 12px; font-size: 14px; }
-.msg time { font-size: 12px; color: #999; margin-top: 2px; }
-.chat-form { display: flex; gap: 8px; margin-top: 12px; }
-.chat-form input { flex: 1; }
-.chat-error { border: 1.5px solid #000; border-left-width: 6px; padding: 8px 12px; background: #fff; }
-.chat-page [hidden] { display: none !important; }
+/* Cột trái */
+.msgr-list { border-right: 1px solid #ddd; display: flex; flex-direction: column; min-height: 0; }
+.msgr-title { font-size: 24px; margin: 0; padding: 18px 18px 10px; }
+.msgr-empty { color: #666; padding: 0 18px; }
+.msgr-list ul { list-style: none; margin: 0; padding: 0 8px 8px; overflow-y: auto; }
+.msgr-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; }
+.msgr-item:hover { background: #f2f2f2; }
+.msgr-item.active { background: #ececec; }
+.msgr-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.msgr-item-name { font-size: 16px; }
+.msgr-item-product { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msgr-item-last { display: flex; gap: 4px; font-size: 14px; color: #666; min-width: 0; }
+.msgr-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msgr-item-time { flex: none; }
+.msgr-item.unread .msgr-item-name, .msgr-item.unread .msgr-item-last { font-weight: 600; color: #000; }
+.msgr-dot { flex: 0 0 12px; height: 12px; border-radius: 50%; background: #000; }
+
+.msgr-avatar {
+  flex: 0 0 52px; width: 52px; height: 52px; border-radius: 50%;
+  background: #000; color: #fff; font-weight: 600; font-size: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.msgr-avatar.small { flex-basis: 28px; width: 28px; height: 28px; font-size: 12px; }
+.msgr-avatar.ghost { visibility: hidden; }
+
+/* Cột phải */
+.msgr-chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.msgr-placeholder { align-items: center; justify-content: center; color: #666; gap: 8px; }
+.msgr-placeholder svg { width: 64px; height: 64px; }
+
+.msgr-head { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #ddd; }
+.msgr-head .msgr-avatar { flex-basis: 40px; width: 40px; height: 40px; font-size: 16px; }
+.msgr-head-text { display: flex; flex-direction: column; min-width: 0; }
+.msgr-head-text strong { font-size: 17px; }
+.msgr-head-text span { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msgr-back { display: none; width: 32px; height: 32px; }
+.msgr-back svg { width: 100%; height: 100%; }
+
+.msgr-thread { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 2px; }
+.msgr-hint { margin: auto; color: #888; }
+.msgr-time { align-self: center; font-size: 12px; color: #888; margin: 14px 0 6px; }
+
+.msgr-row { display: flex; align-items: flex-end; gap: 8px; max-width: 72%; margin-top: 6px; }
+.msgr-row.join-prev { margin-top: 0; }
+.msgr-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+.msgr-row.theirs { align-self: flex-start; }
+
+.msgr-bubble { padding: 8px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.msgr-row.mine .msgr-bubble { background: #000; color: #fff; }
+.msgr-row.theirs .msgr-bubble { background: #ececec; color: #000; }
+/* Bo góc kiểu Messenger: tin giữa nhóm có góc phía mình vuông hơn */
+.msgr-row.mine.join-next .msgr-bubble { border-bottom-right-radius: 5px; }
+.msgr-row.mine.join-prev .msgr-bubble { border-top-right-radius: 5px; }
+.msgr-row.theirs.join-next .msgr-bubble { border-bottom-left-radius: 5px; }
+.msgr-row.theirs.join-prev .msgr-bubble { border-top-left-radius: 5px; }
+
+/* Khung trả giá trong đoạn chat */
+.msgr-offer { min-width: 220px; padding: 12px 14px; border: 2px solid #000; border-radius: 18px; background: #fff;
+  display: flex; flex-direction: column; gap: 2px; }
+.msgr-offer-label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #666; }
+.msgr-offer strong { font-size: 20px; }
+.msgr-offer-status { font-size: 13px; color: #555; }
+.msgr-offer-status.offer-accepted { color: #000; font-weight: 600; }
+.msgr-offer-status.offer-declined, .msgr-offer-status.offer-expired { text-decoration: line-through; }
+.msgr-offer-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+.msgr-pill { font: inherit; font-size: 14px; padding: 6px 14px; border: 1.5px solid #000; border-radius: 18px;
+  background: #000; color: #fff; cursor: pointer; }
+.msgr-pill.light { background: #fff; color: #000; }
+
+.msgr-error { margin: 0 16px 8px; padding: 8px 12px; border: 1.5px solid #000; border-left-width: 6px; border-radius: 8px; }
+.msgr-closed { margin: 0; padding: 14px; text-align: center; color: #666; border-top: 1px solid #ddd; }
+
+/* Ô nhập tin nhắn */
+.msgr-offer-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid #ddd; background: #fafafa; }
+.msgr-offer-bar span { font-weight: 600; }
+.msgr-offer-bar input { flex: 1; min-width: 0; font: inherit; padding: 8px 14px; border: 1.5px solid #000; border-radius: 20px; }
+.msgr-composer { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid #ddd; }
+.msgr-composer input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 10px 16px; border: none;
+  border-radius: 20px; background: #f0f0f0; outline: none; }
+.msgr-composer input:focus { box-shadow: 0 0 0 1.5px #000; }
+.msgr-icon-btn { flex: none; width: 40px; height: 40px; border: none; border-radius: 50%; background: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; padding: 8px; }
+.msgr-icon-btn:hover { background: #f0f0f0; }
+.msgr-icon-btn svg { width: 24px; height: 24px; }
+
+/* Màn hình vừa: cột trái hẹp lại */
+@media (max-width: 1150px) {
+  .msgr { grid-template-columns: 280px 1fr; }
+}
+/* Điện thoại: 1 cột. Trang hộp thư chỉ hiện danh sách, trang đoạn chat chỉ hiện khung chat */
+@media (max-width: 760px) {
+  .msgr { grid-template-columns: 1fr; height: calc(100vh - 170px); border-radius: 16px; }
+  .msgr-inbox .msgr-chat, .msgr-open .msgr-list { display: none; }
+  .msgr-back { display: inline-block; }
+  .msgr-row { max-width: 85%; }
+}
+
+/* ===== Trang /notifications (dùng chung kiểu dòng với danh sách xổ xuống ở style.css) ===== */
+.notify-page { background: #fff; border: 1.5px solid #000; border-radius: 22px; padding: 6px 8px 12px; }
+.notify-page h1 { font-size: 24px; margin: 0; }
+.notify-page .notify-list { padding: 0; }

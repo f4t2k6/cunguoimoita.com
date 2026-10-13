@@ -14,7 +14,7 @@ import java.sql.SQLException;
 
 /**
  * GET /chat/conversation?id=... → khung chat. Tin nhắn do chat.js tải qua /chat/messages.
- *     Attribute gửi sang JSP: conversation (Conversation), userId
+ *     Attribute gửi sang JSP: conversation (Conversation), conversations (cột danh sách bên trái), userId
  */
 @WebServlet("/chat/conversation")
 public class ConversationServlet extends HttpServlet {
@@ -31,6 +31,7 @@ public class ConversationServlet extends HttpServlet {
         try {
             Conversation conv = chatService.getConversation(req.getParameter("id"), userId);
             req.setAttribute("conversation", conv);
+            req.setAttribute("conversations", chatService.inbox(userId));   // cột danh sách bên trái
         } catch (IllegalArgumentException e) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
             return;
