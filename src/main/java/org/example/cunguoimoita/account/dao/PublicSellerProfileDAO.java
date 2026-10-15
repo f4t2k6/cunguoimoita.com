@@ -11,7 +11,7 @@ import java.sql.SQLException;
 /** Chỉ trả trường công khai; số liệu F8 được đọc từ view do nhóm F8 cung cấp. */
 public class PublicSellerProfileDAO {
     public PublicSellerProfile findByUserId(String userId) throws SQLException {
-        String profileSql = "SELECT u.id, u.full_name, u.avatar_path FROM users u "
+        String profileSql = "SELECT u.id, u.fullname, u.avatar_url FROM users u "
                 + "JOIN customers c ON c.user_id = u.id "
                 + "WHERE u.id = ? AND u.user_role = 'customer' AND u.status = 'active'";
         try (Connection c = ConnectionPool.getInstance().getConnection();
@@ -21,8 +21,8 @@ public class PublicSellerProfileDAO {
                 if (!profile.next()) {
                     return null;
                 }
-                String fullName = profile.getString("full_name");
-                String avatarPath = profile.getString("avatar_path");
+                String fullName = profile.getString("fullname");
+                String avatarPath = profile.getString("avatar_url");
                 double averageRating = 0;
                 long totalSales = 0;
                 String memberTier = "Chưa xếp hạng";

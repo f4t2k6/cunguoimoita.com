@@ -2,25 +2,32 @@
 (function () {
   const ctx = document.body.dataset.ctx || '';
 
-  // Số trên chuông thông báo và mục Tin nhắn (F7), cập nhật mỗi 20 giây
+  // Số trên chuông thông báo và mục Tin nhắn (F7): 1 lần gọi /notifications/count trả cả 2 con số.
+  // Cập nhật mỗi 20 giây, ngừng khi tab bị ẩn, cập nhật ngay khi quay lại tab hoặc khi trang khác báo 'badges:refresh'.
   function setBadge(id, count) {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = count > 9 ? '9+' : String(count);
     el.hidden = !(count > 0);
   }
+  let badgeTimer = null;
   async function refreshBadges() {
+    clearTimeout(badgeTimer);
     try {
-      const [n, m] = await Promise.all([
-        fetch(ctx + '/notifications/count').then(r => r.ok ? r.json() : null),
-        fetch(ctx + '/chat/unread').then(r => r.ok ? r.json() : null)
-      ]);
-      if (n && n.ok) setBadge('notifyBadge', n.count);
-      if (m && m.ok) setBadge('chatBadge', m.count);
+      const res = await fetch(ctx + '/notifications/count', { headers: { Accept: 'application/json' } });
+      const json = res.ok ? await res.json() : null;
+      if (json && json.ok) {
+        setBadge('notifyBadge', json.count);
+        setBadge('chatBadge', json.chat);
+      }
     } catch (e) { /* chưa đăng nhập hoặc mất mạng: bỏ qua */ }
+    if (!document.hidden) badgeTimer = setTimeout(refreshBadges, 20000);
   }
   refreshBadges();
-  setInterval(refreshBadges, 20000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearTimeout(badgeTimer); else refreshBadges();
+  });
+  document.addEventListener('badges:refresh', refreshBadges);
 
   // ---- Thông báo (F7): bấm nút Thông báo → danh sách xổ xuống; mỗi dòng có nút "⋯" mở menu ----
   const ago = ms => {

@@ -1,18 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <fmt:setLocale value="vi_VN"/>
 <c:set var="pageTitle" value="Đơn vị vận chuyển"/>
 <c:set var="pageCss" value="shipping.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<main class="shipping-page">
+<div class="shipping-page">
   <h1>Đơn vị vận chuyển</h1>
 
-  <c:if test="${not empty error}"><p class="ship-error">${error}</p></c:if>
+  <c:if test="${not empty error}"><p class="ship-error"><c:out value="${error}"/></p></c:if>
 
   <form class="ship-form-inline" method="get">
-    <label>Gửi từ <input name="from" value="${from}" placeholder="VD: Hà Nội"></label>
-    <label>Giao tới <input name="to" value="${to}" placeholder="VD: TP.HCM"></label>
+    <label>Gửi từ <input name="from" value="${fn:escapeXml(from)}" placeholder="VD: Hà Nội"></label>
+    <label>Giao tới <input name="to" value="${fn:escapeXml(to)}" placeholder="VD: TP.HCM"></label>
     <button type="submit">Tính phí</button>
   </form>
 
@@ -23,8 +24,8 @@
     <tbody>
     <c:forEach var="carrier" items="${carriers}">
       <tr>
-        <td><strong>${carrier.name}</strong></td>
-        <td>${carrier.hotline}</td>
+        <td><strong><c:out value="${carrier.name}"/></strong></td>
+        <td><c:out value="${carrier.hotline}"/></td>
         <td><fmt:formatNumber value="${carrier.baseFee}" pattern="#,##0"/> đ</td>
         <td>
           <c:choose>
@@ -48,15 +49,15 @@
       <label>Đơn vị
         <select name="carrierId">
           <c:forEach var="carrier" items="${carriers}">
-            <option value="${carrier.id}">${carrier.name}</option>
+            <option value="${fn:escapeXml(carrier.id)}"><c:out value="${carrier.name}"/></option>
           </c:forEach>
         </select>
       </label>
-      <label>Gửi từ <input name="from" value="${from}" placeholder="Để trống: theo địa chỉ người bán"></label>
-      <label>Giao tới <input name="to" value="${to}" placeholder="Để trống: theo địa chỉ giao của đơn"></label>
+      <label>Gửi từ <input name="from" value="${fn:escapeXml(from)}" placeholder="Để trống: theo địa chỉ người bán"></label>
+      <label>Giao tới <input name="to" value="${fn:escapeXml(to)}" placeholder="Để trống: theo địa chỉ giao của đơn"></label>
       <label>Tiền thu hộ COD <input name="codAmount" type="number" min="0" value="0"></label>
       <button type="submit">Tạo vận đơn</button>
     </form>
   </section>
-</section>
+</div>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

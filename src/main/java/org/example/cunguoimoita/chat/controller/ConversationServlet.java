@@ -25,7 +25,7 @@ public class ConversationServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            CurrentUser.redirectToLogin(req, resp);
             return;
         }
         try {

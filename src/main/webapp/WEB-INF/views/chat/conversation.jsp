@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="pageTitle" value="Tin nhắn"/>
 <c:set var="pageCss" value="chat.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
@@ -25,12 +26,14 @@
           </c:if>
         </span>
       </span>
+      <%-- F10: báo cáo bài đăng (người hỏi mua) hoặc báo cáo người hỏi (người bán) --%>
+      <a class="msgr-report" href="${ctx}/report?type=${conversation.askerId == userId ? 'product' : 'user'}&amp;id=${fn:escapeXml(conversation.askerId == userId ? conversation.productId : conversation.askerId)}">Báo cáo</a>
     </header>
 
     <div id="chat-box" class="msgr-thread"
          data-ctx="${ctx}"
-         data-conversation="${conversation.id}"
-         data-other-initial="${conversation.otherInitial(userId)}"></div>
+         data-conversation="${fn:escapeXml(conversation.id)}"
+         data-other-initial="${fn:escapeXml(conversation.otherInitial(userId))}"></div>
 
     <p id="chat-error" class="msgr-error" hidden></p>
 

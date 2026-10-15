@@ -314,3 +314,53 @@ a {
         flex-direction: column;
     }
 }
+
+/* Trang xác nhận email (verify-email.jsp) */
+.form-success {
+    margin: -10px 0 16px;
+    color: #14532d;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.verify-text {
+    margin: -8px 0 18px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.verify-dev {
+    margin: -6px 0 16px 0;
+    line-height: 1.4;
+}
+
+.form-card input.code-input {
+    font-size: 22px;
+    letter-spacing: 8px;
+    text-align: center;
+}
+
+.form-card input.code-input::placeholder {
+    font-size: 15px;
+    letter-spacing: normal;
+}
+
+.resend-form {
+    margin: -6px 0 14px;
+    color: #555;
+    font-size: 13px;
+    text-align: center;
+}
+
+.link-button {
+    padding: 0;
+    color: #000;
+    background: none;
+    border: 0;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}

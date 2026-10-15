@@ -151,13 +151,11 @@
                                     <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form">
                                         <input type="hidden" name="action" value="update">
                                         <input type="hidden" name="id" value="<c:out value='${address.id}'/>">
-                                        <label>Nhãn địa chỉ<input name="label" maxlength="60" value="<c:out value='${address.label}'/>" required></label>
-                                        <label>Người nhận<input name="recipientName" maxlength="120" value="<c:out value='${address.recipientName}'/>" required></label>
-                                        <label>Số điện thoại<input name="phone" maxlength="30" value="<c:out value='${address.phone}'/>" required></label>
+                                        <label>Nhãn địa chỉ<input name="label" maxlength="50" value="<c:out value='${address.label}'/>" required></label>
                                         <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" value="<c:out value='${address.addressLine}'/>" required></label>
-                                        <label>Phường/xã<input name="ward" maxlength="120" value="<c:out value='${address.ward}'/>" /></label>
-                                        <label>Quận/huyện<input name="district" maxlength="120" value="<c:out value='${address.district}'/>" /></label>
-                                        <label>Tỉnh/thành phố<input name="province" maxlength="120" value="<c:out value='${address.province}'/>" required></label>
+                                        <label>Phường/xã<input name="ward" maxlength="100" value="<c:out value='${address.ward}'/>" /></label>
+                                        <label>Quận/huyện<input name="district" maxlength="100" value="<c:out value='${address.district}'/>" /></label>
+                                        <label>Tỉnh/thành phố<input name="province" maxlength="100" value="<c:out value='${address.province}'/>" required></label>
                                         <button class="account-button" type="submit">Lưu địa chỉ</button>
                                     </form>
                                 </details>
@@ -187,13 +185,11 @@
                 <summary>Thêm địa chỉ mới</summary>
                 <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form">
                     <input type="hidden" name="action" value="add">
-                    <label>Nhãn địa chỉ<input name="label" maxlength="60" placeholder="Nhà, ký túc xá..." value="Nhà" required></label>
-                    <label>Người nhận<input name="recipientName" maxlength="120" required></label>
-                    <label>Số điện thoại<input name="phone" maxlength="30" required></label>
+                    <label>Nhãn địa chỉ<input name="label" maxlength="50" placeholder="Nhà, ký túc xá..." value="Nhà" required></label>
                     <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" placeholder="Số nhà, tên đường" required></label>
-                    <label>Phường/xã<input name="ward" maxlength="120"></label>
-                    <label>Quận/huyện<input name="district" maxlength="120"></label>
-                    <label>Tỉnh/thành phố<input name="province" maxlength="120" required></label>
+                    <label>Phường/xã<input name="ward" maxlength="100"></label>
+                    <label>Quận/huyện<input name="district" maxlength="100"></label>
+                    <label>Tỉnh/thành phố<input name="province" maxlength="100" required></label>
                     <button class="account-button" type="submit">Thêm địa chỉ</button>
                 </form>
             </details>

@@ -24,7 +24,7 @@ public class InboxServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập (tạm thời thêm ?as=<userId>)");
+            CurrentUser.redirectToLogin(req, resp);
             return;
         }
         try {

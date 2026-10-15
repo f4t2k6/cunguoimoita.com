@@ -8,6 +8,7 @@ import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.MessageType;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.common.dao.OrderRefDAO;
+import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
@@ -19,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +44,13 @@ public class ChatService {
 
     /** Kết quả khi chấp nhận giá: offer đã accepted và đơn hàng vừa tạo. */
     public record AcceptResult(PriceOffer offer, String orderId, String orderCode) {
+    }
+
+    /**
+     * Kết quả loadMessages: tin nhắn (tin price_offer có kèm khung giá) và mọi offer của cuộc trò chuyện.
+     * offers dùng để chat.js cập nhật trạng thái các khung giá cũ; rỗng khi không có tin mới.
+     */
+    public record ChatUpdate(List<Message> messages, List<PriceOffer> offers) {
     }
 
     /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán (lấy từ bài đăng) cho một bài. */
@@ -90,22 +99,28 @@ public class ChatService {
 
     /**
      * Tin nhắn (kèm khung giá cho tin price_offer), đồng thời markAllRead cho người đang xem.
-     * after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này (dùng cho JS hỏi tin mới).
+     * after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này (chat.js hỏi tin mới).
+     * Không có tin mới thì chỉ tốn 1 câu SELECT; chỉ đọc offer và đánh dấu đã đọc khi thật sự có tin.
      */
-    public List<Message> loadMessages(String conversationId, String userId, Timestamp after) throws SQLException {
+    public ChatUpdate loadMessages(String conversationId, String userId, Timestamp after) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            requireParticipant(c, conversationId, userId);
-            offerDAO.expireDue(c);
-            List<Message> messages = messageDAO.findByConversation(c, conversationId, after);
-            Map<String, PriceOffer> offers = offerDAO.findByConversation(c, conversationId).stream()
-                    .collect(Collectors.toMap(PriceOffer::getId, Function.identity()));
+            List<Message> messages = messageDAO.findForParticipant(c, conversationId, userId, after);
+            if (messages.isEmpty()) {
+                return new ChatUpdate(messages, List.of());
+            }
+            List<PriceOffer> offers = offerDAO.findByConversation(c, conversationId);
+            Map<String, PriceOffer> byId = offers.stream().collect(Collectors.toMap(PriceOffer::getId, Function.identity()));
+            boolean hasUnread = false;
             for (Message m : messages) {
                 if (m.getType() == MessageType.PRICE_OFFER) {
-                    m.setOffer(offers.get(m.getContent()));
+                    m.setOffer(byId.get(m.getContent()));
                 }
+                hasUnread |= !m.isRead() && !userId.equals(m.getSenderId());
             }
-            messageDAO.markAllRead(c, conversationId, userId);
-            return messages;
+            if (hasUnread) {
+                messageDAO.markAllRead(c, conversationId, userId);
+            }
+            return new ChatUpdate(messages, offers);
         }
     }
 
@@ -127,7 +142,7 @@ public class ChatService {
             Conversation conv = requireParticipant(c, conversationId, proposerId);
             requireOpen(conv);
             requireAvailable(c, conv);
-            offerDAO.expireDue(c);
+            offerDAO.expireDue(c, conversationId);
             boolean hasPending = offerDAO.findByConversation(c, conversationId).stream().anyMatch(PriceOffer::isPending);
             if (hasPending) {
                 throw new IllegalStateException("Đang có một offer chờ trả lời, hãy chấp nhận, từ chối hoặc trả giá lại offer đó");
@@ -161,13 +176,12 @@ public class ChatService {
                 offerDAO.updateStatus(c, other);
             }
             productDAO.updateStatus(c, product.id(), "reserved");
-            String orderId = orderDAO.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
+            NewOrder order = orderDAO.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
                     product.id(), offer.getAmount());
-            String orderCode = orderDAO.findCode(c, orderId);
             insertMessage(c, conv.getId(), userId, MessageType.TEXT,
-                    "Đã chấp nhận giá " + money(offer.getAmount()) + ". Đơn " + orderCode + " đã được tạo.");
+                    "Đã chấp nhận giá " + money(offer.getAmount()) + ". Đơn " + order.code() + " đã được tạo.");
             convHolder[0] = conv;
-            return new AcceptResult(offer, orderId, orderCode);
+            return new AcceptResult(offer, order.id(), order.code());
         });
         Conversation conv = convHolder[0];
         String other = userId.equals(conv.getAskerId()) ? conv.getSellerId() : conv.getAskerId();
@@ -183,6 +197,7 @@ public class ChatService {
         inTransaction(c -> {
             PriceOffer offer = requireOffer(c, offerId);
             Conversation conv = requireParticipant(c, offer.getConversationId(), userId);
+            requireOpen(conv);
             offer.decline(userId);
             offerDAO.updateStatus(c, offer);
             insertMessage(c, conv.getId(), userId, MessageType.TEXT, "Đã từ chối giá " + money(offer.getAmount()));
@@ -230,9 +245,9 @@ public class ChatService {
         m.setSenderId(senderId);
         m.setType(type);
         m.setContent(content);
-        m.setSentAt(LocalDateTime.now());
-        messageDAO.insert(c, m);
-        conversationDAO.touch(c, conversationId, Timestamp.valueOf(m.getSentAt()));
+        // Làm tròn tới mili giây cho khớp mốc "after" (epoch ms) mà chat.js gửi lên, tránh lấy lại tin cũ
+        m.setSentAt(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS));
+        messageDAO.insert(c, m);   // cập nhật luôn conversations.last_message_at
         return m;
     }
 
@@ -286,6 +301,8 @@ public class ChatService {
             } catch (SQLException | RuntimeException e) {
                 c.rollback();
                 throw e;
+            } finally {
+                c.setAutoCommit(true);   // trả kết nối về pool ở trạng thái mặc định cho người mượn sau
             }
         }
     }

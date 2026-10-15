@@ -10,13 +10,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 /** DAO F1: mọi truy vấn đều dùng PreparedStatement và ConnectionPool chung. */
 public class UserDAO {
     private static final String SELECT_USER = "SELECT u.id, u.email, u.password_hash, u.user_role, "
-            + "u.status, u.full_name, u.phone, u.avatar_path, u.created_at, c.tier_id, c.payout_account_ref "
+            + "u.status, u.fullname, u.phone, u.avatar_url, u.join_date, c.tier_id, c.payout_account_ref "
             + "FROM users u LEFT JOIN customers c ON c.user_id = u.id ";
 
     public User findByEmail(String email) throws SQLException {
@@ -53,9 +55,11 @@ public class UserDAO {
     public String registerCustomer(String email, String passwordHash,
                                    String fullName, String phone) throws SQLException {
         String id = UUID.randomUUID().toString();
-        String insertUser = "INSERT INTO users (id, email, password_hash, user_role, status, full_name, phone) "
+        String insertUser = "INSERT INTO users (id, email, password_hash, user_role, status, fullname, phone) "
                 + "VALUES (?, ?, ?, 'customer', 'active', ?, ?)";
-        String insertCustomer = "INSERT INTO customers (user_id) VALUES (?)";
+        // Khách mới vào hạng thấp nhất (min_eco_points nhỏ nhất, tức Bronze)
+        String insertCustomer = "INSERT INTO customers (user_id, tier_id) "
+                + "SELECT ?, id FROM member_tiers ORDER BY min_eco_points LIMIT 1";
 
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             c.setAutoCommit(false);
@@ -82,7 +86,7 @@ public class UserDAO {
     }
 
     public boolean updateProfile(String id, String fullName, String phone) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, phone = ?, updated_at = CURRENT_TIMESTAMP "
+        String sql = "UPDATE users SET fullname = ?, phone = ? "
                 + "WHERE id = ? AND user_role = 'customer' AND status = 'active'";
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -95,7 +99,7 @@ public class UserDAO {
 
     public boolean updateCustomerProfile(String id, String fullName, String phone,
                                          String payoutAccountRef) throws SQLException {
-        String updateUser = "UPDATE users SET full_name = ?, phone = ?, updated_at = CURRENT_TIMESTAMP "
+        String updateUser = "UPDATE users SET fullname = ?, phone = ? "
                 + "WHERE id = ? AND user_role = 'customer' AND status = 'active'";
         String updateCustomer = "UPDATE customers SET payout_account_ref = ? WHERE user_id = ?";
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -131,7 +135,7 @@ public class UserDAO {
     }
 
     public boolean updatePasswordHash(String id, String newPasswordHash) throws SQLException {
-        String sql = "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP "
+        String sql = "UPDATE users SET password_hash = ? "
                 + "WHERE id = ? AND status = 'active'";
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -142,7 +146,7 @@ public class UserDAO {
     }
 
     public boolean updateAvatarPath(String id, String avatarPath) throws SQLException {
-        String sql = "UPDATE users SET avatar_path = ?, updated_at = CURRENT_TIMESTAMP "
+        String sql = "UPDATE users SET avatar_url = ? "
                 + "WHERE id = ? AND user_role = 'customer' AND status = 'active'";
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -191,10 +195,13 @@ public class UserDAO {
         String passwordHash = rs.getString("password_hash");
         UserRole role = UserRole.fromDatabase(rs.getString("user_role"));
         AccountStatus status = AccountStatus.fromDatabase(rs.getString("status"));
-        String fullName = rs.getString("full_name");
+        String fullName = rs.getString("fullname");
         String phone = rs.getString("phone");
-        String avatarPath = rs.getString("avatar_path");
-        OffsetDateTime createdAt = rs.getObject("created_at", OffsetDateTime.class);
+        String avatarPath = rs.getString("avatar_url");
+        // Database chung chỉ lưu ngày tham gia (join_date), đổi sang đầu ngày để giữ kiểu của model
+        LocalDate joinDate = rs.getObject("join_date", LocalDate.class);
+        OffsetDateTime createdAt = joinDate == null ? null
+                : joinDate.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
 
         if (role == UserRole.CUSTOMER) {
             return new Customer(id, email, passwordHash, role, status, fullName,

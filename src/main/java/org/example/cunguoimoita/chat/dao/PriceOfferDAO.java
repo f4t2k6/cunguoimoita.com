@@ -76,11 +76,16 @@ public class PriceOfferDAO {
         return list;
     }
 
-    /** Chuyển expired mọi offer pending đã quá hạn. */
-    public int expireDue(Connection c) throws SQLException {
-        String sql = "UPDATE price_offers SET status = 'expired' WHERE status = 'pending' AND expires_at < ?";
+    /**
+     * Ghi expired xuống DB cho offer pending đã quá hạn của một cuộc trò chuyện.
+     * Chỉ gọi trước khi tạo offer mới (để không vướng uq_one_pending_offer); khi đọc thì map() đã tự coi là expired.
+     */
+    public int expireDue(Connection c, String conversationId) throws SQLException {
+        String sql = "UPDATE price_offers SET status = 'expired'"
+                + " WHERE conversation_id = ? AND status = 'pending' AND expires_at < ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            ps.setString(1, conversationId);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
             return ps.executeUpdate();
         }
     }
@@ -94,6 +99,7 @@ public class PriceOfferDAO {
         o.setStatus(OfferStatus.fromDb(rs.getString("status")));
         o.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         o.setExpiresAt(rs.getTimestamp("expires_at").toLocalDateTime());
+        o.expireIfDue();   // quá hạn thì hiện là expired luôn, không cần UPDATE mỗi lần đọc
         return o;
     }
 }

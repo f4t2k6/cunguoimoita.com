@@ -18,6 +18,10 @@ public class OrderRefDAO {
                            String fromCity, String toCity) {
     }
 
+    /** Đơn vừa tạo: id và mã đơn hiển thị cho người dùng. */
+    public record NewOrder(String id, String code) {
+    }
+
     public OrderRef find(Connection c, String orderId) throws SQLException {
         String sql = "SELECT o.id, o.code, o.buyer_id, o.seller_id, o.status, sa.city AS from_city, ta.city AS to_city"
                 + " FROM orders o"
@@ -40,9 +44,8 @@ public class OrderRefDAO {
     /**
      * PriceOffer.accept(): Order — tạo đơn 1 món với giá đã chốt, giao tới địa chỉ mặc định của người mua.
      * paymentMethod tạm để cod, người mua đổi ở bước thanh toán (Order.choosePaymentMethod của TV3).
-     * @return id của đơn mới
      */
-    public String createFromOffer(Connection c, String offerId, String buyerId, String sellerId,
+    public NewOrder createFromOffer(Connection c, String offerId, String buyerId, String sellerId,
                                   String productId, double amount) throws SQLException {
         String addressId = findBuyerAddress(c, buyerId);
         if (addressId == null) {
@@ -72,16 +75,7 @@ public class OrderRefDAO {
             ps.setDouble(4, amount);
             ps.executeUpdate();
         }
-        return orderId;
-    }
-
-    public String findCode(Connection c, String orderId) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("SELECT code FROM orders WHERE id = ?")) {
-            ps.setString(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getString(1) : null;
-            }
-        }
+        return new NewOrder(orderId, code);
     }
 
     /** Order.chooseCarrier(carrierId): ghi phí ship và tính lại totalAmount = subTotal + shippingFee − discountAmount. */

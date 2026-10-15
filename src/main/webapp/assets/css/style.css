@@ -173,6 +173,9 @@ a { color: inherit; text-decoration: none; }
     border-radius: 10px;
 }
 .menu-item:hover { background-color: #e9e9e9; }
+/* Nút Đăng xuất (form POST) trông giống các mục menu khác */
+.menu-form { margin: 0; }
+button.menu-item { font: inherit; font-size: 17px; color: inherit; background: none; border: none; cursor: pointer; width: 100%; text-align: left; }
 .menu-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 
 /*KHỐI PROFILE (avatar + username) góc trái dưới*/

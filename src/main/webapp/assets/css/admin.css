@@ -1,0 +1,92 @@
+/* F10 Trang quản trị (admin) + form báo cáo vi phạm. Tông trắng đen theo style.css chung. */
+.admin-page { display: flex; flex-direction: column; gap: 16px; }
+.admin-page h1 { font-size: 26px; margin: 4px 0 0; }
+.admin-note { margin: -6px 0 0; color: #555; font-size: 14px; }
+.admin-empty { color: #666; }
+
+/* Thanh chuyển trang trong khu quản trị */
+.admin-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-tabs a { padding: 7px 14px; border: 1.5px solid #000; border-radius: 20px; background: #fff; font-size: 14px; }
+.admin-tabs a:hover { background: #ececec; }
+.admin-tabs a.active { background: #000; color: #fff; }
+
+.admin-flash { margin: 0; padding: 10px 14px; border: 1.5px solid #000; border-left-width: 6px; border-radius: 10px; background: #fff; }
+.admin-flash.error { border-style: dashed; border-left-style: solid; font-weight: 600; }
+
+/* Số liệu tổng quan */
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.admin-stat { display: flex; flex-direction: column; gap: 2px; padding: 16px 18px; background: #fff;
+  border: 1.5px solid #000; border-radius: 18px; }
+a.admin-stat:hover { background: #f2f2f2; }
+.admin-stat strong { font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.admin-stat span { font-size: 14px; }
+.admin-stat small { font-size: 12px; color: #666; }
+.admin-stat.todo { background: #000; color: #fff; }
+.admin-stat.todo:hover { background: #222; }
+
+/* Thanh lọc / tìm kiếm */
+.admin-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.admin-filter { display: flex; flex-wrap: wrap; gap: 4px; margin-right: auto; }
+.admin-filter label { padding: 6px 12px; border-radius: 16px; cursor: pointer; font-size: 14px; }
+.admin-filter label:hover { background: #e9e9e9; }
+.admin-filter label.active { background: #000; color: #fff; }
+.admin-filter input { position: absolute; opacity: 0; pointer-events: none; }
+
+/* Ô nhập, nút */
+.admin-page input:not([type=radio]):not([type=checkbox]), .admin-page select, .admin-page textarea {
+  font: inherit; font-size: 14px; padding: 7px 12px; border: 1.5px solid #000; border-radius: 10px; background: #fff;
+  min-width: 0; box-sizing: border-box; }
+.admin-page textarea { width: 100%; resize: vertical; }
+.admin-page input[type=search] { flex: 1 1 220px; }
+.admin-page button, .admin-btn { font: inherit; font-size: 14px; padding: 7px 16px; border: 1.5px solid #000; border-radius: 20px;
+  background: #000; color: #fff; cursor: pointer; white-space: nowrap; display: inline-block; }
+.admin-page button.light { background: #fff; color: #000; }
+.admin-page button:hover { opacity: .85; }
+
+/* Thẻ bài đăng / báo cáo */
+.admin-cards { display: flex; flex-direction: column; gap: 12px; }
+.admin-cards.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.admin-card { background: #fff; border: 1.5px solid #000; border-radius: 18px; padding: 16px 18px; display: flex;
+  flex-direction: column; gap: 8px; }
+.admin-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.admin-card h2 { font-size: 18px; margin: 0; }
+.admin-card h2 small { font-size: 13px; font-weight: 400; color: #666; }
+.admin-meta { margin: 0; font-size: 13px; color: #555; }
+.admin-desc { margin: 0; font-size: 14px; white-space: pre-wrap; word-break: break-word; max-height: 6.5em; overflow: hidden; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.admin-inline { display: flex; gap: 6px; flex: 1 1 280px; }
+.admin-inline input, .admin-inline select { flex: 1; }
+
+.admin-badge { flex: none; font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1.5px solid #000; white-space: nowrap; }
+.admin-badge.warn { background: #000; color: #fff; }
+.admin-badge.ok { background: #fff; }
+.admin-badge.off { background: #fff; border-style: dashed; color: #555; }
+
+/* Form thêm / sửa */
+.admin-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 12px; align-items: end; }
+.admin-form h1, .admin-form h2, .admin-form .admin-meta, .admin-form .admin-flash, .admin-form .wide { grid-column: 1 / -1; }
+.admin-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #333; }
+.admin-form button { justify-self: start; }
+.admin-form fieldset { border: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.admin-form legend { font-size: 13px; color: #333; margin-bottom: 4px; }
+.admin-form label.radio { flex-direction: row; align-items: center; gap: 6px; font-size: 15px; color: #000; }
+
+/* Bảng người dùng, danh mục, vận chuyển */
+.admin-table-wrap { overflow-x: auto; background: #fff; border: 1.5px solid #000; border-radius: 18px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table th { text-align: left; font-weight: 600; font-size: 13px; padding: 10px 12px; border-bottom: 1.5px solid #000; white-space: nowrap; }
+.admin-table td { padding: 8px 12px; border-bottom: 1px solid #e2e2e2; vertical-align: middle; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table td small { color: #666; }
+.admin-table tr.is-off td { color: #777; }
+.admin-table tr.is-child td:first-child { padding-left: 32px; }
+.admin-table td input:not([type=checkbox]) { width: 100%; min-width: 120px; }
+.admin-table td input.narrow { min-width: 100px; }
+.admin-table td input.tiny { min-width: 64px; }
+
+.report-form, .report-done { max-width: 560px; }
+
+@media (max-width: 760px) {
+  .admin-inline { flex-wrap: wrap; }
+  .admin-stat strong { font-size: 22px; }
+}

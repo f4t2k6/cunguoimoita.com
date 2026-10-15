@@ -46,37 +46,48 @@ public class NotificationDAO {
         return list;
     }
 
-    public Notification findById(String id) throws SQLException {
+    /**
+     * Số thông báo chưa đọc và số tin nhắn chưa đọc (F7) trong 1 câu lệnh,
+     * để common.js cập nhật cả 2 con số trên header chỉ với 1 lần gọi server.
+     * @return {thông báo chưa đọc, tin nhắn chưa đọc}
+     */
+    public int[] countBadges(String userId) throws SQLException {
+        String sql = "SELECT (SELECT COUNT(*) FROM notifications WHERE user_id = ? AND NOT is_read),"
+                + " (SELECT COUNT(*) FROM messages m JOIN conversations cv ON cv.id = m.conversation_id"
+                + "   WHERE (cv.asker_id = ? OR cv.seller_id = ?) AND m.sender_id <> ? AND NOT m.is_read)";
         try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement("SELECT * FROM notifications WHERE id = ?")) {
-            ps.setString(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? map(rs) : null;
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            for (int i = 1; i <= 4; i++) {
+                ps.setString(i, userId);
             }
-        }
-    }
-
-    public int countUnread(String userId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(
-                     "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND NOT is_read")) {
-            ps.setString(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
-                return rs.getInt(1);
+                return new int[]{rs.getInt(1), rs.getInt(2)};
             }
         }
     }
 
-    /** id = null thì đánh dấu đã đọc tất cả của user. */
-    public void markRead(String userId, String id) throws SQLException {
-        String sql = "UPDATE notifications SET is_read = TRUE WHERE user_id = ?" + (id == null ? "" : " AND id = ?");
+    /**
+     * Đánh dấu đã đọc một thông báo của user và trả về linkUrl của nó trong cùng một câu lệnh.
+     * @return linkUrl, hoặc null nếu thông báo không tồn tại / không phải của user
+     */
+    public String markRead(String userId, String id) throws SQLException {
+        String sql = "UPDATE notifications SET is_read = TRUE WHERE user_id = ? AND id = ? RETURNING link_url";
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, userId);
-            if (id != null) {
-                ps.setString(2, id);
+            ps.setString(2, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
             }
+        }
+    }
+
+    public void markAllRead(String userId) throws SQLException {
+        String sql = "UPDATE notifications SET is_read = TRUE WHERE user_id = ? AND NOT is_read";
+        try (Connection c = ConnectionPool.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
             ps.executeUpdate();
         }
     }

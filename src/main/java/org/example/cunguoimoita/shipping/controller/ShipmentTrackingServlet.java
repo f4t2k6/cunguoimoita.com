@@ -5,6 +5,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
+import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.service.ShippingService;
@@ -22,7 +24,7 @@ import java.sql.SQLException;
  *               status        nút giả lập đổi trạng thái (kèm status: in_transit, delivered, returned)
  *               cod_collected shipper đã thu tiền COD
  *               cod_remitted  shipper đã nộp tiền COD về sàn
- * TODO: khi có AuthFilter (TV1), chỉ người bán được bấm "Đã gửi hàng", nút giả lập chỉ để admin.
+ * Phải đăng nhập. Người mua và người bán của đơn xem được; chỉ người bán (hoặc admin) bấm được các nút.
  */
 @WebServlet("/shipping/track")
 public class ShipmentTrackingServlet extends HttpServlet {
@@ -35,13 +37,23 @@ public class ShipmentTrackingServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String userId = CurrentUser.id(req);
+        if (userId == null) {
+            CurrentUser.redirectToLogin(req, resp);
+            return;
+        }
         String orderId = req.getParameter("orderId");
         try {
-            Shipment shipment = orderId == null ? null : shippingService.findByOrder(orderId);
+            OrderRef order = shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), false);
+            Shipment shipment = shippingService.findByOrder(orderId);
             if (shipment == null) {
                 req.setAttribute("error", "Không tìm thấy vận đơn cho đơn hàng này");
             }
             req.setAttribute("shipment", shipment);
+            req.setAttribute("orderCode", order.code());
+            req.setAttribute("canManage", CurrentUser.isAdmin(req) || userId.equals(order.sellerId()));
+        } catch (IllegalArgumentException | SecurityException e) {
+            req.setAttribute("error", e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
@@ -56,10 +68,16 @@ public class ShipmentTrackingServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
+        String userId = CurrentUser.id(req);
+        if (userId == null) {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập");
+            return;
+        }
         String orderId = req.getParameter("orderId");
         String action = req.getParameter("action");
         String redirect = req.getContextPath() + "/shipping/track?orderId=" + encode(orderId);
         try {
+            shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), true);
             switch (action == null ? "" : action) {
                 case "ship":
                     shippingService.markShipped(orderId, req.getParameter("trackingCode"));
@@ -76,7 +94,7 @@ public class ShipmentTrackingServlet extends HttpServlet {
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-        } catch (IllegalArgumentException | IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirect += "&error=" + encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
