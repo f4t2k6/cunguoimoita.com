@@ -94,10 +94,10 @@
                 </c:choose>
 
                 <!-- FORM GỬI TỚI SERVLET XỬ LÝ THANH TOÁN -->
-                <form action="${pageContext.request.contextPath}/ui" method="get">
-                    <input type="hidden" name="page" value="payment-result" />
+                <form action="${pageContext.request.contextPath}/payment/process" method="post">
+                    <input type="hidden" name="orderId" value="${not empty order ? order.id() : 'O1'}" />
                     <input type="hidden" name="orderCode" value="<c:out value='${orderCode}'/>" />
-                    <input type="hidden" name="status" value="paid" />
+                    <input type="hidden" name="amount" value="1330000" />
 
                     <!-- Option 1: VNPay -->
                     <label class="gateway-option ${selectedGateway == 'vnpay' ? 'selected' : ''}">

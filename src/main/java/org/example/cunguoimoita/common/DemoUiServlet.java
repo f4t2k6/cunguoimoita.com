@@ -52,13 +52,11 @@ public class DemoUiServlet extends HttpServlet {
                 pageTitle = "F4: Giỏ Hàng & Đơn Hàng — Cũ Người Mới Ta";
                 break;
             case "payment":
-                viewPath = "/WEB-INF/views/payment/checkout-gateway.jsp";
-                pageTitle = "F5: Cổng Thanh Toán Escrow (Tuấn Anh) — Cũ Người Mới Ta";
-                break;
+                response.sendRedirect(request.getContextPath() + "/payment/checkout" + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
+                return;
             case "payment-result":
-                viewPath = "/WEB-INF/views/payment/payment-result.jsp";
-                pageTitle = "F5: Kết Quả Giao Dịch (Tuấn Anh) — Cũ Người Mới Ta";
-                break;
+                response.sendRedirect(request.getContextPath() + "/payment/result" + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
+                return;
             case "shipment":
                 viewPath = "/WEB-INF/views/shipping/shipment.jsp";
                 pageTitle = "F6: Vận Đơn & Đối Soát COD — Cũ Người Mới Ta";
@@ -72,13 +70,11 @@ public class DemoUiServlet extends HttpServlet {
                 pageTitle = "F8: Đánh Giá & Hạng Thành Viên EcoPoints — Cũ Người Mới Ta";
                 break;
             case "dispute":
-                viewPath = "/WEB-INF/views/dispute/dispute-center.jsp";
-                pageTitle = "F9: Trung Tâm Khiếu Nại & Hoàn Tiền (Tuấn Anh) — Cũ Người Mới Ta";
-                break;
+                response.sendRedirect(request.getContextPath() + "/dispute" + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
+                return;
             case "payout":
-                viewPath = "/WEB-INF/views/dispute/seller-payout.jsp";
-                pageTitle = "F9: Ví Bán Hàng & Giải Ngân Payout (Tuấn Anh) — Cũ Người Mới Ta";
-                break;
+                response.sendRedirect(request.getContextPath() + "/seller/payouts" + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
+                return;
             case "admin":
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                 return;
