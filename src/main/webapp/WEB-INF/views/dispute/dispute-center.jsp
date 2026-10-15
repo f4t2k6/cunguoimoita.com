@@ -203,9 +203,7 @@
                     Gửi tới <code>DisputeServlet</code> để đóng băng lệnh giải ngân của đơn hàng và yêu cầu hoàn tiền
                 </p>
 
-                <form action="${pageContext.request.contextPath}/ui" method="get">
-                    <input type="hidden" name="page" value="dispute" />
-                    <input type="hidden" name="state" value="open" />
+                <form action="${pageContext.request.contextPath}/dispute/create" method="post">
 
                     <div class="form-group">
                         <label class="form-label">Mã đơn hàng cần khiếu nại (<code>orderId</code>)</label>

@@ -8,8 +8,7 @@
   <a href="${ctx}/admin/categories" class="${adminTab == 'categories' ? 'active' : ''}">Danh mục</a>
   <a href="${ctx}/admin/carriers" class="${adminTab == 'carriers' ? 'active' : ''}">Vận chuyển</a>
   <a href="${ctx}/admin/tiers" class="${adminTab == 'tiers' ? 'active' : ''}">Hạng thành viên</a>
-  <%-- Trang khiếu nại do TV4 làm trong F9; tạm trỏ tới bản demo cho tới khi có trang thật --%>
-  <a href="${ctx}/ui?page=dispute">Khiếu nại</a>
+  <a href="${ctx}/admin/disputes" class="${adminTab == 'disputes' ? 'active' : ''}">Khiếu nại</a>
 </nav>
 <c:if test="${not empty flash}"><p class="admin-flash" role="status"><c:out value="${flash}"/></p></c:if>
 <c:if test="${not empty flashError}"><p class="admin-flash error" role="alert"><c:out value="${flashError}"/></p></c:if>

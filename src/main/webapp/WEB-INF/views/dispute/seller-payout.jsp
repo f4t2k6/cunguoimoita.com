@@ -49,7 +49,7 @@
                     </p>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="${pageContext.request.contextPath}/payout-export" class="btn btn-primary">
+                    <a href="${pageContext.request.contextPath}/seller/payouts/export" class="btn btn-primary">
                         📥 Xuất Báo Cáo Đối Soát CSV (Servlet Header)
                     </a>
                     <a href="${pageContext.request.contextPath}/ui?page=profile" class="btn btn-outline">
