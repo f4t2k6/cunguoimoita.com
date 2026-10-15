@@ -35,18 +35,23 @@ public class NotificationService {
         return notificationDAO.findByUser(userId, 50);
     }
 
+    /** limit thông báo mới nhất (danh sách xổ xuống ở header lấy 20). */
+    public List<Notification> list(String userId, int limit) throws SQLException {
+        return notificationDAO.findByUser(userId, limit);
+    }
+
     public int unreadCount(String userId) throws SQLException {
-        return notificationDAO.countUnread(userId);
+        return notificationDAO.countBadges(userId)[0];
+    }
+
+    /** {thông báo chưa đọc, tin nhắn chưa đọc} cho 2 con số trên header. */
+    public int[] badgeCounts(String userId) throws SQLException {
+        return notificationDAO.countBadges(userId);
     }
 
     /** Đánh dấu đã đọc một thông báo và trả về link để chuyển tới (null nếu không có). */
     public String open(String userId, String notificationId) throws SQLException {
-        Notification n = notificationDAO.findById(notificationId);
-        if (n == null || !n.getUserId().equals(userId)) {
-            return null;
-        }
-        notificationDAO.markRead(userId, notificationId);
-        return n.getLinkUrl();
+        return notificationId == null ? null : notificationDAO.markRead(userId, notificationId);
     }
 
     /** Notification.markAsRead(): chỉ đánh dấu đã đọc, không chuyển trang. */
@@ -55,6 +60,6 @@ public class NotificationService {
     }
 
     public void markAllRead(String userId) throws SQLException {
-        notificationDAO.markRead(userId, null);
+        notificationDAO.markAllRead(userId);
     }
 }

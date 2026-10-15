@@ -10,7 +10,10 @@ public enum ShipmentStatus {
     }
 
     public static ShipmentStatus fromDb(String value) {
-        return valueOf(value.toUpperCase());
+        if (value == null) {
+            throw new IllegalArgumentException("Thiếu trạng thái vận đơn");
+        }
+        return valueOf(value.toUpperCase());   // chuỗi lạ: valueOf ném IllegalArgumentException
     }
 
     /** Chuỗi hợp lệ: created → picked_up → in_transit → delivered, hoặc chuyển returned khi chưa giao xong. */

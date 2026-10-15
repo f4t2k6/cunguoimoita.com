@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS conversations (
     last_message_at TIMESTAMP,
     UNIQUE (product_id, asker_id)            -- mỗi người hỏi 1 cuộc trò chuyện cho 1 bài
 );
+-- Hộp thư và số tin chưa đọc tìm theo người hỏi / người bán
+CREATE INDEX IF NOT EXISTS idx_conversations_asker ON conversations (asker_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_seller ON conversations (seller_id);
 
 CREATE TABLE IF NOT EXISTS messages (
     id              VARCHAR(36) PRIMARY KEY,
@@ -23,6 +26,8 @@ CREATE TABLE IF NOT EXISTS messages (
     is_read         BOOLEAN     NOT NULL DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages (conversation_id, sent_at);
+-- Chỉ chứa tin chưa đọc nên rất nhỏ: đếm số trên mục Tin nhắn nhanh
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages (conversation_id) WHERE NOT is_read;
 
 CREATE TABLE IF NOT EXISTS price_offers (
     id              VARCHAR(36)   PRIMARY KEY,
@@ -36,6 +41,7 @@ CREATE TABLE IF NOT EXISTS price_offers (
 );
 -- Mỗi Conversation chỉ có 1 PriceOffer pending
 CREATE UNIQUE INDEX IF NOT EXISTS uq_one_pending_offer ON price_offers (conversation_id) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_price_offers_conversation ON price_offers (conversation_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
     id           VARCHAR(36) PRIMARY KEY,
@@ -47,3 +53,5 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_date TIMESTAMP   NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_date DESC);
+-- Số trên chuông thông báo: chỉ chứa thông báo chưa đọc
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications (user_id) WHERE NOT is_read;

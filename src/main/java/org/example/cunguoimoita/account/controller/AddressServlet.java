@@ -30,8 +30,7 @@ public class AddressServlet extends HttpServlet {
                         redirect(resp, req, "invalidAddress");
                         return;
                     }
-                    addressDAO.add(userId, req.getParameter("label"), req.getParameter("recipientName"),
-                            req.getParameter("phone"), req.getParameter("addressLine"),
+                    addressDAO.add(userId, req.getParameter("label"), req.getParameter("addressLine"),
                             req.getParameter("ward"), req.getParameter("district"),
                             req.getParameter("province"));
                     success = true;
@@ -42,7 +41,6 @@ public class AddressServlet extends HttpServlet {
                         return;
                     }
                     success = addressDAO.update(id, userId, req.getParameter("label"),
-                            req.getParameter("recipientName"), req.getParameter("phone"),
                             req.getParameter("addressLine"), req.getParameter("ward"),
                             req.getParameter("district"), req.getParameter("province"));
                 }
@@ -60,13 +58,12 @@ public class AddressServlet extends HttpServlet {
     }
 
     private boolean validAddress(HttpServletRequest req) {
-        return length(req.getParameter("recipientName"), 1, 120)
-                && length(req.getParameter("phone"), 8, 30)
-                && length(req.getParameter("addressLine"), 1, 255)
-                && length(req.getParameter("province"), 1, 120)
-                && length(req.getParameter("label"), 0, 60)
-                && length(req.getParameter("ward"), 0, 120)
-                && length(req.getParameter("district"), 0, 120);
+        // Người nhận và số điện thoại lấy theo tài khoản (database chung không lưu riêng cho địa chỉ)
+        return length(req.getParameter("addressLine"), 1, 255)
+                && length(req.getParameter("province"), 1, 100)
+                && length(req.getParameter("label"), 0, 50)
+                && length(req.getParameter("ward"), 0, 100)
+                && length(req.getParameter("district"), 0, 100);
     }
 
     private boolean length(String value, int min, int max) {

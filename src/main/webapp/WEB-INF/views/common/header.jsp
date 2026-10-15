@@ -12,7 +12,7 @@
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
-<c:set var="assetVer" value="20261013b"/>
+<c:set var="assetVer" value="20261014b"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -77,9 +77,38 @@
     </svg>
     <span>Reels</span>
   </a>
+  <%-- Admin thấy thêm mục Quản trị (F10) --%>
+  <c:if test="${sessionScope.userRole == 'admin'}">
+    <a class="menu-item" href="${ctx}/admin/dashboard">
+      <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 4l10 4v7c0 6.5-4.3 11.3-10 13-5.7-1.7-10-6.5-10-13V8z"/><path d="M11.5 16l3.2 3.2 6-6.4"/>
+      </svg>
+      <span>Quản trị</span>
+    </a>
+  </c:if>
+  <c:choose>
+    <c:when test="${not empty sessionScope.userId}">
+      <form method="post" action="${ctx}/logout" class="menu-form">
+        <button type="submit" class="menu-item">
+          <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M13 6H7v20h6"/><path d="M19 10l6 6-6 6"/><path d="M25 16H12"/>
+          </svg>
+          <span>Đăng xuất</span>
+        </button>
+      </form>
+    </c:when>
+    <c:otherwise>
+      <a class="menu-item" href="${ctx}/login">
+        <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 6h6v20h-6"/><path d="M13 10l6 6-6 6"/><path d="M19 16H6"/>
+        </svg>
+        <span>Đăng nhập</span>
+      </a>
+    </c:otherwise>
+  </c:choose>
 </nav>
 
-<a class="profile-block" href="${ctx}/account/profile">
+<a class="profile-block" href="${ctx}${sessionScope.userRole == 'admin' ? '/admin/dashboard' : '/account/profile'}">
   <c:choose>
     <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}${sessionScope.avatarPath}" alt="avatar" class="profile-avatar"></c:when>
     <c:otherwise><img src="${ctx}/assets/images/avt.png" alt="avatar" class="profile-avatar"></c:otherwise>

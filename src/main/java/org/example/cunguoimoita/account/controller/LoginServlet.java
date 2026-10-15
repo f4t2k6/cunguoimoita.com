@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.User;
+import org.example.cunguoimoita.account.service.LoginAttemptLimiter;
 import org.example.cunguoimoita.common.model.AccountStatus;
 import org.example.cunguoimoita.common.model.UserRole;
 import org.example.cunguoimoita.common.util.PasswordUtil;
@@ -37,12 +38,26 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
+        String key = email.trim().toLowerCase(Locale.ROOT);
+        LoginAttemptLimiter limiter = LoginAttemptLimiter.getInstance();
+        long locked = limiter.secondsLocked(key);
+        if (locked > 0) {
+            showForm(req, resp, "Bạn đã nhập sai " + LoginAttemptLimiter.MAX_FAILURES
+                    + " lần. Vui lòng thử lại sau " + ((locked + 59) / 60) + " phút.");
+            return;
+        }
+
         try {
-            User user = userDAO.findByEmail(email.trim().toLowerCase(Locale.ROOT));
+            User user = userDAO.findByEmail(key);
             if (user == null || !PasswordUtil.verifyPassword(password, user.getPasswordHash())) {
-                showForm(req, resp, "Email hoặc mật khẩu không đúng.");
+                int left = limiter.recordFailure(key);
+                showForm(req, resp, left > 0
+                        ? "Email hoặc mật khẩu không đúng. Bạn còn " + left + " lần thử."
+                        : "Bạn đã nhập sai " + LoginAttemptLimiter.MAX_FAILURES + " lần. Vui lòng thử lại sau "
+                        + LoginAttemptLimiter.LOCK_MINUTES + " phút.");
                 return;
             }
+            limiter.recordSuccess(key);
             if (user.getStatus() == AccountStatus.BANNED) {
                 showForm(req, resp, "Tài khoản của bạn đang bị khóa.");
                 return;

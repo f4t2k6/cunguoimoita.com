@@ -1,20 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copy file này thành context.xml (cùng thư mục) rồi sửa username/password PostgreSQL của máy bạn.
+  Copy file này thành context.xml (cùng thư mục) rồi sửa url/username/password PostgreSQL.
   context.xml nằm trong .gitignore, không commit.
   Tomcat đọc file này và tạo sẵn connection pool tên jdbc/cunguoimoita cho ConnectionPool.java.
+
+  Dùng pool của Tomcat (tomcat-jdbc, có sẵn trong thư mục lib của Tomcat):
+  validationInterval="30000" nghĩa là mỗi kết nối chỉ chạy SELECT 1 kiểm tra tối đa 30 giây một lần,
+  thay vì lần nào mượn kết nối cũng kiểm tra (với database trên cloud như Neon, mỗi lần kiểm tra mất thêm 1 lượt mạng).
+  rollbackOnReturn + jdbcInterceptors="ConnectionState": kết nối trả về pool luôn sạch (huỷ transaction dở, autoCommit mặc định).
+
+  Database chung trên Neon: url dạng
+    jdbc:postgresql://<host-pooler>.neon.tech/neondb?sslmode=require
+  username neondb_owner, maxActive="5" maxIdle="2" (gói free giới hạn số kết nối).
 -->
 <Context>
     <Resource name="jdbc/cunguoimoita"
               auth="Container"
               type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
               driverClassName="org.postgresql.Driver"
               url="jdbc:postgresql://localhost:5432/cunguoimoita"
               username="postgres"
               password="ĐỔI_MẬT_KHẨU"
-              maxTotal="20"
+              maxActive="20"
               maxIdle="10"
-              maxWaitMillis="10000"
+              minIdle="0"
+              initialSize="0"
+              maxWait="10000"
               validationQuery="SELECT 1"
-              testOnBorrow="true"/>
+              testOnBorrow="true"
+              validationInterval="30000"
+              testWhileIdle="true"
+              timeBetweenEvictionRunsMillis="60000"
+              minEvictableIdleTimeMillis="120000"
+              defaultAutoCommit="true"
+              rollbackOnReturn="true"
+              jdbcInterceptors="ConnectionState"/>
+
+    <!--
+      Gửi email mã xác nhận khi đăng ký (MailSender.java). Dùng Gmail:
+        1. Bật xác minh 2 bước cho tài khoản Gmail dùng để gửi.
+        2. Vào https://myaccount.google.com/apppasswords tạo "Mật khẩu ứng dụng" (16 ký tự).
+        3. Điền email và mật khẩu ứng dụng vào 2 dòng dưới. KHÔNG dùng mật khẩu Gmail thật, không commit.
+      Để nguyên ĐỔI_... thì web vẫn chạy: mã xác nhận được in ra cửa sổ log của Tomcat thay vì gửi email.
+    -->
+    <Parameter name="mail.username" value="ĐỔI_EMAIL_GỬI@gmail.com" override="false"/>
+    <Parameter name="mail.password" value="ĐỔI_MẬT_KHẨU_ỨNG_DỤNG" override="false"/>
 </Context>

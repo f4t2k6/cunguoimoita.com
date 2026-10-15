@@ -13,9 +13,11 @@ import java.util.List;
 
 public class MessageDAO {
 
+    /** Thêm tin nhắn và cập nhật conversations.last_message_at trong cùng một câu lệnh (1 lần gọi DB). */
     public void insert(Connection c, Message m) throws SQLException {
-        String sql = "INSERT INTO messages (id, conversation_id, sender_id, type, content, sent_at, is_read) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "WITH m AS (INSERT INTO messages (id, conversation_id, sender_id, type, content, sent_at, is_read)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING conversation_id, sent_at)"
+                + " UPDATE conversations cv SET last_message_at = m.sent_at FROM m WHERE cv.id = m.conversation_id";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, m.getId());
             ps.setString(2, m.getConversationId());
@@ -28,15 +30,23 @@ public class MessageDAO {
         }
     }
 
-    /** Tin nhắn của cuộc trò chuyện, cũ trước mới sau. after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này. */
-    public List<Message> findByConversation(Connection c, String conversationId, Timestamp after) throws SQLException {
-        String sql = "SELECT * FROM messages WHERE conversation_id = ?"
-                + (after == null ? "" : " AND sent_at > ?") + " ORDER BY sent_at";
+    /**
+     * Tin nhắn của cuộc trò chuyện, cũ trước mới sau. after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này.
+     * Chỉ trả tin khi userId là một trong hai người của cuộc trò chuyện (kiểm tra quyền luôn trong câu SELECT,
+     * để mỗi lần chat.js hỏi tin mới chỉ tốn 1 câu lệnh).
+     */
+    public List<Message> findForParticipant(Connection c, String conversationId, String userId, Timestamp after)
+            throws SQLException {
+        String sql = "SELECT m.* FROM messages m JOIN conversations cv ON cv.id = m.conversation_id"
+                + " WHERE m.conversation_id = ? AND (cv.asker_id = ? OR cv.seller_id = ?)"
+                + (after == null ? "" : " AND m.sent_at > ?") + " ORDER BY m.sent_at";
         List<Message> list = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, conversationId);
+            ps.setString(2, userId);
+            ps.setString(3, userId);
             if (after != null) {
-                ps.setTimestamp(2, after);
+                ps.setTimestamp(4, after);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

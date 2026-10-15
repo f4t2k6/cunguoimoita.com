@@ -49,6 +49,7 @@
 .msgr-head-text strong { font-size: 17px; }
 .msgr-head-text span { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .msgr-back { display: none; width: 32px; height: 32px; }
+.msgr-report { margin-left: auto; font-size: 13px; color: #666; text-decoration: underline; flex: none; }
 .msgr-back svg { width: 100%; height: 100%; }
 
 .msgr-thread { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 2px; }
@@ -63,6 +64,7 @@
 .msgr-bubble { padding: 8px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
 .msgr-row.mine .msgr-bubble { background: #000; color: #fff; }
 .msgr-row.theirs .msgr-bubble { background: #ececec; color: #000; }
+.msgr-row.sending .msgr-bubble { opacity: .55; }   /* tin đang gửi */
 /* Bo góc kiểu Messenger: tin giữa nhóm có góc phía mình vuông hơn */
 .msgr-row.mine.join-next .msgr-bubble { border-bottom-right-radius: 5px; }
 .msgr-row.mine.join-prev .msgr-bubble { border-top-right-radius: 5px; }

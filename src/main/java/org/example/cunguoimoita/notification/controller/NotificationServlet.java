@@ -17,7 +17,7 @@ import java.util.List;
 /**
  *  GET  /notifications             danh sách thông báo. Attribute gửi sang JSP: notifications (List&lt;Notification&gt;)
  *  GET  /notifications/open?id=    đánh dấu đã đọc rồi chuyển tới linkUrl của thông báo
- *  GET  /notifications/count       JSON số chưa đọc (chuông trên header)
+ *  GET  /notifications/count       JSON {count: thông báo chưa đọc, chat: tin nhắn chưa đọc} cho 2 con số trên header
  *  GET  /notifications/list        JSON 20 thông báo mới nhất (danh sách xổ xuống ở nút Thông báo)
  *  POST /notifications/read?id=    đánh dấu đã đọc 1 thông báo (JSON)
  *  POST /notifications/read-all    đánh dấu đã đọc tất cả (JSON nếu gọi bằng fetch, còn lại quay về /notifications)
@@ -32,20 +32,28 @@ public class NotificationServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập (tạm thời thêm ?as=<userId>)");
+            String path = req.getServletPath();
+            if ("/notifications".equals(path) || "/notifications/open".equals(path)) {
+                CurrentUser.redirectToLogin(req, resp);   // trang HTML: về trang đăng nhập
+            } else {
+                JsonUtil.error(resp, HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập");
+            }
             return;
         }
         try {
             switch (req.getServletPath()) {
                 case "/notifications/count":
-                    JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + notificationService.unreadCount(userId) + "}");
+                    int[] counts = notificationService.badgeCounts(userId);
+                    JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + counts[0] + ",\"chat\":" + counts[1] + "}");
                     return;
                 case "/notifications/list":
-                    JsonUtil.write(resp, 200, listJson(notificationService.list(userId)));
+                    JsonUtil.write(resp, 200, listJson(notificationService.list(userId, 20)));
                     return;
                 case "/notifications/open":
                     String link = notificationService.open(userId, req.getParameter("id"));
-                    resp.sendRedirect(req.getContextPath() + (link == null ? "/notifications" : link));
+                    // Chỉ chuyển tới đường dẫn trong trang (bắt đầu bằng một dấu "/"), tránh bị dẫn ra trang ngoài
+                    boolean safe = link != null && link.startsWith("/") && !link.startsWith("//");
+                    resp.sendRedirect(req.getContextPath() + (safe ? link : "/notifications"));
                     return;
                 default:
                     req.setAttribute("notifications", notificationService.list(userId));
@@ -82,7 +90,7 @@ public class NotificationServlet extends HttpServlet {
 
     private static String listJson(List<Notification> list) {
         StringBuilder json = new StringBuilder("{\"ok\":true,\"items\":[");
-        for (int i = 0; i < Math.min(list.size(), 20); i++) {
+        for (int i = 0; i < list.size(); i++) {
             Notification n = list.get(i);
             if (i > 0) {
                 json.append(',');

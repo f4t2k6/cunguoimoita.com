@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -51,16 +52,19 @@
                   method="post">
                 <input name="fullName"
                        type="text"
+                       value="<c:out value='${fullName}'/>"
                        placeholder="Họ và tên"
                        required>
 
                 <input name="email"
                        type="email"
+                       value="<c:out value='${email}'/>"
                        placeholder="Email"
                        required>
 
                 <input name="phone"
                        type="tel"
+                       value="<c:out value='${phone}'/>"
                        placeholder="Số điện thoại"
                        required>
 

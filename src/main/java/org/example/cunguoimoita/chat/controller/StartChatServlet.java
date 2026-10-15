@@ -26,7 +26,11 @@ public class StartChatServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            CurrentUser.redirectToLogin(req, resp);
+            return;
+        }
+        if (CurrentUser.isAdmin(req)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Tài khoản admin không dùng chức năng nhắn tin mua bán");
             return;
         }
         try {

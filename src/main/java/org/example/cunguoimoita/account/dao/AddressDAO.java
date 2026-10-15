@@ -7,19 +7,22 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** CRUD địa chỉ; mọi thao tác đều khóa theo userId để không sửa địa chỉ người khác. */
+/**
+ * CRUD địa chỉ; mọi thao tác đều khóa theo userId để không sửa địa chỉ người khác.
+ * Theo database chung (00_database_chung.sql): addresses(customer_id, label, street, ward, district, city, is_default).
+ * Bảng không có người nhận và số điện thoại riêng, nên lấy họ tên và số điện thoại của chủ tài khoản.
+ */
 public class AddressDAO {
-    private static final String COLUMNS = "id, user_id, label, recipient_name, phone, address_line, "
-            + "ward, district, province, is_default, created_at";
+    private static final String COLUMNS = "a.id, a.customer_id, a.label, u.fullname, u.phone, a.street, "
+            + "a.ward, a.district, a.city, a.is_default";
 
     public List<Address> findByUserId(String userId) throws SQLException {
-        String sql = "SELECT " + COLUMNS + " FROM addresses WHERE user_id = ? "
-                + "ORDER BY is_default DESC, created_at DESC";
+        String sql = "SELECT " + COLUMNS + " FROM addresses a JOIN users u ON u.id = a.customer_id "
+                + "WHERE a.customer_id = ? ORDER BY a.is_default DESC, a.label, a.id";
         List<Address> addresses = new ArrayList<>();
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -33,15 +36,15 @@ public class AddressDAO {
         return addresses;
     }
 
-    public String add(String userId, String label, String recipientName, String phone,
-                      String addressLine, String ward, String district, String province)
+    public String add(String userId, String label, String addressLine, String ward,
+                      String district, String province)
             throws SQLException {
         String id = UUID.randomUUID().toString();
         String lockUser = "SELECT id FROM users WHERE id = ? AND user_role = 'customer' FOR UPDATE";
-        String countAddresses = "SELECT COUNT(*) FROM addresses WHERE user_id = ?";
-        String clearDefault = "UPDATE addresses SET is_default = FALSE WHERE user_id = ? AND is_default = TRUE";
-        String insert = "INSERT INTO addresses (id, user_id, label, recipient_name, phone, address_line, "
-                + "ward, district, province, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String countAddresses = "SELECT COUNT(*) FROM addresses WHERE customer_id = ?";
+        String clearDefault = "UPDATE addresses SET is_default = FALSE WHERE customer_id = ? AND is_default = TRUE";
+        String insert = "INSERT INTO addresses (id, customer_id, label, street, ward, district, city, is_default) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             c.setAutoCommit(false);
@@ -72,13 +75,11 @@ public class AddressDAO {
                     ps.setString(1, id);
                     ps.setString(2, userId);
                     ps.setString(3, clean(label, "Địa chỉ mới"));
-                    ps.setString(4, recipientName.trim());
-                    ps.setString(5, phone.trim());
-                    ps.setString(6, addressLine.trim());
-                    ps.setString(7, clean(ward, null));
-                    ps.setString(8, clean(district, null));
-                    ps.setString(9, province.trim());
-                    ps.setBoolean(10, firstAddress);
+                    ps.setString(4, addressLine.trim());
+                    ps.setString(5, clean(ward, null));
+                    ps.setString(6, clean(district, null));
+                    ps.setString(7, province.trim());
+                    ps.setBoolean(8, firstAddress);
                     ps.executeUpdate();
                 }
                 c.commit();
@@ -92,23 +93,19 @@ public class AddressDAO {
         }
     }
 
-    public boolean update(String id, String userId, String label, String recipientName,
-                          String phone, String addressLine, String ward, String district,
-                          String province) throws SQLException {
-        String sql = "UPDATE addresses SET label = ?, recipient_name = ?, phone = ?, address_line = ?, "
-                + "ward = ?, district = ?, province = ?, updated_at = CURRENT_TIMESTAMP "
-                + "WHERE id = ? AND user_id = ?";
+    public boolean update(String id, String userId, String label, String addressLine,
+                          String ward, String district, String province) throws SQLException {
+        String sql = "UPDATE addresses SET label = ?, street = ?, ward = ?, district = ?, city = ? "
+                + "WHERE id = ? AND customer_id = ?";
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, clean(label, "Địa chỉ mới"));
-            ps.setString(2, recipientName.trim());
-            ps.setString(3, phone.trim());
-            ps.setString(4, addressLine.trim());
-            ps.setString(5, clean(ward, null));
-            ps.setString(6, clean(district, null));
-            ps.setString(7, province.trim());
-            ps.setString(8, id);
-            ps.setString(9, userId);
+            ps.setString(2, addressLine.trim());
+            ps.setString(3, clean(ward, null));
+            ps.setString(4, clean(district, null));
+            ps.setString(5, province.trim());
+            ps.setString(6, id);
+            ps.setString(7, userId);
             return ps.executeUpdate() == 1;
         }
     }
@@ -128,14 +125,13 @@ public class AddressDAO {
                     }
                 }
                 try (PreparedStatement clear = c.prepareStatement(
-                        "UPDATE addresses SET is_default = FALSE WHERE user_id = ?")) {
+                        "UPDATE addresses SET is_default = FALSE WHERE customer_id = ?")) {
                     clear.setString(1, userId);
                     clear.executeUpdate();
                 }
                 int changed;
                 try (PreparedStatement set = c.prepareStatement(
-                        "UPDATE addresses SET is_default = TRUE, updated_at = CURRENT_TIMESTAMP "
-                                + "WHERE id = ? AND user_id = ?")) {
+                        "UPDATE addresses SET is_default = TRUE WHERE id = ? AND customer_id = ?")) {
                     set.setString(1, id);
                     set.setString(2, userId);
                     changed = set.executeUpdate();
@@ -173,7 +169,7 @@ public class AddressDAO {
 
                 boolean deletingDefault;
                 try (PreparedStatement check = c.prepareStatement(
-                        "SELECT is_default FROM addresses WHERE id = ? AND user_id = ? FOR UPDATE")) {
+                        "SELECT is_default FROM addresses WHERE id = ? AND customer_id = ? FOR UPDATE")) {
                     check.setString(1, id);
                     check.setString(2, userId);
                     try (ResultSet rs = check.executeQuery()) {
@@ -186,7 +182,7 @@ public class AddressDAO {
                 }
 
                 try (PreparedStatement delete = c.prepareStatement(
-                        "DELETE FROM addresses WHERE id = ? AND user_id = ?")) {
+                        "DELETE FROM addresses WHERE id = ? AND customer_id = ?")) {
                     delete.setString(1, id);
                     delete.setString(2, userId);
                     delete.executeUpdate();
@@ -194,9 +190,9 @@ public class AddressDAO {
 
                 if (deletingDefault) {
                     try (PreparedStatement promote = c.prepareStatement(
-                            "UPDATE addresses SET is_default = TRUE, updated_at = CURRENT_TIMESTAMP "
-                                    + "WHERE id = (SELECT id FROM addresses WHERE user_id = ? "
-                                    + "ORDER BY created_at DESC LIMIT 1)")) {
+                            "UPDATE addresses SET is_default = TRUE "
+                                    + "WHERE id = (SELECT id FROM addresses WHERE customer_id = ? "
+                                    + "ORDER BY label, id LIMIT 1)")) {
                         promote.setString(1, userId);
                         promote.executeUpdate();
                     }
@@ -213,12 +209,11 @@ public class AddressDAO {
     }
 
     private Address map(ResultSet rs) throws SQLException {
-        return new Address(rs.getString("id"), rs.getString("user_id"),
-                rs.getString("label"), rs.getString("recipient_name"),
-                rs.getString("phone"), rs.getString("address_line"),
+        return new Address(rs.getString("id"), rs.getString("customer_id"),
+                rs.getString("label"), rs.getString("fullname"),
+                rs.getString("phone"), rs.getString("street"),
                 rs.getString("ward"), rs.getString("district"),
-                rs.getString("province"), rs.getBoolean("is_default"),
-                rs.getObject("created_at", OffsetDateTime.class));
+                rs.getString("city"), rs.getBoolean("is_default"), null);
     }
 
     private String clean(String value, String fallback) {

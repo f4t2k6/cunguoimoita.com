@@ -20,7 +20,7 @@
 -- DROP TABLE IF EXISTS payouts, refunds, disputes, payments, shipments, shipping_carriers,
 --     reviews, order_items, orders, messages, price_offers, conversations, vouchers,
 --     cart_items, carts, wishlist_products, wishlists, reports, products, categories,
---     notifications, addresses, customers, admins, member_tiers, users CASCADE;
+--     notifications, addresses, customers, admins, member_tiers, users, email_verifications CASCADE;
 
 -- ============================ F1. TÀI KHOẢN ============================
 
@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_date TIMESTAMP   NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_date DESC);
+-- Số trên chuông thông báo: chỉ chứa thông báo chưa đọc
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications (user_id) WHERE NOT is_read;
 
 -- ======================= F2/F3. SẢN PHẨM & FEED =======================
 
@@ -155,6 +157,9 @@ CREATE TABLE IF NOT EXISTS conversations (
     last_message_at TIMESTAMP,
     UNIQUE (product_id, asker_id)            -- mỗi người hỏi 1 cuộc trò chuyện cho 1 bài
 );
+-- Hộp thư và số tin chưa đọc tìm theo người hỏi / người bán
+CREATE INDEX IF NOT EXISTS idx_conversations_asker ON conversations (asker_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_seller ON conversations (seller_id);
 
 CREATE TABLE IF NOT EXISTS messages (
     id              VARCHAR(36) PRIMARY KEY,
@@ -166,6 +171,8 @@ CREATE TABLE IF NOT EXISTS messages (
     is_read         BOOLEAN     NOT NULL DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages (conversation_id, sent_at);
+-- Chỉ chứa tin chưa đọc nên rất nhỏ: đếm số trên mục Tin nhắn nhanh
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages (conversation_id) WHERE NOT is_read;
 
 CREATE TABLE IF NOT EXISTS price_offers (
     id              VARCHAR(36)   PRIMARY KEY,
@@ -179,6 +186,7 @@ CREATE TABLE IF NOT EXISTS price_offers (
 );
 -- Mỗi Conversation chỉ có 1 PriceOffer pending
 CREATE UNIQUE INDEX IF NOT EXISTS uq_one_pending_offer ON price_offers (conversation_id) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_price_offers_conversation ON price_offers (conversation_id);
 
 -- ===================== F4. GIỎ HÀNG & ĐƠN HÀNG =====================
 
@@ -356,10 +364,23 @@ CREATE TABLE IF NOT EXISTS payouts (
 CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status);
 CREATE INDEX IF NOT EXISTS idx_payouts_seller_id ON payouts(seller_id);
 
+-- ============ Xác nhận email khi đăng ký (F1, bảng phụ ngoài diagram) ============
+-- Lưu tạm lượt đăng ký chờ nhập mã; nhập đúng mã mới tạo users/customers (xem 10_email_verification.sql)
+CREATE TABLE IF NOT EXISTS email_verifications (
+    email         VARCHAR(150) PRIMARY KEY,
+    fullname      VARCHAR(100) NOT NULL,
+    phone         VARCHAR(20),
+    password_hash VARCHAR(255) NOT NULL,
+    code_hash     CHAR(64)     NOT NULL,          -- SHA-256 của email + mã, không lưu mã gốc
+    expires_at    TIMESTAMPTZ  NOT NULL,          -- mã hết hạn sau 10 phút
+    attempts      INT          NOT NULL DEFAULT 0, -- số lần nhập sai (tối đa 5)
+    last_sent_at  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP  -- chống gửi lại liên tục (60 giây)
+);
+
 -- ====================================================================
 -- DỮ LIỆU MẪU (chạy lại nhiều lần không bị trùng)
--- Đăng nhập tạm bằng ?as=<id>: S1, S2 là người bán; B1, B2 là người mua; A1 là admin.
--- password_hash mẫu chỉ là chuỗi giả, TV1 thay khi làm đăng nhập thật.
+-- S1, S2 là người bán; B1, B2 là người mua; A1 là admin (email xem bên dưới).
+-- Tài khoản mẫu đăng nhập bằng mật khẩu 123456 (hash PBKDF2 theo PasswordUtil của TV1). Chỉ để demo.
 -- ====================================================================
 
 -- discount_rate tạm đặt, nhóm chốt lại sau
@@ -371,11 +392,11 @@ INSERT INTO member_tiers (id, name, min_eco_points, discount_rate, benefit_note)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO users (id, fullname, email, password_hash, phone, user_role) VALUES
-('A1', 'Quản trị viên', 'admin@cunguoimoita.com', 'CHUA_CO_HASH', '0900000000', 'admin'),
-('S1', 'Mai Thành',     's1@cunguoimoita.com',    'CHUA_CO_HASH', '0900000001', 'customer'),
-('S2', 'Huy Phát',      's2@cunguoimoita.com',    'CHUA_CO_HASH', '0900000002', 'customer'),
-('B1', 'Người mua 1',   'b1@cunguoimoita.com',    'CHUA_CO_HASH', '0900000003', 'customer'),
-('B2', 'Người mua 2',   'b2@cunguoimoita.com',    'CHUA_CO_HASH', '0900000004', 'customer')
+('A1', 'Quản trị viên', 'admin@cunguoimoita.com', 'pbkdf2-sha256$310000$7A20VBUFYMLunR9bEnNr9A==$8FFP7nMlr45Tmpr3bcLc/F3fzvULftzDQ5dZPQCRK7w=', '0900000000', 'admin'),
+('S1', 'Mai Thành',     's1@cunguoimoita.com',    'pbkdf2-sha256$310000$7A20VBUFYMLunR9bEnNr9A==$8FFP7nMlr45Tmpr3bcLc/F3fzvULftzDQ5dZPQCRK7w=', '0900000001', 'customer'),
+('S2', 'Huy Phát',      's2@cunguoimoita.com',    'pbkdf2-sha256$310000$7A20VBUFYMLunR9bEnNr9A==$8FFP7nMlr45Tmpr3bcLc/F3fzvULftzDQ5dZPQCRK7w=', '0900000002', 'customer'),
+('B1', 'Người mua 1',   'b1@cunguoimoita.com',    'pbkdf2-sha256$310000$7A20VBUFYMLunR9bEnNr9A==$8FFP7nMlr45Tmpr3bcLc/F3fzvULftzDQ5dZPQCRK7w=', '0900000003', 'customer'),
+('B2', 'Người mua 2',   'b2@cunguoimoita.com',    'pbkdf2-sha256$310000$7A20VBUFYMLunR9bEnNr9A==$8FFP7nMlr45Tmpr3bcLc/F3fzvULftzDQ5dZPQCRK7w=', '0900000004', 'customer')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO admins (user_id, permission_level) VALUES ('A1', 10) ON CONFLICT (user_id) DO NOTHING;

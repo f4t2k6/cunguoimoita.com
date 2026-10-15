@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.chat.service.ChatService;
+import org.example.cunguoimoita.chat.service.ChatService.ChatUpdate;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.JsonUtil;
 
@@ -19,7 +20,8 @@ import java.util.List;
 
 /**
  * API JSON cho chat.js (khung chat không tải lại trang).
- *  GET  /chat/messages?id=&after=   tin nhắn mới hơn mốc after (epoch ms), after bỏ trống để lấy hết
+ *  GET  /chat/messages?id=&after=   tin nhắn mới hơn mốc after (epoch ms), after bỏ trống để lấy hết.
+ *                                   Có tin mới thì kèm "offers" (mọi offer của cuộc trò chuyện) để cập nhật khung giá cũ.
  *  GET  /chat/unread                số tin chưa đọc (icon tin nhắn trên header)
  *  POST /chat/send                  conversationId, content
  *  POST /chat/offer                 action=make (conversationId, amount) | accept | decline (offerId) | counter (offerId, amount)
@@ -42,15 +44,22 @@ public class ChatApiServlet extends HttpServlet {
                 JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + chatService.unreadCount(userId) + "}");
                 return;
             }
-            String after = req.getParameter("after");
-            Timestamp afterTs = after == null || after.isBlank() ? null : new Timestamp(Long.parseLong(after));
-            List<Message> messages = chatService.loadMessages(req.getParameter("id"), userId, afterTs);
+            ChatUpdate update = chatService.loadMessages(req.getParameter("id"), userId, afterParam(req));
             StringBuilder json = new StringBuilder("{\"ok\":true,\"messages\":[");
+            List<Message> messages = update.messages();
             for (int i = 0; i < messages.size(); i++) {
                 if (i > 0) {
                     json.append(',');
                 }
                 appendMessage(json, messages.get(i), userId);
+            }
+            json.append("],\"offers\":[");
+            List<PriceOffer> offers = update.offers();
+            for (int i = 0; i < offers.size(); i++) {
+                if (i > 0) {
+                    json.append(',');
+                }
+                appendOffer(json, offers.get(i), userId);
             }
             JsonUtil.write(resp, 200, json.append("]}").toString());
         } catch (IllegalArgumentException e) {
@@ -100,9 +109,32 @@ public class ChatApiServlet extends HttpServlet {
 
     private static double amount(HttpServletRequest req) {
         try {
-            return Double.parseDouble(req.getParameter("amount"));
+            double value = Double.parseDouble(req.getParameter("amount").trim());
+            // Chặn NaN/Infinity và số vượt NUMERIC(12,2) của price_offers.amount
+            if (!Double.isFinite(value) || value <= 0 || value >= 1e10) {
+                throw new NumberFormatException();
+            }
+            return value;
         } catch (NumberFormatException | NullPointerException e) {
             throw new IllegalArgumentException("Số tiền không hợp lệ");
+        }
+    }
+
+    /**
+     * Mốc after (epoch ms) → Timestamp. Cộng thêm 0,999999 ms để tin cũ lưu lẻ micro giây
+     * (trước khi làm tròn tới ms) không bị trả lại ở mỗi lần hỏi.
+     */
+    private static Timestamp afterParam(HttpServletRequest req) {
+        String after = req.getParameter("after");
+        if (after == null || after.isBlank()) {
+            return null;
+        }
+        try {
+            Timestamp ts = new Timestamp(Long.parseLong(after));
+            ts.setNanos(ts.getNanos() + 999_999);
+            return ts;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Mốc thời gian không hợp lệ");
         }
     }
 
@@ -117,15 +149,20 @@ public class ChatApiServlet extends HttpServlet {
             .append(",\"sentAt\":").append(epochMs(m.getSentAt()));
         PriceOffer o = m.getOffer();
         if (o != null) {
-            json.append(",\"offer\":{\"id\":").append(JsonUtil.quote(o.getId()))
-                .append(",\"amount\":").append(o.getAmount())
-                .append(",\"status\":").append(JsonUtil.quote(o.getStatus().dbValue()))
-                .append(",\"canRespond\":").append(o.isPending() && !userId.equals(o.getProposerId()))
-                .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()))
-                .append('}');
+            json.append(",\"offer\":");
+            appendOffer(json, o, userId);
         } else {
             json.append(",\"content\":").append(JsonUtil.quote(m.getContent()));
         }
         json.append('}');
+    }
+
+    private static void appendOffer(StringBuilder json, PriceOffer o, String userId) {
+        json.append("{\"id\":").append(JsonUtil.quote(o.getId()))
+            .append(",\"amount\":").append(o.getAmount())
+            .append(",\"status\":").append(JsonUtil.quote(o.getStatus().dbValue()))
+            .append(",\"canRespond\":").append(o.isPending() && !userId.equals(o.getProposerId()))
+            .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()))
+            .append('}');
     }
 }
