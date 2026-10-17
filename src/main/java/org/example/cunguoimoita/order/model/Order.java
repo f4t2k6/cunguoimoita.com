@@ -24,17 +24,30 @@ public class Order {
     private LocalDateTime orderDate;
     private LocalDateTime completedDate;
     public enum Status {
-        NEW, AWATING_PAYMENT, PAID, SHIPPING, DELIVERED, COMPLETED, CANCELLED, REFUNDED;
+        NEW, AWAITING_PAYMENT, PAID, SHIPPING, DELIVERED, COMPLETED, CANCELLED, REFUNDED;
 
         public boolean canMoveTo(Status next) {
             switch (this) {
-                case NEW: return next == AWATING_PAYMENT || next == PAID
+                case NEW: return next == AWAITING_PAYMENT || next == PAID
                         || next == SHIPPING || next == CANCELLED;
-                case AWATING_PAYMENT: return next == PAID || next == CANCELLED;
+                case AWAITING_PAYMENT: return next == PAID || next == CANCELLED;
                 case PAID: return next == SHIPPING || next == CANCELLED || next == REFUNDED;
                 case SHIPPING: return next == DELIVERED || next == REFUNDED;
                 case DELIVERED: return next == COMPLETED || next == REFUNDED;
                 default: return false ;
+            }
+        }
+        // Chữ hiển thị trên giao diện
+        public String label() {
+            switch (this) {
+                case NEW:              return "Mới tạo";
+                case AWAITING_PAYMENT: return "Chờ thanh toán";
+                case PAID:             return "Đã thanh toán";
+                case SHIPPING:         return "Đang giao";
+                case DELIVERED:        return "Đã giao";
+                case COMPLETED:        return "Hoàn tất";
+                case CANCELLED:        return "Đã huỷ";
+                default:               return "Đã hoàn tiền";
             }
         }
     }
@@ -86,7 +99,7 @@ public class Order {
 
         }
         this.paymentMethod = method;
-        this.status = (method == PaymentMethod.ONLINE) ? Status.AWATING_PAYMENT : Status.NEW;
+        this.status = (method == PaymentMethod.ONLINE) ? Status.AWAITING_PAYMENT : Status.NEW;
     }
 
     // + applyVoucher(code): void
@@ -149,7 +162,7 @@ public class Order {
 
     // Chỉ được sửa địa chỉ / vận chuyển / thanh toán / voucher khi đơn chưa thanh toán
     private void requireEditable() {
-        if (status != Status.NEW && status != Status.AWATING_PAYMENT) {
+        if (status != Status.NEW && status != Status.AWAITING_PAYMENT) {
             throw new IllegalStateException("Đơn đã thanh toán hoặc đang xử lý, không sửa được nữa");
         }
     }

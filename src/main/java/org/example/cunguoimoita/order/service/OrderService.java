@@ -15,6 +15,7 @@ import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.model.Voucher;
+import org.example.cunguoimoita.review.service.ReviewService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,6 +35,7 @@ public class OrderService {
     private final ProductRefDAO productDAO = new ProductRefDAO();          // bảng products (F2)
     private final AddressDAO addressDAO = new AddressDAO();                // sổ địa chỉ (F1)
     private final NotificationService notificationService = new NotificationService();   // thông báo (F7)
+    private final ReviewService reviewService = new ReviewService();      // F8: xét hạng khi đơn hoàn tất
 
     // ===================== CHECKOUT =====================
 
@@ -189,8 +191,10 @@ public class OrderService {
                 productDAO.updateStatus(c, item.getProductId(), "sold");
             }
             // F8: cộng ecoPoints + xét hạng cho người mua và người bán sẽ gọi ở đây (làm ở phần review)
+            reviewService.recalculateTier(c, o.getBuyerId());    // F8: cộng điểm + xét hạng người mua
+            reviewService.recalculateTier(c, o.getSellerId());   // F8: và người bán
             return o;
-        });
+        }) ;
         notify(order.getSellerId(), "Đơn " + order.getCode() + " đã hoàn tất", order.getId());
     }
 

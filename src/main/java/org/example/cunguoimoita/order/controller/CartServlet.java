@@ -58,7 +58,7 @@ public class CartServlet extends HttpServlet {
         String productId = req.getParameter("productId");
         String redirect = req.getContextPath() + "/order/cart";
         try {
-            switch (action == null ? "" : action) {
+            switch (action == null ? "add" : action) {
                 case "add":
                     cartService.addToCart(userId, productId);
                     redirect += "?message=" + encode("Đã thêm vào giỏ");
