@@ -155,7 +155,7 @@ a { color: inherit; text-decoration: none; }
 .count-badge[hidden] { display: none; }
 .notify-badge { position: absolute; right: 52px; bottom: -12px; border: 2px solid #fff; }
 
-/*KHỐI MENU BÊN TRÁI (Giỏ hàng, Tin nhắn, Đã lưu, Hội nhóm, Reels)*/
+/*KHỐI MENU BÊN TRÁI (Giỏ hàng, Tin nhắn, Đã lưu, Hội nhóm, Đăng bài, Bài của tôi)*/
 .sidebar-menu {
     position: fixed;
     top: 172px;
@@ -290,19 +290,6 @@ button.menu-item { font: inherit; font-size: 17px; color: inherit; background: n
     cursor: pointer;
 }
 .btn-dark { background: #000; color: #fff; }
-
-/* DẢI REELS */
-.reel-strip { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 0 2px; scrollbar-width: none; }
-.reel-card {
-    flex: 0 0 196px;
-    height: 300px;
-    border-radius: 14px;
-    position: relative;
-    background: linear-gradient(170deg, #cfcfcf, #8f8f8f);
-    color: #fff;
-}
-.reel-card span { position: absolute; top: 40px; left: 0; right: 0; text-align: center; font-weight: 600; font-size: 17px; }
-.reel-card::after { content: '⋮'; position: absolute; top: 8px; right: 12px; font-size: 20px; }
 
 /* Màn hình vừa: menu trái chỉ còn icon */
 @media (max-width: 1150px) {

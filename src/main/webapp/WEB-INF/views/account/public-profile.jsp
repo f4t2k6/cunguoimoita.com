@@ -1,5 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="vi_VN"/>
 <c:set var="pageTitle" value="Hồ sơ người bán" />
 <c:set var="pageCss" value="account.css" />
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
@@ -34,6 +37,20 @@
         </div>
         <p class="public-profile-note">Điểm đánh giá, số đơn đã bán và hạng thành viên được tổng hợp từ dữ liệu F8.</p>
     </div>
+
+    <%-- Bài đang bán của người này (F2); thẻ nhỏ dùng chung với trang chi tiết bài --%>
+    <link rel="stylesheet" href="${ctx}/assets/css/product.css?v=${assetVer}">
+    <section class="detail-section">
+        <h2 class="section-heading">Đang bán (${fn:length(sellerProducts)})</h2>
+        <c:choose>
+            <c:when test="${empty sellerProducts}"><p class="muted">Người này chưa có bài nào đang bán.</p></c:when>
+            <c:otherwise>
+                <div class="mini-grid">
+                    <c:forEach var="m" items="${sellerProducts}"><%@ include file="/WEB-INF/views/product/_mini-card.jsp" %></c:forEach>
+                </div>
+            </c:otherwise>
+        </c:choose>
+    </section>
 </section>
 
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

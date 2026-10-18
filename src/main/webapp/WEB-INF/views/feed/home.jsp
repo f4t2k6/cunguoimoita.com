@@ -1,59 +1,55 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN"/>
-<c:set var="pageTitle" value="Bảng tin"/>
+<c:set var="pageTitle" value="Trang chủ"/>
+<c:set var="pageCss" value="product.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
-<nav class="category-bar">
+<nav class="category-bar" aria-label="Danh mục">
   <c:forEach var="cat" items="${categories}">
-    <a class="category-item" href="${ctx}/feed/search?category=${cat.slug}">
+    <a class="category-item" href="${ctx}/feed/search?category=${fn:escapeXml(cat.slug)}">
       <span class="cat-icon">${cat.icon}</span>
-      <span>${cat.name}</span>
+      <span><c:out value="${cat.name}"/></span>
     </a>
   </c:forEach>
 </nav>
 
-<c:forEach var="post" items="${posts}" varStatus="st">
-  <article class="post-card">
-    <div class="post-head">
-      <img src="${ctx}/assets/images/avt.png" alt="" class="post-avatar">
-      <div>
-        <span class="post-author"><c:out value="${post.author}"/></span>
-        <span class="post-date">${post.date}</span>
-      </div>
-    </div>
-    <p class="post-caption">
-      <span class="tag tag-${post.quality}">${post.qualityLabel}</span><c:out value="${post.caption}"/>
-    </p>
-    <div class="post-footer">
-      <span class="post-price"><fmt:formatNumber value="${post.price}" pattern="#,##0"/> đ</span>
-      <form method="post" action="${ctx}/feed/wishlist"><input type="hidden" name="productId" value="${post.id}">
-        <button class="btn" type="submit">Lưu</button></form>
-      <form method="post" action="${ctx}/chat/start">
-        <input type="hidden" name="productId" value="${post.id}">
-        <button class="btn" type="submit">Nhắn tin</button>
-      </form>
-      <form method="post" action="${ctx}/order/cart"><input type="hidden" name="productId" value="${post.id}">
-        <button class="btn btn-dark" type="submit">Thêm vào giỏ</button></form>
-    </div>
-    <div class="post-photos">
-      <c:forEach var="photo" items="${post.photos}">
-        <div class="post-photo">${photo}</div>
-      </c:forEach>
-    </div>
-  </article>
+<%-- Ô "Bạn muốn thanh lý gì?" giống ô đăng bài của mạng xã hội --%>
+<c:if test="${sessionScope.userRole != 'admin'}">
+  <section class="composer">
+    <c:choose>
+      <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}${sessionScope.avatarPath}" alt="" class="post-avatar"></c:when>
+      <c:otherwise><img src="${ctx}/assets/images/default-avatar.png" alt="" class="post-avatar"></c:otherwise>
+    </c:choose>
+    <a class="composer-input" href="${ctx}/product/new">
+      <c:out value="${empty sessionScope.fullName ? 'Bạn' : sessionScope.fullName}"/> ơi, bạn muốn thanh lý món gì?
+    </a>
+    <a class="btn btn-dark composer-btn" href="${ctx}/product/new">Đăng bài</a>
+  </section>
+</c:if>
 
-  <%-- Dải reels chen sau bài đầu tiên --%>
-  <c:if test="${st.first}">
-    <section class="post-card">
-      <div class="reel-strip">
-        <c:forEach var="reel" items="${reels}">
-          <div class="reel-card"><span>${reel}</span></div>
-        </c:forEach>
-      </div>
-    </section>
-  </c:if>
+<c:forEach var="post" items="${posts}">
+  <%@ include file="/WEB-INF/views/feed/_post.jsp" %>
 </c:forEach>
 
+<c:if test="${empty posts}">
+  <section class="post-card empty-state">
+    <div class="empty-icon">🪴</div>
+    <h2>Chưa có bài đăng nào</h2>
+    <p>Bài đăng mới sẽ hiện ở đây sau khi admin duyệt.</p>
+    <a class="btn btn-dark" href="${ctx}/product/new">Đăng món đầu tiên</a>
+  </section>
+</c:if>
+
+<c:if test="${result.totalPages > 1}">
+  <nav class="pager" aria-label="Phân trang">
+    <c:if test="${result.hasPrevious}"><a class="btn" href="${ctx}/home?page=${result.page - 1}">← Bài mới hơn</a></c:if>
+    <span class="pager-info">Trang ${result.page} / ${result.totalPages}</span>
+    <c:if test="${result.hasNext}"><a class="btn btn-dark" href="${ctx}/home?page=${result.page + 1}">Xem thêm bài →</a></c:if>
+  </nav>
+</c:if>
+
+<script src="${ctx}/assets/js/product.js?v=${assetVer}" defer></script>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>
