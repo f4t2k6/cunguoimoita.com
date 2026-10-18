@@ -5,53 +5,65 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.admin.model.Category;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
+import org.example.cunguoimoita.feed.service.FeedService;
+import org.example.cunguoimoita.product.model.ProductFilter;
+import org.example.cunguoimoita.product.service.ProductService;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * GET /home → trang chủ dạng bảng tin.
+ * GET /home?page= → trang chủ: các bài đã duyệt, mới nhất trước, mỗi bài hiện như một post.
  *     Attribute gửi sang JSP:
- *       categories: List&lt;Map&gt; {slug, name, icon}
- *       posts:      List&lt;Map&gt; {id, author, sellerId, date, quality (new|used|damaged), qualityLabel, caption, price, photos}
- *       reels:      List&lt;String&gt; tiêu đề reel
- * TODO TV2 (F3): thay dữ liệu mẫu bằng CategoryService và ProductService (bài đã duyệt, mới nhất trước),
- *                giữ nguyên tên attribute để home.jsp không phải sửa.
+ *       categories: List&lt;Map&gt; {slug, name, icon}   danh mục gốc cho thanh danh mục
+ *       posts:      List&lt;Product&gt;                     bài của trang hiện tại
+ *       result:     FeedService.Page                  để vẽ nút trang trước / trang sau
+ *       backUrl:    trang quay về sau khi bấm Lưu
  */
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
 
-    private static final List<Map<String, String>> CATEGORIES = List.of(
-            Map.of("slug", "dien-thoai", "name", "Điện thoại", "icon", "📱"),
-            Map.of("slug", "noxh", "name", "NOXH", "icon", "🏢"),
-            Map.of("slug", "bat-dong-san", "name", "Bất động sản", "icon", "🏠"),
-            Map.of("slug", "xe-co", "name", "Xe cộ", "icon", "🚗"),
-            Map.of("slug", "viec-lam", "name", "Việc làm", "icon", "👷"),
-            Map.of("slug", "dien-tu", "name", "Điện tử", "icon", "💻"),
-            Map.of("slug", "thu-cung", "name", "Thú cưng", "icon", "🐕"),
-            Map.of("slug", "dien-lanh", "name", "Điện lạnh", "icon", "🧊"),
-            Map.of("slug", "noi-that", "name", "Nội thất, cây cảnh", "icon", "🛋️"));
+    /** Biểu tượng cho các danh mục có sẵn; danh mục admin mới thêm dùng biểu tượng mặc định. */
+    private static final Map<String, String> CATEGORY_ICONS = Map.ofEntries(
+            Map.entry("dien-thoai", "📱"), Map.entry("noxh", "🏢"), Map.entry("bat-dong-san", "🏠"),
+            Map.entry("xe-co", "🚗"), Map.entry("viec-lam", "👷"), Map.entry("dien-tu", "💻"),
+            Map.entry("thu-cung", "🐕"), Map.entry("dien-lanh", "🧊"), Map.entry("noi-that", "🛋️"),
+            Map.entry("ban-phim", "⌨️"));
+    private static final String DEFAULT_ICON = "🏷️";
 
-    private static final List<Map<String, Object>> SAMPLE_POSTS = List.of(
-            Map.of("id", "P1", "author", "Mai Thành", "sellerId", "S1", "date", "31 tháng 8",
-                    "quality", "new", "qualityLabel", "Mới sử dụng",
-                    "caption", "Còn em Atk Ghost Ultimate màu bạc likenew fullbox đẹp 1m7",
-                    "price", 1_700_000, "photos", List.of("Ảnh 1", "Ảnh 2")),
-            Map.of("id", "P2", "author", "Huy Phát", "sellerId", "S2", "date", "29 tháng 8",
-                    "quality", "used", "qualityLabel", "Đã qua sử dụng",
-                    "caption", "Pass lại bàn phím cơ 75%, switch đã lube, đổi được tai nghe",
-                    "price", 850_000, "photos", List.of("Ảnh 1")));
-
-    private static final List<String> SAMPLE_REELS = List.of("Pizza", "Kẹt xe", "Đập hộp", "Fur", "Góc học tập");
+    private final FeedService feedService = new FeedService();
+    private final ProductService productService = new ProductService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        CurrentUser.id(req); // đọc người dùng từ session nếu đã đăng nhập
-        req.setAttribute("categories", CATEGORIES);
-        req.setAttribute("posts", SAMPLE_POSTS);
-        req.setAttribute("reels", SAMPLE_REELS);
+        ProductFilter filter = new ProductFilter();
+        filter.setPage(FormUtil.positiveInt(req, "page", 1));
+        try {
+            FeedService.Page result = feedService.search(filter, CurrentUser.id(req));
+            req.setAttribute("categories", topCategories(productService.categories()));
+            req.setAttribute("posts", result.getItems());
+            req.setAttribute("result", result);
+            req.setAttribute("backUrl", filter.getPage() > 1 ? "/home?page=" + filter.getPage() : "/home");
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
         req.getRequestDispatcher("/WEB-INF/views/feed/home.jsp").forward(req, resp);
+    }
+
+    private List<Map<String, String>> topCategories(List<Category> all) {
+        List<Map<String, String>> list = new ArrayList<>();
+        for (Category cg : all) {
+            if (cg.isTopLevel()) {
+                list.add(Map.of("slug", cg.getId(), "name", cg.getName(),
+                        "icon", CATEGORY_ICONS.getOrDefault(cg.getId(), DEFAULT_ICON)));
+            }
+        }
+        return list;
     }
 }

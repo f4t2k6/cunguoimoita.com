@@ -12,7 +12,7 @@
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
-<c:set var="assetVer" value="20261018"/>
+<c:set var="assetVer" value="20261019"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -70,13 +70,23 @@
   <a class="menu-item" href="${ctx}/group">
     <img src="${ctx}/assets/images/group-icon.png" alt="" class="menu-icon"><span>Hội nhóm</span>
   </a>
-  <a class="menu-item" href="${ctx}/reels">
-    <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" aria-hidden="true">
-      <circle cx="15" cy="15" r="11"/><circle cx="15" cy="9" r="2.5"/><circle cx="15" cy="21" r="2.5"/>
-      <circle cx="9" cy="15" r="2.5"/><circle cx="21" cy="15" r="2.5"/><path d="M24 23l5 6"/>
-    </svg>
-    <span>Reels</span>
-  </a>
+  <%-- Đăng bài và quản lý bài (F2): admin không bán hàng nên không thấy --%>
+  <c:if test="${sessionScope.userRole != 'admin'}">
+    <a class="menu-item" href="${ctx}/product/new">
+      <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="5" y="5" width="22" height="22" rx="6"/><path d="M16 10.5v11M10.5 16h11"/>
+      </svg>
+      <span>Đăng bài</span>
+    </a>
+  </c:if>
+  <c:if test="${sessionScope.userRole == 'customer'}">
+    <a class="menu-item" href="${ctx}/product/mine">
+      <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 11l11-6 11 6-11 6z"/><path d="M5 11v10l11 6 11-6V11"/><path d="M16 17v10"/>
+      </svg>
+      <span>Bài của tôi</span>
+    </a>
+  </c:if>
   <%-- Admin thấy thêm mục Quản trị (F10) --%>
   <c:if test="${sessionScope.userRole == 'admin'}">
     <a class="menu-item" href="${ctx}/admin/dashboard">

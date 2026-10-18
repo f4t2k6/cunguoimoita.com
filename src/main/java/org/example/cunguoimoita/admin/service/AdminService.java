@@ -77,7 +77,7 @@ public class AdminService {
             }
             productDAO.approve(c, productId, adminId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
-                    "Bài \"" + p.name() + "\" đã được duyệt và hiện trên bảng tin", "/home"));
+                    "Bài \"" + p.name() + "\" đã được duyệt và hiện trên bảng tin", "/product?id=" + productId));
             return null;
         });
         send(notices);
@@ -94,7 +94,7 @@ public class AdminService {
             }
             productDAO.reject(c, productId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
-                    "Bài \"" + p.name() + "\" bị từ chối: " + why, null));
+                    "Bài \"" + p.name() + "\" bị từ chối: " + why, "/product/mine?tab=rejected"));
             return null;
         });
         send(notices);
