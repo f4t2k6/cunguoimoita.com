@@ -1,31 +1,27 @@
-.account-page {
-    max-width: 1050px;
-    margin: 28px auto 56px;
+/* Trang tài khoản: /account/profile (profile.jsp) và /users/profile (public-profile.jsp).
+   Tông đen trắng giống phần còn lại của web: viền đen, bóng đổ lệch, nút bo tròn. */
+
+.account-page,
+.account-page *,
+.account-page *::before,
+.account-page *::after {
+    box-sizing: border-box;
 }
 
-.account-heading,
-.account-card-heading,
-.address-item-heading,
-.address-actions,
-.avatar-input-row {
+.account-page {
+    width: 100%;
+    max-width: 1040px;
+    margin: 24px auto 56px;
+    padding: 0 16px;
+}
+
+/* ---------- Tiêu đề trang ---------- */
+.account-heading {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
-}
-
-.account-heading {
     margin-bottom: 22px;
-}
-
-.account-heading h1,
-.account-card h2 {
-    margin: 0;
-    font-family: 'Bungee', sans-serif;
-}
-
-.account-heading h1 {
-    font-size: clamp(24px, 3vw, 34px);
 }
 
 .account-eyebrow {
@@ -36,105 +32,186 @@
     letter-spacing: .12em;
 }
 
-.account-subtitle,
-.account-card > p,
-.account-card-heading p {
+.account-heading h1 {
+    margin: 0;
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.15;
+}
+
+.account-subtitle {
     margin: 8px 0 0;
     color: #666;
     line-height: 1.5;
 }
 
+/* ---------- Thông báo ---------- */
+.account-alert {
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border: 1.5px solid #111;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.account-alert-success {
+    background: #f1f8f2;
+    border-color: #14532d;
+    color: #14532d;
+}
+
+.account-alert-error {
+    background: #fdf1f1;
+    border-color: #b42318;
+    color: #b42318;
+}
+
+/* ---------- Lưới thẻ ---------- */
 .account-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     align-items: start;
-    gap: 18px;
+    gap: 20px;
 }
 
 .account-card {
-    padding: 22px;
+    min-width: 0;
+    padding: 24px;
     background: #fff;
     border: 1.5px solid #111;
-    border-radius: 16px;
+    border-radius: 18px;
     box-shadow: 4px 4px 0 #111;
 }
 
-.account-profile-card,
 .account-address-card {
     grid-column: 1 / -1;
 }
 
 .account-card h2 {
-    font-size: 17px;
+    margin: 0;
+    font-family: 'Bungee', sans-serif;
+    font-size: 18px;
+}
+
+.account-card > p,
+.account-card-heading p {
+    margin: 6px 0 18px;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .account-card-heading {
-    align-items: flex-start;
-    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 }
 
+/* ---------- Ảnh đại diện ---------- */
 .account-avatar {
-    width: 76px;
-    height: 76px;
-    flex: 0 0 76px;
+    flex: 0 0 auto;
+    width: 84px;
+    height: 84px;
     object-fit: cover;
-    border: 2px solid #111;
+    background: #e8ebee;
+    border: 1.5px solid #111;
     border-radius: 50%;
-    background: #eee;
 }
 
+.avatar-form {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px dashed #bbb;
+}
+
+.avatar-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+}
+
+.avatar-input-row input[type="file"] {
+    flex: 1 1 240px;
+    min-width: 0;
+    height: auto;
+    padding: 9px 12px;
+    font-size: 13px;
+    background: #fafafa;
+    border-style: dashed;
+    cursor: pointer;
+}
+
+.avatar-input-row input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 6px 14px;
+    color: #fff;
+    background: #111;
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ---------- Form ---------- */
 .account-form {
-    display: grid;
-    gap: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .account-form label {
-    display: grid;
-    gap: 6px;
-    color: #333;
+    margin-top: 8px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .account-form input {
     width: 100%;
-    min-height: 42px;
-    padding: 9px 12px;
+    height: 44px;
+    padding: 0 14px;
     color: #111;
     background: #fff;
-    border: 1px solid #999;
-    border-radius: 8px;
+    border: 1.5px solid #111;
+    border-radius: 12px;
     font: inherit;
-    font-weight: 400;
+    font-size: 14px;
 }
 
 .account-form input:focus {
-    outline: 2px solid #111;
-    outline-offset: 1px;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .15);
 }
 
 .account-form input[readonly] {
-    color: #777;
-    background: #f3f3f3;
+    color: #666;
+    background: #f2f2f2;
+    border-color: #bbb;
+    cursor: not-allowed;
 }
 
 .account-button {
-    width: fit-content;
-    min-height: 40px;
-    margin-top: 8px;
-    padding: 9px 16px;
+    align-self: flex-start;
+    margin-top: 14px;
+    padding: 11px 22px;
     color: #fff;
     background: #111;
-    border: 1px solid #111;
-    border-radius: 22px;
+    border: 1.5px solid #111;
+    border-radius: 999px;
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, transform .15s;
 }
 
 .account-button:hover {
     background: #333;
+    transform: translateY(-1px);
 }
 
 .account-button-light {
@@ -143,53 +220,156 @@
 }
 
 .account-button-light:hover {
-    color: #fff;
+    background: #f0f0f0;
 }
 
-.avatar-form {
-    margin-top: 24px;
-    padding-top: 18px;
-    border-top: 1px solid #ddd;
+.avatar-input-row .account-button,
+.account-heading .account-button {
+    margin-top: 0;
 }
 
-.avatar-input-row {
-    align-items: center;
-    justify-content: flex-start;
-}
-
-.avatar-input-row input {
-    max-width: 420px;
-    border: 0;
-    padding-left: 0;
-}
-
-.account-alert {
-    margin: 12px 0;
-    padding: 12px 16px;
-    border: 1px solid;
-    border-radius: 10px;
-    font-size: 14px;
-}
-
-.account-alert-success {
-    color: #14532d;
-    background: #dcfce7;
-    border-color: #86c99a;
-}
-
-.account-alert-error {
-    color: #991b1b;
-    background: #fee2e2;
-    border-color: #f2a3a3;
-}
-
+/* ---------- Sổ địa chỉ ---------- */
 .account-empty {
+    margin: 0 0 18px;
     padding: 18px;
     color: #666;
-    background: #f7f7f7;
-    border-radius: 10px;
+    background: #f6f6f6;
+    border-radius: 12px;
+    text-align: center;
 }
 
+.address-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.address-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border: 1.5px solid #ccc;
+    border-radius: 14px;
+}
+
+.address-item.is-default {
+    border-color: #111;
+    box-shadow: 3px 3px 0 #111;
+}
+
+.address-item-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.address-item-heading > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.address-item-heading > span {
+    color: #666;
+    font-size: 13px;
+}
+
+.default-badge {
+    padding: 2px 8px;
+    color: #fff;
+    background: #111;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.address-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.address-edit summary,
+.add-address summary {
+    width: fit-content;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.address-edit[open] summary {
+    margin-bottom: 4px;
+}
+
+.address-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.address-actions form {
+    margin: 0;
+}
+
+.text-button {
+    padding: 0;
+    color: #111;
+    background: none;
+    border: 0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.text-button:hover {
+    text-decoration: underline;
+}
+
+.danger-text {
+    color: #b42318;
+}
+
+.add-address {
+    padding-top: 18px;
+    border-top: 1px dashed #bbb;
+}
+
+.add-address summary {
+    font-size: 15px;
+    text-decoration: none;
+}
+
+/* Form địa chỉ: 2 cột, nút ở hàng riêng */
+.compact-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 14px;
+}
+
+.compact-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.compact-form button {
+    grid-column: 1 / -1;
+    justify-self: start;
+}
+
+.address-item .compact-form {
+    grid-template-columns: 1fr;
+}
+
+/* ---------- Hồ sơ công khai người bán ---------- */
 .public-profile-page {
     max-width: 720px;
 }
@@ -198,44 +378,41 @@
     text-align: center;
 }
 
-.public-seller-card h1 {
-    margin: 12px 0 0;
-    font-family: 'Bungee', sans-serif;
-    font-size: 24px;
-}
-
 .public-avatar {
-    width: 104px;
-    height: 104px;
+    width: 112px;
+    height: 112px;
+    margin: 0 auto 12px;
+    display: block;
 }
 
-.public-seller-id,
-.public-profile-note {
+.public-seller-card h1 {
+    margin: 0;
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(22px, 3vw, 30px);
+}
+
+.public-seller-id {
+    margin: 6px 0 20px;
     color: #666;
-    font-size: 13px;
 }
 
 .seller-stat-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 24px;
 }
 
 .seller-stat {
-    min-height: 92px;
-    padding: 14px 8px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-    background: #f4f4f0;
-    border: 1px solid #bbb;
-    border-radius: 12px;
+    gap: 4px;
+    padding: 14px 8px;
+    border: 1.5px solid #111;
+    border-radius: 14px;
 }
 
 .seller-stat-value {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
 }
 
@@ -246,136 +423,48 @@
 
 .public-profile-note {
     margin: 18px 0 0;
-}
-
-.address-list {
-    display: grid;
-    gap: 12px;
-}
-
-.address-item {
-    padding: 16px;
-    border: 1px solid #bbb;
-    border-radius: 12px;
-}
-
-.address-item.is-default {
-    background: #effaf1;
-    border-color: #61a875;
-}
-
-.address-item-heading {
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-
-.address-item-heading > span {
-    color: #555;
-    font-size: 13px;
-}
-
-.default-badge {
-    display: inline-block;
-    margin-left: 8px;
-    padding: 4px 8px;
-    color: #14532d;
-    background: #d6f5dd;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.address-text {
-    margin: 10px 0;
-    color: #444;
-    line-height: 1.5;
-}
-
-.address-edit,
-.add-address {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #ddd;
-}
-
-.address-edit summary,
-.add-address summary {
-    width: fit-content;
-    color: #111;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.compact-form {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 12px;
-}
-
-.compact-form button {
-    align-self: end;
-}
-
-.address-actions {
-    justify-content: flex-start;
-    margin-top: 12px;
-}
-
-.address-actions form {
-    margin: 0;
-}
-
-.text-button {
-    padding: 4px 0;
-    color: #111;
-    background: none;
-    border: 0;
-    font: inherit;
+    color: #888;
     font-size: 12px;
-    text-decoration: underline;
-    cursor: pointer;
 }
 
-.danger-text {
-    color: #a11;
-}
-
-.add-address {
-    margin-top: 20px;
-}
-
-@media (max-width: 760px) {
-    .account-page {
-        width: calc(100% - 32px);
-        margin-top: 18px;
-    }
-
+/* ---------- Màn hình hẹp ---------- */
+@media (max-width: 860px) {
     .account-grid {
         grid-template-columns: 1fr;
     }
-
-    .account-profile-card,
-    .account-address-card {
-        grid-column: auto;
-    }
 }
 
-@media (max-width: 520px) {
-    .account-heading,
-    .account-card-heading {
+@media (max-width: 560px) {
+    .account-page {
+        margin-top: 12px;
+        padding: 0;
+    }
+
+    .account-heading {
         align-items: flex-start;
+        flex-direction: column;
     }
 
     .account-card {
-        padding: 16px;
+        padding: 18px;
     }
 
+    .account-card-heading {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+    }
+
+    .avatar-input-row,
     .compact-form {
         grid-template-columns: 1fr;
     }
 
     .avatar-input-row {
-        align-items: flex-start;
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .seller-stat-grid {
+        grid-template-columns: 1fr;
     }
 }

@@ -12,7 +12,7 @@
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
-<c:set var="assetVer" value="20261014b"/>
+<c:set var="assetVer" value="20261018"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -111,7 +111,7 @@
 <a class="profile-block" href="${ctx}${sessionScope.userRole == 'admin' ? '/admin/dashboard' : '/account/profile'}">
   <c:choose>
     <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}${sessionScope.avatarPath}" alt="avatar" class="profile-avatar"></c:when>
-    <c:otherwise><img src="${ctx}/assets/images/avt.png" alt="avatar" class="profile-avatar"></c:otherwise>
+    <c:otherwise><img src="${ctx}/assets/images/default-avatar.png" alt="avatar" class="profile-avatar"></c:otherwise>
   </c:choose>
   <span class="username-box"><span class="username" id="usernameText"><c:out value="${empty sessionScope.fullName ? 'Khách' : sessionScope.fullName}" /></span></span>
 </a>

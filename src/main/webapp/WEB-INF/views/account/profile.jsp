@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="pageTitle" value="Hồ sơ cá nhân" />
 <c:set var="pageCss" value="account.css" />
-<jsp:include page="/WEB-INF/views/common/header.jsp" />
+<%@ include file="/WEB-INF/views/common/header.jsp" %>
 
 <section class="account-page">
     <div class="account-heading">
@@ -62,7 +62,7 @@
                         <img class="account-avatar" src="${pageContext.request.contextPath}<c:out value='${customer.avatarPath}'/>" alt="Ảnh đại diện">
                     </c:when>
                     <c:otherwise>
-                        <img class="account-avatar" src="${pageContext.request.contextPath}/assets/images/avt.png" alt="Ảnh đại diện mặc định">
+                        <img class="account-avatar" src="${pageContext.request.contextPath}/assets/images/default-avatar.png" alt="Ảnh đại diện mặc định">
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -197,4 +197,4 @@
     </div>
 </section>
 
-<jsp:include page="/WEB-INF/views/common/footer.jsp" />
+<%@ include file="/WEB-INF/views/common/footer.jsp" %>
