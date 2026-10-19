@@ -6,6 +6,7 @@
 <c:set var="pageTitle" value="Bài đăng của tôi"/>
 <c:set var="pageCss" value="product.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
+<div class="page-card">
 
 <section class="search-head with-action">
   <div>
@@ -91,6 +92,7 @@
     </ul>
   </c:otherwise>
 </c:choose>
+</div>
 
 <script src="${ctx}/assets/js/product.js?v=${assetVer}" defer></script>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

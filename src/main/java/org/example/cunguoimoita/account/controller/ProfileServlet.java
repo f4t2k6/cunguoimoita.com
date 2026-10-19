@@ -9,6 +9,7 @@ import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.Customer;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.review.service.ReviewService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -19,6 +20,7 @@ public class ProfileServlet extends HttpServlet {
     private static final Pattern PHONE = Pattern.compile("^[0-9+()\\-\\s]{8,20}$");
     private final UserDAO userDAO = new UserDAO();
     private final AddressDAO addressDAO = new AddressDAO();
+    private final ReviewService reviewService = new ReviewService();   // F8: hạng thành viên hiện trong hồ sơ
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -65,6 +67,10 @@ public class ProfileServlet extends HttpServlet {
             }
             req.setAttribute("customer", customer);
             req.setAttribute("addresses", addressDAO.findByUserId(userId));
+            // Hạng thành viên (cùng dữ liệu với /review/tier): progress, summary, reviews
+            req.setAttribute("progress", reviewService.getTierProgress(userId));
+            req.setAttribute("summary", reviewService.getSummary(userId));
+            req.setAttribute("reviews", reviewService.getReviewsOf(userId));
             req.getRequestDispatcher("/WEB-INF/views/account/profile.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException("Không thể tải hồ sơ.", e);

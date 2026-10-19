@@ -3,39 +3,82 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Chi tiết + thanh toán 1 đơn. Dữ liệu từ OrderServlet.showDetail:
-     order, isBuyer, isSeller, editable, codConfirmed, shipment, carrierName, payments, dispute, refund, payout, error, message
-     + khi người mua còn sửa được đơn: addresses, quotes, vouchers, codProblem --%>
+<%-- Chi tiết 1 đơn, khác nhau theo vai trò. Dữ liệu từ OrderServlet.showDetail:
+     order, itemCards (productId → tên + ảnh), isBuyer, isSeller, editable, codConfirmed, shipment, carrierName,
+     dispute, refund, payout, sellerAddresses (người bán), error, message
+     + khi người mua còn sửa được đơn: addresses, quotes, vouchers, codProblem
+     Người mua: đang tạo đơn → các bước đặt hàng (không có Huỷ đơn); đã đặt → trạng thái, vận chuyển, huỷ đơn.
+     Người bán: thông tin đơn, xác nhận giao hàng cho đơn vị vận chuyển (bưu cục / nhân viên đến lấy), huỷ đơn. --%>
 <c:set var="pageTitle" value="Đơn ${order.code}"/>
 <c:set var="pageCss" value="order.css"/>
 <c:set var="backUrl" value="/order/list"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <c:set var="o" value="${order}"/>
 <c:set var="disputeOpen" value="${not empty dispute and dispute.open}"/>
-<div class="order-page">
-  <h1>Đơn <c:out value="${o.code}"/> <span class="status status-${o.status}">${o.status.label()}</span></h1>
+<c:set var="closed" value="${o.status == 'CANCELLED' or o.status == 'REFUNDED'}"/>
+<%-- Người mua đã trả tiền (online) hoặc đã đặt COD → vận đơn đã có mã, chờ người bán giao --%>
+<c:set var="placed" value="${not closed and (o.status != 'NEW' and o.status != 'AWAITING_PAYMENT' or codConfirmed)}"/>
+<%-- Bước trên thanh trạng thái: 1 chờ người bán xác nhận, 2 chuẩn bị vận chuyển, 3 đang vận chuyển, 4 đã giao --%>
+<c:set var="step" value="${empty shipment ? 1 : (shipment.status == 'RETURNED' ? 0 : shipment.status.ordinal() + 1)}"/>
+<c:set var="canCancel" value="${not closed and (o.status == 'NEW' or o.status == 'AWAITING_PAYMENT' or o.status == 'PAID') and (empty shipment or shipment.status == 'CREATED') and (isSeller or not editable)}"/>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">${isBuyer ? 'ĐƠN MUA' : 'ĐƠN BÁN'}</p>
+    <h1 class="page-title">Đơn <c:out value="${o.code}"/> <span class="status status-${o.status}">${o.status.label()}</span></h1>
+  </div>
   <p class="hint">
     Ngày đặt: ${o.orderDate.toLocalDate()} ·
     Bạn là <strong>${isBuyer ? 'người mua' : 'người bán'}</strong> ·
-    <a href="${ctx}/order/list?as=${isBuyer ? 'buyer' : 'seller'}">Danh sách đơn</a>
+    <a href="${ctx}/order/list?as=${isBuyer ? 'buyer' : 'seller'}">${isBuyer ? 'Đơn mua' : 'Đơn bán'}</a>
+    <c:if test="${isBuyer}"> · <a href="${ctx}/payment/history">Lịch sử thanh toán</a></c:if>
   </p>
 
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
   <c:if test="${not empty message}"><p class="order-alert"><c:out value="${message}"/></p></c:if>
 
+  <%-- ========== TRẠNG THÁI ĐƠN ========== --%>
+  <c:choose>
+    <c:when test="${o.status == 'CANCELLED'}"><p class="order-state-banner">Đơn đã huỷ.</p></c:when>
+    <c:when test="${o.status == 'REFUNDED'}"><p class="order-state-banner">Đơn đã hoàn tiền cho người mua.</p></c:when>
+    <c:when test="${placed}">
+      <ol class="order-steps" aria-label="Trạng thái đơn">
+        <li class="${step >= 1 ? 'done' : ''} ${step == 1 ? 'current' : ''}"><span>1</span>Chờ người bán xác nhận</li>
+        <li class="${step >= 2 ? 'done' : ''} ${step == 2 ? 'current' : ''}"><span>2</span>Chuẩn bị vận chuyển</li>
+        <li class="${step >= 3 ? 'done' : ''} ${step == 3 ? 'current' : ''}"><span>3</span>Đang vận chuyển</li>
+        <li class="${step >= 4 ? 'done' : ''} ${step == 4 ? 'current' : ''}"><span>4</span>Đã giao thành công</li>
+      </ol>
+      <c:if test="${shipment.status == 'RETURNED'}"><p class="order-state-banner">Đơn vị vận chuyển đã hoàn hàng về người bán.</p></c:if>
+      <c:if test="${o.status == 'COMPLETED'}"><p class="hint">Đơn đã hoàn tất.</p></c:if>
+    </c:when>
+    <c:when test="${isSeller}"><p class="order-state-banner">Chờ người mua chọn vận chuyển và thanh toán.</p></c:when>
+  </c:choose>
+
   <%-- ========== CÁC MÓN + TIỀN ========== --%>
   <section class="order-card">
     <h2>Sản phẩm</h2>
-    <table class="order-table">
-      <tr><th>Mã sản phẩm</th><th>Số lượng</th><th>Giá chốt</th></tr>
-      <c:forEach var="item" items="${o.items}">
-        <tr>
-          <td><a href="${ctx}/product?id=${item.productId}"><c:out value="${item.productId}"/></a></td>
-          <td>${item.quantity}</td>
-          <td><fmt:formatNumber value="${item.unitPrice}" pattern="#,##0"/> đ</td>
-        </tr>
-      </c:forEach>
-    </table>
+    <div class="table-scroll">
+      <table class="order-table order-items-table">
+        <tr><th>Sản phẩm</th><th>Mã sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr>
+        <c:forEach var="item" items="${o.items}">
+          <c:set var="card" value="${itemCards[item.productId]}"/>
+          <tr>
+            <td>
+              <a class="order-item" href="${ctx}/product?id=${fn:escapeXml(item.productId)}">
+                <c:choose>
+                  <c:when test="${not empty card.coverImage()}"><img class="cart-thumb" src="${ctx}<c:out value='${card.coverImage()}'/>" alt="" loading="lazy"></c:when>
+                  <c:otherwise><span class="cart-thumb cart-thumb-empty">Chưa có ảnh</span></c:otherwise>
+                </c:choose>
+                <span class="order-item-name"><c:out value="${empty card ? item.productId : card.name()}"/></span>
+              </a>
+            </td>
+            <td class="order-item-code"><c:out value="${item.productId}"/></td>
+            <td>${item.quantity}</td>
+            <td><fmt:formatNumber value="${item.unitPrice}" pattern="#,##0"/> đ</td>
+            <td><strong><fmt:formatNumber value="${item.unitPrice * item.quantity}" pattern="#,##0"/> đ</strong></td>
+          </tr>
+        </c:forEach>
+      </table>
+    </div>
     <table class="money">
       <tr><td>Tiền hàng</td><td><fmt:formatNumber value="${o.subTotal}" pattern="#,##0"/> đ</td></tr>
       <tr><td>Phí vận chuyển</td><td>
@@ -44,7 +87,13 @@
           <c:otherwise><fmt:formatNumber value="${o.shippingFee}" pattern="#,##0"/> đ</c:otherwise>
         </c:choose></td></tr>
       <tr><td>Giảm giá</td><td>− <fmt:formatNumber value="${o.discountAmount}" pattern="#,##0"/> đ</td></tr>
+      <tr><td>Phí dịch vụ</td><td>0 đ</td></tr>
       <tr class="total"><td>Tổng thanh toán</td><td><fmt:formatNumber value="${o.totalAmount}" pattern="#,##0"/> đ</td></tr>
+      <%-- Người bán: phí sàn trừ vào tiền nhận (khi đơn đã hoàn tất và có khoản thu nhập) --%>
+      <c:if test="${isSeller and not empty payout}">
+        <tr><td>Phí sàn (trừ vào tiền bạn nhận)</td><td>− <fmt:formatNumber value="${payout.commissionFee}" pattern="#,##0"/> đ</td></tr>
+        <tr><td>Bạn thực nhận</td><td><strong><fmt:formatNumber value="${payout.netAmount}" pattern="#,##0"/> đ</strong></td></tr>
+      </c:if>
     </table>
   </section>
 
@@ -144,60 +193,56 @@
     </section>
   </c:if>
 
-  <%-- ========== VẬN CHUYỂN ========== --%>
-  <c:if test="${not empty shipment}">
+
+  <%-- ========== VẬN CHUYỂN (sau khi đã đặt: mã vận đơn tự sinh) ========== --%>
+  <c:if test="${placed and not empty shipment}">
     <section class="order-card">
       <h2>Vận chuyển</h2>
       <p><strong><c:out value="${carrierName}"/></strong> · ${shipment.status.label()}
-        <c:if test="${not empty shipment.trackingCode}"> · mã vận đơn <c:out value="${shipment.trackingCode}"/></c:if>
-        · <a href="${ctx}/shipping/track?orderId=${o.id}">Theo dõi vận chuyển</a></p>
+        <c:if test="${not empty shipment.trackingCode}"> · mã vận đơn <strong><c:out value="${shipment.trackingCode}"/></strong></c:if></p>
       <c:if test="${codConfirmed}">
-        <p>Thu hộ (COD): <fmt:formatNumber value="${shipment.codAmount}" pattern="#,##0"/> đ
-          <c:if test="${isBuyer and o.status == 'NEW'}"> · Bạn đã đặt hàng, trả tiền cho shipper khi nhận hàng.</c:if></p>
+        <p>Thu hộ (COD): <fmt:formatNumber value="${shipment.codAmount}" pattern="#,##0"/> đ</p>
       </c:if>
-
-      <%-- Người bán gửi hàng khi người mua đã trả online hoặc đã xác nhận COD --%>
-      <c:if test="${isSeller and shipment.status == 'CREATED'}">
-        <c:choose>
-          <c:when test="${o.status == 'PAID' or (o.status == 'NEW' and codConfirmed)}">
-            <form method="post" action="${ctx}/shipping/track">
-              <input type="hidden" name="orderId" value="${o.id}">
-              <input type="hidden" name="action" value="ship">
-              <input name="trackingCode" required placeholder="Mã vận đơn">
-              <button>Đã gửi hàng</button>
-            </form>
-          </c:when>
-          <c:when test="${o.status == 'NEW' or o.status == 'AWAITING_PAYMENT'}">
-            <p class="hint">Chờ người mua thanh toán hoặc xác nhận COD rồi mới gửi hàng.</p>
-          </c:when>
-        </c:choose>
-      </c:if>
-    </section>
-  </c:if>
-  <c:if test="${isSeller and empty shipment and (o.status == 'NEW' or o.status == 'AWAITING_PAYMENT')}">
-    <p class="hint">Người mua chưa chọn đơn vị vận chuyển và thanh toán.</p>
-  </c:if>
-
-  <%-- ========== LỊCH SỬ THANH TOÁN (F5) ========== --%>
-  <c:if test="${not empty payments}">
-    <section class="order-card">
-      <h2>Lịch sử thanh toán</h2>
-      <table class="order-table">
-        <tr><th>Mã</th><th>Cổng</th><th>Số tiền</th><th>Trạng thái</th><th>Thời gian</th></tr>
-        <c:forEach var="p" items="${payments}">
-          <tr>
-            <td><c:out value="${p.code}"/></td>
-            <td>${p.gateway.displayName}</td>
-            <td><fmt:formatNumber value="${p.amount}" pattern="#,##0"/> đ</td>
-            <td>${p.status.displayName}</td>
-            <td>${empty p.paidAt ? p.createdAt.toLocalDate() : p.paidAt.toLocalDate()}</td>
-          </tr>
-        </c:forEach>
-      </table>
+      <a class="btn-link secondary" href="${ctx}/shipping/track?orderId=${o.id}">Xem vận chuyển →</a>
     </section>
   </c:if>
 
-  <%-- ========== HOÀN TIỀN / TIỀN NGƯỜI BÁN NHẬN (F9) ========== --%>
+  <%-- ========== NGƯỜI BÁN: XÁC NHẬN GIAO HÀNG CHO ĐƠN VỊ VẬN CHUYỂN ========== --%>
+  <c:if test="${isSeller and placed and not empty shipment and shipment.status == 'CREATED'}">
+    <section class="order-card" id="ban-giao">
+      <h2>Xác nhận giao hàng</h2>
+      <p class="hint">Mã vận đơn đã được tạo tự động. Đóng gói xong, chọn cách giao hàng cho
+        <strong><c:out value="${carrierName}"/></strong>:</p>
+      <form method="post" action="${ctx}/shipping/track" class="handover-form">
+        <input type="hidden" name="orderId" value="${o.id}">
+        <input type="hidden" name="action" value="handover">
+        <label class="handover-option">
+          <input type="radio" name="handover" value="dropoff" required checked>
+          <span><strong>Mang đến bưu cục gần nhất</strong><small>Bạn tự mang gói hàng ra bưu cục của <c:out value="${carrierName}"/>.</small></span>
+        </label>
+        <label class="handover-option">
+          <input type="radio" name="handover" value="pickup" ${empty sellerAddresses ? 'disabled' : ''}>
+          <span><strong>Nhân viên đến lấy hàng</strong><small>Chọn địa chỉ trong sổ địa chỉ của bạn:</small>
+            <c:choose>
+              <c:when test="${empty sellerAddresses}">
+                <small class="tag-off">Bạn chưa có địa chỉ nào. <a href="${ctx}/account/profile#so-dia-chi">Thêm địa chỉ</a></small>
+              </c:when>
+              <c:otherwise>
+                <select name="addressId">
+                  <c:forEach var="a" items="${sellerAddresses}">
+                    <option value="${a.id}"><c:out value="${a.label}: ${a.addressLine}${empty a.ward ? '' : ', '.concat(a.ward)}${empty a.district ? '' : ', '.concat(a.district)}, ${a.province}"/></option>
+                  </c:forEach>
+                </select>
+              </c:otherwise>
+            </c:choose>
+          </span>
+        </label>
+        <button>Xác nhận giao hàng</button>
+      </form>
+    </section>
+  </c:if>
+
+  <%-- ========== HOÀN TIỀN / TIỀN NGƯỜI BÁN NHẬN / KHIẾU NẠI (F9) ========== --%>
   <c:if test="${not empty refund}">
     <p class="order-alert">Đã hoàn <strong><fmt:formatNumber value="${refund.amount}" pattern="#,##0"/> đ</strong>
       cho người mua (${refund.reason.displayName}).</p>
@@ -213,35 +258,37 @@
       <a href="${ctx}/dispute?id=${dispute.id}">Xem khiếu nại</a></p>
   </c:if>
 
-  <%-- ========== CÁC NÚT THEO TRẠNG THÁI ========== --%>
-  <section class="order-card actions">
-    <%-- Người mua xác nhận đã nhận hàng → đơn hoàn tất, tiền chuyển cho người bán --%>
-    <c:if test="${isBuyer and not disputeOpen and (o.status == 'SHIPPING' or o.status == 'DELIVERED')}">
+  <%-- ========== NGƯỜI MUA: NHẬN HÀNG / TRẢ HÀNG / ĐÁNH GIÁ ========== --%>
+  <%-- Chỉ khi vận đơn đã qua đủ các bước tới "đã giao" mới hiện 2 lựa chọn; người bán không có các nút này --%>
+  <c:if test="${isBuyer and not disputeOpen and o.status == 'DELIVERED'}">
+    <section class="order-card actions">
       <form method="post" action="${ctx}/order/detail">
         <input type="hidden" name="id" value="${o.id}">
         <input type="hidden" name="action" value="received">
         <button>Đã nhận hàng</button>
       </form>
-      <a class="btn-link secondary" href="${ctx}/dispute?orderId=${o.id}">Khiếu nại</a>
-    </c:if>
-    <c:if test="${isBuyer and o.status == 'DELIVERED' and not disputeOpen}">
-      <span class="hint">Đơn tự hoàn tất sau 7 ngày kể từ khi giao nếu bạn không khiếu nại.</span>
-    </c:if>
+      <a class="btn-link secondary" href="${ctx}/dispute?orderId=${o.id}">Trả hàng/Hoàn tiền</a>
+      <p class="hint">Đơn tự hoàn tất sau 7 ngày kể từ khi giao nếu bạn không yêu cầu trả hàng/hoàn tiền.</p>
+    </section>
+  </c:if>
+  <%-- F8: đơn hoàn tất → chỉ người mua đánh giá giao dịch --%>
+  <c:if test="${isBuyer and o.status == 'COMPLETED'}">
+    <section class="order-card actions">
+      <a class="btn-link" href="${ctx}/review/create?orderId=${o.id}">Đánh giá giao dịch</a>
+    </section>
+  </c:if>
 
-    <%-- F8: đơn hoàn tất → người mua và người bán đều đánh giá được bên kia --%>
-    <c:if test="${o.status == 'COMPLETED'}">
-       <a class="btn-link" href="${ctx}/review/create?orderId=${o.id}">Đánh giá giao dịch</a>
-    </c:if>
-
-    <%-- Huỷ đơn: khi hàng chưa gửi (luật canMoveTo(CANCELLED) trong Order). Đơn đã trả online → tự hoàn tiền. --%>
-    <c:if test="${(o.status == 'NEW' or o.status == 'AWAITING_PAYMENT' or o.status == 'PAID') and (empty shipment or shipment.status == 'CREATED')}">
-      <form method="post" action="${ctx}/order/detail">
+  <%-- ========== HUỶ ĐƠN: khi hàng chưa giao cho đơn vị vận chuyển. Người mua đang tạo đơn thì không có ô này. ========== --%>
+  <c:if test="${canCancel}">
+    <section class="order-card cancel-box">
+      <h2>Huỷ đơn hàng</h2>
+      <form method="post" action="${ctx}/order/detail" class="cancel-form">
         <input type="hidden" name="id" value="${o.id}">
         <input type="hidden" name="action" value="cancel">
         <input name="reason" placeholder="Lý do huỷ" required>
         <button class="secondary">Huỷ đơn${o.status == 'PAID' ? ' và hoàn tiền' : ''}</button>
       </form>
-    </c:if>
-  </section>
+    </section>
+  </c:if>
 </div>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

@@ -505,3 +505,19 @@
     color: #8a5a00;
     font-size: 11.5px;
 }
+
+/* ---------- Hạng thành viên trong hồ sơ ---------- */
+.account-tier-card { margin-bottom: 18px; scroll-margin-top: 100px; }
+.account-tier-card p { margin: 3.5px 0; }
+.account-muted { color: #666; font-size: 12px; }
+.tier-row { display: flex; align-items: center; gap: 14.5px; flex-wrap: wrap; margin-top: 11px; }
+.tier-info { flex: 1; min-width: 0; font-size: 13.5px; }
+.account-tier-card .tier-badge { display: inline-block; padding: 5.5px 18px; border: 2px solid #000; border-radius: 18px; font-weight: 700; font-size: 16px; background: #fff; }
+.account-tier-card .tier-Silver { background: #e5e5e5; }
+.account-tier-card .tier-Gold { background: #f5d76e; }
+.account-tier-card .tier-Diamond { background: #000; color: #fff; }
+.tier-progress { height: 11px; border: 1.5px solid #000; border-radius: 9px; overflow: hidden; margin: 11px 0 5.5px; }
+.tier-progress-bar { height: 100%; background: #000; }
+.tier-reviews { margin-top: 12.5px; padding-top: 11px; border-top: 1px solid #e3e3e3; font-size: 13.5px; }
+.tier-review { padding: 7px 0; border-top: 1px dashed #e3e3e3; }
+.tier-review:first-of-type { border-top: none; }

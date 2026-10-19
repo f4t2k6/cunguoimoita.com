@@ -3,9 +3,9 @@
 <c:set var="pageTitle" value="Thông báo"/>
 <c:set var="pageCss" value="chat.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<section class="notify-page">
+<section class="notify-page page-card">
   <div class="notify-panel-head">
-    <h1>Thông báo</h1>
+    <h1 class="page-title">Thông báo</h1>
     <form method="post" action="${ctx}/notifications/read-all">
       <button type="submit" class="notify-link">Đánh dấu tất cả đã đọc</button>
     </form>

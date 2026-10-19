@@ -153,3 +153,8 @@
 .msgr-product-meta { font-size: 11.5px; color: #555; }
 .msgr-product .msgr-pill { margin-top: 4.5px; }
 .msgr-offer-bar .msgr-offer-unit { font-weight: 600; margin-left: -2px; }
+
+/* Khung món đầu đoạn chat: "Trả giá món này" + "Mua ngay" nằm cạnh nhau */
+.msgr-product-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 4.5px; }
+.msgr-product-actions .msgr-pill { margin-top: 0; }
+.msgr-buy-form { margin: 0; display: inline-flex; }

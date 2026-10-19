@@ -31,6 +31,7 @@ public class Conversation {
     private Double productPrice;
     private String productImage;               // ảnh bìa của món (khung sản phẩm đầu đoạn chat)
     private ProductCondition productCondition;
+    private boolean productBuyable;            // món còn mua ngay được với giá đăng (còn hàng, bài có bán)
 
     /** + close(): void  (khi món đã bán) */
     public void close() {
@@ -73,6 +74,9 @@ public class Conversation {
         String pattern = t.toLocalDate().equals(LocalDate.now()) ? "HH:mm" : "dd/MM";
         return t.format(DateTimeFormatter.ofPattern(pattern));
     }
+
+    public boolean isProductBuyable() { return productBuyable; }
+    public void setProductBuyable(boolean productBuyable) { this.productBuyable = productBuyable; }
 
     public boolean isOpen() {
         return status == ConversationStatus.OPEN;

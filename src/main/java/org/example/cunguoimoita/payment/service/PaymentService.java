@@ -9,6 +9,7 @@ import org.example.cunguoimoita.payment.dao.PaymentDAO;
 import org.example.cunguoimoita.payment.model.Payment;
 import org.example.cunguoimoita.payment.model.PaymentGateway;
 import org.example.cunguoimoita.payment.model.PaymentStatus;
+import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,6 +35,7 @@ public class PaymentService {
     private final PaymentDAO paymentDAO = new PaymentDAO();
     private final OrderDAO orderDAO = new OrderDAO();
     private final NotificationService notificationService = new NotificationService();
+    private final ShippingService shippingService = new ShippingService();   // F6: tự sinh mã vận đơn khi đã trả tiền
 
     /**
      * Customer.canUseCod(): người mua còn dùng được COD không.
@@ -150,6 +152,7 @@ public class PaymentService {
                 paymentDAO.updateStatus(c, paymentId, PaymentStatus.PAID, gatewayTxnId);
                 order.setStatus(Order.Status.PAID);
                 orderDAO.update(c, order);
+                shippingService.assignTrackingCode(c, order.getId());   // người bán chỉ còn xác nhận bàn giao
                 c.commit();
                 paidOrder = order;
             } catch (SQLException | RuntimeException ex) {
@@ -166,7 +169,7 @@ public class PaymentService {
                     "Bạn đã thanh toán thành công đơn hàng " + paidOrder.getCode() + ". Khoản tiền đang được sàn giữ hộ (Escrow).",
                     link);
             notificationService.send(paidOrder.getSellerId(), NotificationType.PAYMENT,
-                    "Đơn hàng " + paidOrder.getCode() + " đã được thanh toán. Vui lòng đóng gói và giao hàng.",
+                    "Đơn hàng " + paidOrder.getCode() + " đã được thanh toán, mã vận đơn đã được tạo. Vui lòng đóng gói và xác nhận cách giao hàng cho đơn vị vận chuyển.",
                     link);
         } catch (Exception e) {
             e.printStackTrace();

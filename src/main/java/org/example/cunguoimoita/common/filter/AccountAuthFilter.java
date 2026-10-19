@@ -25,6 +25,13 @@ public class AccountAuthFilter implements Filter {
         HttpServletResponse resp = (HttpServletResponse) response;
         String userId = CurrentUser.id(req);
         if (userId == null) {
+            // Nhớ trang đang mở để đăng nhập xong quay lại (giống LoginRequiredFilter)
+            if ("GET".equals(req.getMethod())) {
+                String query = req.getQueryString();
+                req.getSession(true).setAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN,
+                        req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo())
+                                + (query == null ? "" : "?" + query));
+            }
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }

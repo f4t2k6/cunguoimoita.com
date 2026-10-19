@@ -24,6 +24,24 @@ public class ProductRefDAO {
         }
     }
 
+    /** Tên + ảnh bìa của món để hiện trong trang đơn hàng (thay cho mã sản phẩm). */
+    public record ProductCard(String id, String name, String coverImage) {
+    }
+
+    public ProductCard findCard(Connection c, String productId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement("SELECT id, name, images FROM products WHERE id = ?")) {
+            ps.setString(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return new ProductCard(productId, productId, null);
+                }
+                String images = rs.getString("images");
+                String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
+                return new ProductCard(rs.getString("id"), rs.getString("name"), cover);
+            }
+        }
+    }
+
     public ProductRef find(Connection c, String productId) throws SQLException {
         return query(c, "SELECT id, seller_id, name, status FROM products WHERE id = ?", productId);
     }

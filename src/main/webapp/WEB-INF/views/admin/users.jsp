@@ -5,9 +5,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">QUẢN LÝ</p>
+    <h1 class="page-title">Người dùng</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Người dùng</h1>
 
   <form class="admin-toolbar" method="get">
     <input type="search" name="q" value="${fn:escapeXml(q)}" placeholder="Tên, email hoặc số điện thoại">

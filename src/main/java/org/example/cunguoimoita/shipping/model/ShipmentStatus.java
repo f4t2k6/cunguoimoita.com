@@ -28,10 +28,10 @@ public enum ShipmentStatus {
 
     public String label() {
         switch (this) {
-            case CREATED:    return "Đã tạo vận đơn";
-            case PICKED_UP:  return "Đã lấy hàng";
-            case IN_TRANSIT: return "Đang giao";
-            case DELIVERED:  return "Đã giao";
+            case CREATED:    return "Chờ người bán xác nhận";
+            case PICKED_UP:  return "Chuẩn bị vận chuyển";
+            case IN_TRANSIT: return "Đang vận chuyển";
+            case DELIVERED:  return "Đã giao thành công";
             default:         return "Hoàn hàng";
         }
     }

@@ -132,3 +132,23 @@ a.admin-stat:hover { background: #f2f2f2; }
 .admin-tabs { gap: 5.5px 4.5px; }
 .admin-tabs a { padding: 6.5px 11px; }
 .admin-jobs { margin-top: 0; }
+
+/* ===== Khung trang quản trị (.page-card ở style.css): dễ đọc, khoảng cách đều ===== */
+.admin-page.page-card { gap: 14.5px; }
+.admin-page.page-card > .page-card-head { margin: 0; }
+.admin-page .admin-note { margin: 0; padding: 9px 12.5px; background: #f6f6f6; border-radius: 9px; font-size: 12px; line-height: 1.5; }
+.admin-page .admin-section { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: 14.5px; margin: 5.5px 0 0; }
+.admin-page .admin-card { border-radius: 14.5px; }
+.admin-page .admin-card:hover { box-shadow: 3.5px 3.5px 0 #111; }
+.admin-page .admin-card h2 { font-size: 15px; }
+.admin-page .admin-stat { border-radius: 14.5px; }
+.admin-page .admin-stat:not(.todo):hover { box-shadow: 3.5px 3.5px 0 #111; }
+.admin-page .admin-toolbar { padding: 9px 11px; border: 1.5px solid #000; border-radius: 14.5px; background: #fafafa; }
+.admin-page .admin-table-wrap { border-radius: 14.5px; }
+.admin-page .admin-table th { background: #f3f3f3; text-transform: uppercase; letter-spacing: .04em; font-size: 10.5px; }
+.admin-page .admin-table tbody tr:nth-child(even) td, .admin-page .admin-table tr:nth-child(even) td { background: #fafafa; }
+.admin-page .admin-table tr:hover td { background: #f0f0f0; }
+.admin-page .admin-form { padding: 12.5px 14.5px; border: 1.5px solid #000; border-radius: 14.5px; background: #fff; }
+.admin-page .admin-flash { border-radius: 9px; }
+.admin-jobs { max-width: none; }
+.admin-page .admin-form:hover { box-shadow: none; }

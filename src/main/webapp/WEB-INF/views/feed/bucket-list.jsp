@@ -6,6 +6,7 @@
 <c:set var="pageTitle" value="Đã lưu"/>
 <c:set var="pageCss" value="product.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
+<div class="page-card">
 
 <section class="search-head">
   <p class="page-eyebrow">BUCKET LIST</p>
@@ -56,5 +57,6 @@
     </div>
   </c:otherwise>
 </c:choose>
+</div>
 
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

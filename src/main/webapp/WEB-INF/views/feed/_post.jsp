@@ -5,7 +5,7 @@
   Cần sẵn: taglib c, fmt; biến ctx (header.jsp đã đặt) và backUrl (trang quay về sau khi bấm Lưu).
 --%>
 <c:url var="postUrl" value="/product"><c:param name="id" value="${post.id}"/></c:url>
-<c:set var="isMine" value="${post.sellerId == sessionScope.userId}"/>
+<c:set var="isMine" value="${not empty sessionScope.userId and post.sellerId == sessionScope.userId}"/>
 <article class="post-card feed-post">
   <header class="post-head">
     <c:choose>
@@ -45,6 +45,12 @@
       <c:when test="${isMine}">
         <span class="post-mine">Bài của bạn</span>
         <a class="btn" href="${ctx}/product/edit?id=${fn:escapeXml(post.id)}">Sửa bài</a>
+      </c:when>
+      <c:when test="${empty sessionScope.userId}">
+        <%-- Khách: các nút dẫn tới trang đăng nhập, đăng nhập xong quay lại trang này --%>
+        <a class="btn" href="${loginUrl}">Lưu</a>
+        <a class="btn" href="${loginUrl}">Nhắn tin</a>
+        <c:if test="${post.listingType.forSale}"><a class="btn btn-dark" href="${loginUrl}">Thêm vào giỏ</a></c:if>
       </c:when>
       <c:otherwise>
         <form method="post" action="${ctx}/feed/wishlist" class="js-save">

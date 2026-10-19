@@ -1,5 +1,7 @@
 package org.example.cunguoimoita.shipping.service;
 
+import org.example.cunguoimoita.account.dao.AddressDAO;
+import org.example.cunguoimoita.account.model.Address;
 import org.example.cunguoimoita.common.dao.OrderRefDAO;
 import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
@@ -16,7 +18,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -38,6 +42,11 @@ public class ShippingService {
     private final ShipmentDAO shipmentDAO = new ShipmentDAO();
     private final OrderRefDAO orderDAO = new OrderRefDAO();
     private final NotificationService notificationService = new NotificationService();
+    private final AddressDAO addressDAO = new AddressDAO();
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Cách người bán bàn giao hàng cho đơn vị vận chuyển. */
+    public enum Handover { DROPOFF, PICKUP }
 
     /** Các hãng đang hoạt động, rẻ trước. */
     public List<ShippingCarrier> listCarriers() throws SQLException {
@@ -175,6 +184,85 @@ public class ShippingService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return shipmentDAO.findByOrderId(c, orderId);
         }
+    }
+
+    /**
+     * Người mua thanh toán xong (online thành công hoặc đặt COD) → tự sinh mã vận đơn theo hãng đã chọn,
+     * vận đơn vẫn ở "Chờ người bán xác nhận" (created). Chạy trong transaction của nơi gọi (F4, F5).
+     * Đã có mã thì giữ nguyên. @return mã vận đơn (null nếu đơn chưa có vận đơn)
+     */
+    public String assignTrackingCode(Connection c, String orderId) throws SQLException {
+        Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
+        if (s == null) {
+            return null;
+        }
+        if (isBlank(s.getTrackingCode())) {
+            s.setTrackingCode(newTrackingCode(s.getCarrierId()));
+            shipmentDAO.update(c, s);
+        }
+        return s.getTrackingCode();
+    }
+
+    /** Mã vận đơn: tiền tố theo hãng + 9 số ngẫu nhiên, VD GHN482913570. */
+    private static String newTrackingCode(String carrierId) {
+        String prefix = carrierId == null ? "VD" : switch (carrierId) {
+            case "ghn" -> "GHN";
+            case "ghtk" -> "GHTK";
+            case "ahamove" -> "AHA";
+            case "viettel" -> "VTP";
+            default -> carrierId.replaceAll("[^A-Za-z]", "").toUpperCase(Locale.ROOT);
+        };
+        return prefix + String.format("%09d", RANDOM.nextInt(1_000_000_000));
+    }
+
+    /**
+     * Người bán xác nhận bàn giao hàng (mã vận đơn đã tự sinh khi người mua thanh toán):
+     *  - DROPOFF: tự mang đến bưu cục gần nhất của hãng
+     *  - PICKUP:  nhân viên hãng đến lấy tại 1 địa chỉ trong sổ địa chỉ của người bán (pickupAddressId)
+     * Vận đơn chuyển sang "Chuẩn bị vận chuyển" (picked_up), đơn chuyển "Đang giao", người mua nhận thông báo.
+     * @return dòng mô tả cách bàn giao để hiện cho người bán
+     */
+    public String confirmHandover(String orderId, String sellerId, Handover method, String pickupAddressId)
+            throws SQLException {
+        if (method == null) {
+            throw new IllegalArgumentException("Vui lòng chọn cách giao hàng cho đơn vị vận chuyển");
+        }
+        String where;
+        if (method == Handover.PICKUP) {
+            Address address = addressDAO.findByUserId(sellerId).stream()
+                    .filter(a -> a.getId().equals(pickupAddressId)).findFirst().orElse(null);
+            if (address == null) {
+                throw new IllegalArgumentException("Vui lòng chọn địa chỉ lấy hàng trong sổ địa chỉ của bạn");
+            }
+            where = "nhân viên vận chuyển sẽ đến lấy hàng tại " + addressText(address);
+        } else {
+            where = "người bán mang hàng đến bưu cục gần nhất";
+        }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            OrderRef order = requireOrder(c, orderId);
+            Shipment s = shipmentDAO.findByOrderId(c, orderId);
+            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (!"paid".equals(order.status()) && !codConfirmed) {
+                throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa giao hàng được");
+            }
+        }
+        changeShipment(orderId, s -> {
+            if (isBlank(s.getTrackingCode())) {
+                s.setTrackingCode(newTrackingCode(s.getCarrierId()));   // đơn cũ trước khi có tự sinh mã
+            }
+            s.updateStatus(ShipmentStatus.PICKED_UP);
+        }, true);
+        return where;
+    }
+
+    private static String addressText(Address a) {
+        StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
+        for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
+            if (!isBlank(part)) {
+                sb.append(sb.length() > 0 ? ", " : "").append(part);
+            }
+        }
+        return sb.toString();
     }
 
     /**

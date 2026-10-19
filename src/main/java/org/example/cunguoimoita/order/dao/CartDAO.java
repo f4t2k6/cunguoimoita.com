@@ -16,8 +16,13 @@ public class CartDAO {
 
     // Một dòng hiển thị trong giỏ: món + thông tin sản phẩm + người bán (JOIN với products, users).
     // Dùng cho trang giỏ hàng và cho checkout (cần sellerId, price để tách đơn).
+    // coverImage: ảnh đầu tiên của sản phẩm (null nếu bài không có ảnh), để trang giỏ hiện ảnh nhỏ.
     public record CartLine(String productId, String productName, double price,
-                           String sellerId, String sellerName, String productStatus) {
+                           String sellerId, String sellerName, String productStatus, String coverImage) {
+        // Còn mua được (chưa có người đặt / chưa bán) → trang giỏ cho tick chọn
+        public boolean available() {
+            return "available".equals(productStatus);
+        }
     }
 
     // Tìm giỏ của khách (kèm danh sách món). Không có giỏ → trả null.
@@ -94,7 +99,7 @@ public class CartDAO {
 
     // Các dòng hiển thị của giỏ, sắp theo người bán để trang giỏ nhóm theo shop.
     public List<CartLine> findLines(Connection c, String cartId) throws SQLException {
-        String sql = "SELECT p.id, p.name, p.price, p.seller_id, u.fullname AS seller_name, p.status"
+        String sql = "SELECT p.id, p.name, p.price, p.seller_id, u.fullname AS seller_name, p.status, p.images"
                 + " FROM cart_items ci"
                 + " JOIN products p ON p.id = ci.product_id"
                 + " JOIN users u ON u.id = p.seller_id"
@@ -105,8 +110,10 @@ public class CartDAO {
             ps.setString(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {                        // nhiều dòng → dùng while
+                    String images = rs.getString("images");
+                    String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
                     lines.add(new CartLine(rs.getString("id"), rs.getString("name"), rs.getDouble("price"),
-                            rs.getString("seller_id"), rs.getString("seller_name"), rs.getString("status")));
+                            rs.getString("seller_id"), rs.getString("seller_name"), rs.getString("status"), cover));
                 }
             }
         }

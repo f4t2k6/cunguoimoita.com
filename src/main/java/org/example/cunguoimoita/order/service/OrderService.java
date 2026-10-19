@@ -32,6 +32,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +59,17 @@ public class OrderService {
 
     // ===================== CHECKOUT =====================
 
-    // Customer.checkout() / Cart.checkout(): tách giỏ thành mỗi người bán 1 đơn.
+    // Customer.checkout() / Cart.checkout(): tách cả giỏ thành mỗi người bán 1 đơn.
     public List<Order> checkout(String buyerId) throws SQLException {
+        return checkout(buyerId, null);
+    }
+
+    // Như trên nhưng chỉ đặt các món người mua đã tick chọn (selectedProductIds); món không chọn vẫn ở lại giỏ.
+    // selectedProductIds = null → đặt cả giỏ.
+    public List<Order> checkout(String buyerId, Collection<String> selectedProductIds) throws SQLException {
+        if (selectedProductIds != null && selectedProductIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn sản phẩm để mua");
+        }
         String addressId = defaultAddressId(buyerId);
 
         List<Order> orders = inTransaction(c -> {
@@ -68,10 +78,15 @@ public class OrderService {
                 throw new IllegalStateException("Giỏ hàng đang trống");
             }
 
-            // 1. Gom các món theo người bán: sellerId → danh sách món của người đó
+            // 1. Gom các món (đã chọn) theo người bán: sellerId → danh sách món của người đó
             Map<String, List<CartLine>> bySeller = new LinkedHashMap<>();
             for (CartLine line : cartDAO.findLines(c, cart.getId())) {
-                bySeller.computeIfAbsent(line.sellerId(), k -> new ArrayList<>()).add(line);
+                if (selectedProductIds == null || selectedProductIds.contains(line.productId())) {
+                    bySeller.computeIfAbsent(line.sellerId(), k -> new ArrayList<>()).add(line);
+                }
+            }
+            if (bySeller.isEmpty()) {
+                throw new IllegalStateException("Các sản phẩm đã chọn không còn trong giỏ hàng");
             }
 
             // 2. Mỗi người bán → 1 Order
@@ -122,6 +137,17 @@ public class OrderService {
             requireParticipant(order, userId);
             return order;
         }
+    }
+
+    // Tên + ảnh của từng món trong đơn (productId → ProductCard), để trang đơn hiện thay cho mã sản phẩm.
+    public Map<String, ProductRefDAO.ProductCard> getItemCards(Order order) throws SQLException {
+        Map<String, ProductRefDAO.ProductCard> cards = new LinkedHashMap<>();
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            for (OrderItem item : order.getItems()) {
+                cards.put(item.getProductId(), productDAO.findCard(c, item.getProductId()));
+            }
+        }
+        return cards;
     }
 
     public List<Order> getBuyerOrders(String buyerId) throws SQLException {
@@ -227,10 +253,13 @@ public class OrderService {
             o.choosePaymentMethod(method);
             orderDAO.update(c, o);
             shippingService.setCodAmount(c, orderId, method == Order.PaymentMethod.COD ? o.getTotalAmount() : 0);
+            if (method == Order.PaymentMethod.COD) {
+                shippingService.assignTrackingCode(c, orderId);   // đặt COD xong → tự sinh mã vận đơn
+            }
             return o;
         });
         if (method == Order.PaymentMethod.COD) {
-            notify(order.getSellerId(), "Đơn " + order.getCode() + " đã xác nhận thanh toán khi nhận hàng (COD). Bạn có thể gửi hàng.",
+            notify(order.getSellerId(), "Đơn " + order.getCode() + " đã xác nhận thanh toán khi nhận hàng (COD), mã vận đơn đã được tạo. Vui lòng xác nhận cách giao hàng cho đơn vị vận chuyển.",
                     order.getId());
         }
     }
@@ -269,6 +298,10 @@ public class OrderService {
     public void confirmReceived(String orderId, String buyerId) throws SQLException {
         Completed result = inTransaction(c -> {
             Order o = requireBuyerOrder(c, orderId, buyerId);
+            // Chỉ bấm được sau khi vận đơn đã qua các bước: đã nhận vận đơn → đang giao → đã giao
+            if (o.getStatus() != Order.Status.DELIVERED) {
+                throw new IllegalStateException("Chỉ xác nhận đã nhận hàng được sau khi đơn đã giao");
+            }
             if (disputeDAO.hasOpenDispute(c, orderId)) {
                 throw new IllegalStateException("Đơn đang có khiếu nại, vui lòng chờ admin xử lý");
             }

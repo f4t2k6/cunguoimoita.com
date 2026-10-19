@@ -44,7 +44,7 @@ public class DisputeService {
 
     /**
      * Dispute.openDispute(): người mua của đơn mở khiếu nại.
-     * Chỉ khi đơn đang giao hoặc đã giao, và đơn chưa có khiếu nại nào đang mở.
+     * Chỉ khi đơn đã giao (vận đơn đã giao xong), và đơn chưa có khiếu nại nào đang mở.
      */
     public Dispute openDispute(String orderId, String buyerId, DisputeReason reason,
                                String description, String evidenceImages) throws SQLException {
@@ -56,8 +56,9 @@ public class DisputeService {
             if (!order.getBuyerId().equals(buyerId)) {
                 throw new SecurityException("Chỉ người mua của đơn mới mở khiếu nại được");
             }
-            if (order.getStatus() != Order.Status.SHIPPING && order.getStatus() != Order.Status.DELIVERED) {
-                throw new IllegalStateException("Chỉ khiếu nại được đơn đang giao hoặc đã giao");
+            // Trả hàng/hoàn tiền chỉ mở được khi vận đơn đã giao xong (đã nhận vận đơn → đang giao → đã giao)
+            if (order.getStatus() != Order.Status.DELIVERED) {
+                throw new IllegalStateException("Chỉ yêu cầu trả hàng/hoàn tiền được sau khi đơn đã giao");
             }
             if (disputeDAO.hasOpenDispute(c, orderId)) {
                 throw new IllegalStateException("Đơn này đang có khiếu nại chờ xử lý");
@@ -217,8 +218,8 @@ public class DisputeService {
             if (order == null || !order.getBuyerId().equals(buyerId)) {
                 return "Chỉ người mua của đơn mới mở khiếu nại được";
             }
-            if (order.getStatus() != Order.Status.SHIPPING && order.getStatus() != Order.Status.DELIVERED) {
-                return "Chỉ khiếu nại được đơn đang giao hoặc đã giao";
+            if (order.getStatus() != Order.Status.DELIVERED) {
+                return "Chỉ yêu cầu trả hàng/hoàn tiền được sau khi đơn đã giao";
             }
             if (disputeDAO.hasOpenDispute(c, orderId)) {
                 return "Đơn này đang có khiếu nại chờ xử lý";

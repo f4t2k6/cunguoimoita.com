@@ -7,9 +7,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">QUẢN LÝ</p>
+    <h1 class="page-title">Voucher</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Voucher</h1>
   <p class="admin-note">Mỗi voucher thuộc một khách và dùng được 1 lần. Để trống email thì mỗi khách đang hoạt động nhận 1 voucher,
     mã = mã bạn nhập + 4 ký tự ngẫu nhiên. Khách được báo qua chuông thông báo và thấy mã ở trang đơn hàng.</p>
 

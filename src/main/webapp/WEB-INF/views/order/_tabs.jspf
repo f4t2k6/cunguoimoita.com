@@ -1,0 +1,8 @@
+<%@ page pageEncoding="UTF-8" %>
+<%-- 3 tab đơn hàng dùng chung: Giỏ hàng / Đơn mua / Đơn bán. Trang gọi đặt <c:set var="orderTab" value="cart|buyer|seller"/>.
+     Thu nhập bán hàng, Khiếu nại & hoàn tiền, Hạng thành viên nằm trong menu Cài đặt (header.jsp). --%>
+<nav class="order-tabs" aria-label="Đơn hàng">
+  <a href="${ctx}/order/cart" class="${orderTab == 'cart' ? 'active' : ''}">Giỏ hàng</a>
+  <a href="${ctx}/order/list?as=buyer" class="${orderTab == 'buyer' ? 'active' : ''}">Đơn mua</a>
+  <a href="${ctx}/order/list?as=seller" class="${orderTab == 'seller' ? 'active' : ''}">Đơn bán</a>
+</nav>

@@ -7,9 +7,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">QUẢN LÝ</p>
+    <h1 class="page-title">Hạng thành viên</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Hạng thành viên</h1>
   <p class="admin-note">Khách lên hạng khi điểm xanh (eco points) đạt ngưỡng. Hạng Bronze luôn từ 0 điểm, hạng sau phải cần nhiều điểm hơn hạng trước.</p>
 
   <div class="admin-cards tiers">

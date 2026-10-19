@@ -6,9 +6,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">TRỌNG TÀI</p>
+    <h1 class="page-title">Khiếu nại</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Khiếu nại</h1>
   <p class="admin-note">Xem trình bày và ảnh của hai bên rồi chọn: hoàn tiền cho người mua (đơn chuyển "Đã hoàn tiền")
     hoặc xử cho người bán (đơn hoàn tất, tiền chuyển cho người bán đã trừ phí sàn).</p>
 
