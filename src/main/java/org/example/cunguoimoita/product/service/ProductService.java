@@ -7,6 +7,7 @@ import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.product.dao.ProductDAO;
 import org.example.cunguoimoita.product.model.Product;
 import org.example.cunguoimoita.product.model.ProductStatus;
+import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -30,7 +31,7 @@ public class ProductService {
 
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
-    private final ProductImageStore imageStore = new ProductImageStore();
+    private final MediaStore imageStore = new MediaStore();
 
     // ==================================================================
     // Đọc
@@ -110,7 +111,7 @@ public class ProductService {
         if (uploads.size() > MAX_IMAGES) {
             throw new IllegalArgumentException("Tối đa " + MAX_IMAGES + " ảnh cho một bài");
         }
-        List<String> saved = saveAll(uploads);
+        List<String> saved = saveAll(uploads, sellerId);
         input.setId(UUID.randomUUID().toString());
         input.setSellerId(sellerId);
         input.setImages(saved);
@@ -157,7 +158,7 @@ public class ProductService {
                 if (kept.size() + uploads.size() > MAX_IMAGES) {
                     throw new IllegalArgumentException("Tối đa " + MAX_IMAGES + " ảnh cho một bài");
                 }
-                newImages = saveAll(uploads);
+                newImages = saveAll(uploads, sellerId);
                 List<String> images = new ArrayList<>(kept);
                 images.addAll(newImages);
 
@@ -175,7 +176,7 @@ public class ProductService {
                         imageStore.delete(old);
                     }
                 }
-            } catch (SQLException | IOException | RuntimeException e) {
+            } catch (SQLException | RuntimeException e) {
                 c.rollback();
                 newImages.forEach(imageStore::delete);
                 throw e;
@@ -331,13 +332,14 @@ public class ProductService {
         return p;
     }
 
-    private List<String> saveAll(List<Part> parts) throws IOException {
+    /** Lưu từng ảnh vào bảng media, trả về danh sách "/media/<id>"; lỗi giữa chừng thì xoá các ảnh đã lưu. */
+    private List<String> saveAll(List<Part> parts, String sellerId) throws IOException, SQLException {
         List<String> saved = new ArrayList<>();
         try {
             for (Part part : parts) {
-                saved.add(imageStore.save(part));
+                saved.add(imageStore.save(part, sellerId, 1600));
             }
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException | RuntimeException | SQLException e) {
             saved.forEach(imageStore::delete);
             throw e;
         }

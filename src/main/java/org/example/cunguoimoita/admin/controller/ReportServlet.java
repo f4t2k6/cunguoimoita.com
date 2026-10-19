@@ -10,6 +10,7 @@ import org.example.cunguoimoita.admin.model.ReportReason;
 import org.example.cunguoimoita.admin.service.AdminService;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.ImageStore;
+import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,13 +23,13 @@ import java.sql.SQLException;
  * Phải đăng nhập bằng tài khoản khách hàng (bảng reports.reporter_id trỏ customers).
  */
 @WebServlet("/report")
-@MultipartConfig(maxFileSize = ImageStore.MAX_FILE_SIZE, maxRequestSize = 4 * ImageStore.MAX_FILE_SIZE)
+@MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = 4 * MediaStore.MAX_FILE_SIZE)
 public class ReportServlet extends HttpServlet {
 
     private static final int MAX_IMAGES = 3;
 
     private final AdminService adminService = new AdminService();
-    private final ImageStore imageStore = new ImageStore("reports");
+    private final MediaStore mediaStore = new MediaStore();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -52,7 +53,7 @@ public class ReportServlet extends HttpServlet {
             return;
         }
         try {
-            String images = String.join(",", imageStore.saveAll(req.getParts(), "images", MAX_IMAGES));
+            String images = String.join(",", mediaStore.saveAll(req.getParts(), "images", MAX_IMAGES, userId));
             adminService.submitReport(userId, req.getParameter("type"), req.getParameter("id"),
                     req.getParameter("reason"), req.getParameter("description"), images);
             req.setAttribute("sent", true);
