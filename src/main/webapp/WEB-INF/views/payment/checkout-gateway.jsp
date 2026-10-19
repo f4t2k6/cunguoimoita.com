@@ -34,9 +34,7 @@
           ${g.displayName}
         </label>
       </c:forEach>
-      <c:if test="${not vnpayReal}">
-        <p class="hint">Bản chạy thử: chưa cấu hình khoá cổng thật, bạn sẽ sang trang giả lập để chọn "thành công" hoặc "thất bại".</p>
-      </c:if>
+      <p class="hint">⚡ Cổng VNPay sẽ chuyển hướng trực tiếp sang giao diện thanh toán Sandbox chính thức của VNPay để bạn quét mã QR hoặc nhập thẻ ngân hàng thử nghiệm.</p>
       <button>Thanh toán <fmt:formatNumber value="${order.totalAmount}" pattern="#,##0"/> đ</button>
     </form>
   </section>

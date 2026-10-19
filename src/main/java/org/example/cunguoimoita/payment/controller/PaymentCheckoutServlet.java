@@ -76,16 +76,20 @@ public class PaymentCheckoutServlet extends HttpServlet {
         try {
             Payment p = paymentService.startPayment(orderId, userId, gateway);
 
-            if (gateway == PaymentGateway.VNPAY && VNPayConfig.isConfigured()) {
+            if (gateway == PaymentGateway.VNPAY) {
+                VNPayConfig.init(getServletContext());
                 String ipAddr = req.getRemoteAddr();
-                if ("0:0:0:0:0:0:0:1".equals(ipAddr)) ipAddr = "127.0.0.1";
+                if ("0:0:0:0:0:0:0:1".equals(ipAddr) || "localhost".equals(ipAddr) || ipAddr == null) {
+                    ipAddr = "127.0.0.1";
+                }
                 String returnUrl = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort()
                                  + req.getContextPath() + "/payment/vnpay-return";
-                resp.sendRedirect(VNPayConfig.buildPaymentUrl(p.getCode(), Math.round(p.getAmount()),
-                        "Thanh toan don hang " + p.getCode(), ipAddr, returnUrl));
+                String paymentUrl = VNPayConfig.buildPaymentUrl(p.getCode(), Math.round(p.getAmount()),
+                        "Thanh toan don hang " + p.getCode(), ipAddr, returnUrl);
+                resp.sendRedirect(paymentUrl);
                 return;
             }
-            // Chưa có khoá cổng thật → trang giả lập cổng (người mua tự bấm thành công / thất bại)
+            // Các cổng khác (MoMo / Bank Transfer chưa nối API thật) → chuyển sang sandbox nội bộ
             resp.sendRedirect(req.getContextPath() + "/payment/sandbox?paymentId=" + encode(p.getId()));
         } catch (IllegalStateException | SecurityException e) {
             resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId) + "&error=" + encode(e.getMessage()));
