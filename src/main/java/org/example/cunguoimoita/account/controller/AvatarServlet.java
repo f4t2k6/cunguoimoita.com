@@ -9,19 +9,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.MediaStore;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @WebServlet("/account/avatar")
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024, maxRequestSize = 5 * 1024 * 1024)
 public class AvatarServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
+    private final MediaStore mediaStore = new MediaStore();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -33,38 +29,26 @@ public class AvatarServlet extends HttpServlet {
             return;
         }
 
-        BufferedImage image;
-        try (var input = part.getInputStream()) {
-            image = ImageIO.read(input);
-        }
-        if (image == null || image.getWidth() > 4096 || image.getHeight() > 4096) {
-            redirect(resp, req, "invalid");
-            return;
-        }
-
-        String base = System.getProperty("catalina.base");
-        if (base == null || base.isBlank()) {
-            throw new ServletException("Tomcat chưa thiết lập catalina.base để lưu ảnh đại diện.");
-        }
-        String fileName = UUID.randomUUID() + ".png";
-        Path directory = Paths.get(base, "uploads", "avatars").toAbsolutePath().normalize();
-        Files.createDirectories(directory);
-        Path destination = directory.resolve(fileName).normalize();
-        if (!destination.startsWith(directory) || !ImageIO.write(image, "png", destination.toFile())) {
-            redirect(resp, req, "invalid");
-            return;
-        }
-
         try {
-            if (!userDAO.updateAvatarPath(CurrentUser.id(req), "/avatar/" + fileName)) {
-                Files.deleteIfExists(destination);
+            String avatarUrl;
+            try {
+                // Đọc ảnh, thu nhỏ còn tối đa 512px, nén JPEG rồi lưu vào bảng media
+                avatarUrl = mediaStore.save(part, CurrentUser.id(req), 512);
+            } catch (IllegalArgumentException e) {
+                redirect(resp, req, "invalid");
+                return;
+            }
+
+            String oldAvatar = (String) req.getSession().getAttribute("avatarPath");
+            if (!userDAO.updateAvatarPath(CurrentUser.id(req), avatarUrl)) {
+                mediaStore.delete(avatarUrl);
                 redirect(resp, req, "saveFailed");
                 return;
             }
-            req.getSession().setAttribute("avatarPath", "/avatar/" + fileName);
+            mediaStore.delete(oldAvatar);   // bỏ ảnh đại diện cũ trong bảng media (đường dẫn kiểu cũ thì bị bỏ qua)
+            req.getSession().setAttribute("avatarPath", avatarUrl);
             resp.sendRedirect(req.getContextPath() + "/account/profile?avatar=updated");
         } catch (java.sql.SQLException e) {
-            Files.deleteIfExists(destination);
             throw new ServletException("Không thể lưu ảnh đại diện.", e);
         }
     }

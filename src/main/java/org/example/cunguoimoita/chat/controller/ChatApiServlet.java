@@ -14,6 +14,7 @@ import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.ImageStore;
 import org.example.cunguoimoita.common.util.JsonUtil;
+import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -34,11 +35,11 @@ import java.util.Map;
  * Lỗi trả {"ok":false,"error":"..."}.
  */
 @WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/send", "/chat/offer", "/chat/image"})
-@MultipartConfig(maxFileSize = ImageStore.MAX_FILE_SIZE, maxRequestSize = ImageStore.MAX_FILE_SIZE + 64 * 1024)
+@MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = MediaStore.MAX_FILE_SIZE + 64 * 1024)
 public class ChatApiServlet extends HttpServlet {
 
     private final ChatService chatService = new ChatService();
-    private final ImageStore imageStore = new ImageStore("chat");
+    private final MediaStore mediaStore = new MediaStore();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -95,7 +96,7 @@ public class ChatApiServlet extends HttpServlet {
                 if (part == null || part.getSize() == 0) {
                     throw new IllegalArgumentException("Chưa chọn ảnh");
                 }
-                chatService.sendImage(conversationId, userId, imageStore.save(part));
+                chatService.sendImage(conversationId, userId, mediaStore.save(part, userId, MediaStore.PHOTO_SIDE));
             } else {
                 String offerId = req.getParameter("offerId");
                 switch (String.valueOf(req.getParameter("action"))) {
