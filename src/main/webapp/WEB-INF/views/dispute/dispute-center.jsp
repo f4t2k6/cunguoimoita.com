@@ -11,6 +11,16 @@
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <div class="order-page">
   <h1>Khiếu nại &amp; hoàn tiền</h1>
+
+  <nav class="order-tabs">
+    <a href="${ctx}/order/cart">Giỏ hàng</a>
+    <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
+    <a href="${ctx}/order/list?as=seller">Đơn bán</a>
+    <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
+    <a href="${ctx}/dispute" class="active">Khiếu nại &amp; hoàn tiền</a>
+    <a href="${ctx}/review/tier">Hạng thành viên</a>
+  </nav>
+
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
   <c:if test="${not empty message}"><p class="order-alert"><c:out value="${message}"/></p></c:if>
 

@@ -10,6 +10,15 @@
 <div class="order-page">
   <h1>Thu nhập của tôi</h1>
 
+  <nav class="order-tabs">
+    <a href="${ctx}/order/cart">Giỏ hàng</a>
+    <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
+    <a href="${ctx}/order/list?as=seller">Đơn bán</a>
+    <a href="${ctx}/seller/payouts" class="active">Thu nhập bán hàng</a>
+    <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
+    <a href="${ctx}/review/tier">Hạng thành viên</a>
+  </nav>
+
   <section class="order-card">
     <table class="money">
       <tr><td>Tổng tiền hàng đã bán</td><td><fmt:formatNumber value="${summary.totalGross()}" pattern="#,##0"/> đ</td></tr>

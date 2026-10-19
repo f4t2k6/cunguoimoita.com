@@ -10,6 +10,15 @@
 <div class="order-page">
   <h1>Hạng thành viên</h1>
 
+  <nav class="order-tabs">
+    <a href="${ctx}/order/cart">Giỏ hàng</a>
+    <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
+    <a href="${ctx}/order/list?as=seller">Đơn bán</a>
+    <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
+    <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
+    <a href="${ctx}/review/tier" class="active">Hạng thành viên</a>
+  </nav>
+
   <%-- ========== HUY HIỆU + THANH TIẾN ĐỘ ========== --%>
   <section class="order-card">
     <p class="tier-badge tier-${p.current().name}">${p.current().name}</p>
