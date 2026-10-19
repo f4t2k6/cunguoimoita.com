@@ -1,0 +1,12 @@
+<%@ page pageEncoding="UTF-8" %>
+<%-- Phần chữ bên trái mảng đen, dùng chung cho login.jsp, register.jsp, verify-email.jsp --%>
+<section class="intro">
+    <h1 class="intro-title">
+        <span>CŨ NGƯỜI</span>
+        <span class="title-outline">MỚI TA</span>
+    </h1>
+    <p>
+        Chợ đồ đã qua sử dụng: đăng bán trong 1 phút,
+        trả giá ngay trong tin nhắn, nhận hàng tận tay.
+    </p>
+</section>

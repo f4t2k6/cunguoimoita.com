@@ -13,6 +13,7 @@ import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.common.util.MediaStore;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
 import org.example.cunguoimoita.order.model.Order;
@@ -150,7 +151,8 @@ public class ChatService {
      * Kiểm tra quyền trước khi lưu file thì gọi requireCanSend(...).
      */
     public Message sendImage(String conversationId, String senderId, String imageUrl) throws SQLException {
-        if (imageUrl == null || !imageUrl.startsWith("/uploads/chat/")) {
+        // Ảnh chat giờ lưu trong database (MediaStore, "/media/<id>"); vẫn nhận đường dẫn cũ /uploads/chat/
+        if (imageUrl == null || !(imageUrl.startsWith(MediaStore.URL_PREFIX) || imageUrl.startsWith("/uploads/chat/"))) {
             throw new IllegalArgumentException("Ảnh không hợp lệ");
         }
         try (Connection c = ConnectionPool.getInstance().getConnection()) {

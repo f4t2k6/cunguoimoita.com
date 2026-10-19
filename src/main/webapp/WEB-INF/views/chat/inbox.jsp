@@ -1,8 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="pageTitle" value="Tin nhắn"/>
 <c:set var="pageCss" value="chat.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
+<c:set var="hideChatDock" value="true"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <section class="msgr msgr-inbox">
   <%@ include file="/WEB-INF/views/chat/_danh-sach.jsp" %>

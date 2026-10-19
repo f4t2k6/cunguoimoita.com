@@ -5,18 +5,19 @@
 <c:set var="pageTitle" value="Tin nhắn"/>
 <c:set var="pageCss" value="chat.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
+<c:set var="hideChatDock" value="true"/>
 <c:set var="backUrl" value="/chat/inbox"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <fmt:setLocale value="vi_VN"/>
 <section class="msgr msgr-open">
   <%@ include file="/WEB-INF/views/chat/_danh-sach.jsp" %>
 
-  <div class="msgr-chat">
+  <div class="msgr-chat" data-chat-root>
     <header class="msgr-head">
       <a class="msgr-back" href="${ctx}/chat/inbox" aria-label="Quay lại danh sách">
         <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>
       </a>
-      <span class="msgr-avatar"><c:out value="${conversation.otherInitial(userId)}"/></span>
+      <span class="msgr-avatar"><c:choose><c:when test="${not empty conversation.otherAvatar(userId)}"><img src="${ctx}${fn:escapeXml(conversation.otherAvatar(userId))}" alt=""></c:when><c:otherwise><c:out value="${conversation.otherInitial(userId)}"/></c:otherwise></c:choose></span>
       <span class="msgr-head-text">
         <strong><c:out value="${conversation.otherName(userId)}"/></strong>
         <span>
@@ -34,10 +35,11 @@
     <div id="chat-box" class="msgr-thread"
          data-ctx="${ctx}"
          data-conversation="${fn:escapeXml(conversation.id)}"
-         data-other-initial="${fn:escapeXml(conversation.otherInitial(userId))}"></div>
+         data-other-initial="${fn:escapeXml(conversation.otherInitial(userId))}"
+         data-other-avatar="${fn:escapeXml(conversation.otherAvatar(userId))}"></div>
 
     <%-- Khung món đang trao đổi, chat.js luôn đặt ở đầu đoạn chat (kể cả khi chưa có tin nào) --%>
-    <template id="chat-product">
+    <template id="chat-product" data-chat-product>
       <div class="msgr-product">
         <a class="msgr-product-photo" href="${ctx}/product?id=${fn:escapeXml(conversation.productId)}">
           <c:choose>
@@ -73,10 +75,10 @@
                  placeholder="Số tiền muốn trả, VD 1.500.000" aria-label="Số tiền muốn trả (đồng)">
           <span class="msgr-offer-unit">đ</span>
           <button type="submit" class="msgr-pill">Gửi giá</button>
-          <button type="button" class="msgr-pill light" id="offer-cancel">Huỷ</button>
+          <button type="button" class="msgr-pill light" id="offer-cancel" data-offer-cancel>Huỷ</button>
         </form>
         <form id="chat-form" class="msgr-composer">
-          <button type="button" id="offer-toggle" class="msgr-icon-btn" title="Trả giá" aria-label="Trả giá">
+          <button type="button" id="offer-toggle" class="msgr-icon-btn" data-offer-toggle title="Trả giá" aria-label="Trả giá">
             <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linejoin="round">
               <path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.5"/>
             </svg>

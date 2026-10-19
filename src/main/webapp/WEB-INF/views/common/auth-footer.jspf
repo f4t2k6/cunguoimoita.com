@@ -1,0 +1,27 @@
+<%@ page pageEncoding="UTF-8" %>
+<%-- Footer trắng dùng chung cho login.jsp, register.jsp, verify-email.jsp. Trang include cần có biến ctx. --%>
+<footer class="footer">
+    <div class="footer-columns">
+        <div class="footer-col">
+            <h3>Thanh toán</h3>
+            <div class="logo-grid">
+                <c:forEach var="logo" items="visa,mastercard,jcb,amex,cod,tra-gop,unionpay">
+                    <span class="logo-tile"><img src="${ctx}/assets/images/payment-${logo}.png" alt="${logo}"></span>
+                </c:forEach>
+            </div>
+            <h3>Vận chuyển</h3>
+            <div class="logo-grid">
+                <c:forEach var="logo" items="giao-hang-nhanh,viettel-post,vietnam-post,grabexpress,be,ahamove,best,green-sm">
+                    <span class="logo-tile"><img src="${ctx}/assets/images/ship-${logo}.png" alt="${logo}"></span>
+                </c:forEach>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h3>Theo dõi chúng tôi</h3>
+            <a class="follow-link" href="#"><img src="${ctx}/assets/images/social-facebook.svg" alt="">Facebook</a>
+            <a class="follow-link" href="#"><img src="${ctx}/assets/images/social-instagram.svg" alt="">Instagram</a>
+            <a class="follow-link" href="#"><img src="${ctx}/assets/images/social-linkedin.svg" alt="">LinkedIn</a>
+        </div>
+    </div>
+    <p class="copyright">© 2026 Cunguoimoita. All Rights Reserved</p>
+</footer>

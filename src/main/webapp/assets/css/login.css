@@ -1,3 +1,4 @@
+/* Trang đăng nhập (login.jsp). Chữ thường dùng Poppins, tiêu đề nổi bật dùng Bungee như trang chủ. */
 * {
     box-sizing: border-box;
 }
@@ -5,11 +6,16 @@
 body {
     margin: 0;
     color: #111;
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 a {
     color: inherit;
+}
+
+button,
+input {
+    font-family: inherit;
 }
 
 .header {
@@ -21,27 +27,27 @@ a {
     background: #fff;
 }
 
+/* logo.png có khoảng trống trong suốt ở trên và dưới, khung này cắt lấy phần chữ (cao ~ cỡ chữ cũ) */
 .logo {
-    color: #111;
-    font-size: 22.5px;
-    font-style: italic;
-    font-weight: 700;
-    text-decoration: none;
+    display: block;
+    flex: none;
+    width: 141.5px;
+    height: 40px;
+    overflow: hidden;
+}
+
+.logo img {
+    display: block;
+    width: 141.5px;
+    height: auto;
+    margin-top: -15.5px;
 }
 
 .header-title {
     padding-left: 21.5px;
     border-left: 1px solid #ccc;
-    font-size: 21.5px;
-    font-weight: 700;
-}
-
-.help {
-    margin-left: auto;
-    padding: 9px 16px;
-    border: 1px solid #111;
-    border-radius: 21.5px;
-    text-decoration: none;
+    font-family: 'Bungee', sans-serif;
+    font-size: 19px;
 }
 
 .main {
@@ -61,25 +67,17 @@ a {
     gap: 63px;
 }
 
-.intro-logo {
-    margin-bottom: 21.5px;
-    font-size: 34px;
-    font-style: italic;
-}
-
 .intro-title {
     margin: 0;
-    font-size: clamp(39.5px, 6vw, 61px);
-    line-height: 1.02;
-    font-weight: 900;
-    letter-spacing: -1.5px;
-    text-transform: uppercase;
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(36px, 5.5vw, 56px);
+    font-weight: 400;
+    line-height: 1.12;
 }
 
 .intro-title span {
     display: block;
     width: fit-content;
-    font-weight: 900;
 }
 
 .intro-title .title-outline {
@@ -90,22 +88,11 @@ a {
 
 .intro p {
     max-width: 450px;
+    margin: 21.5px 0 0;
     color: #ccc;
-    font-size: 15.5px;
-    line-height: 1.6;
-}
-
-.features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-}
-
-.feature {
-    padding: 9px 14.5px;
-    border: 1px solid #fff;
-    border-radius: 21.5px;
-    font-size: 12.5px;
+    font-size: 14.5px;
+    font-weight: 300;
+    line-height: 1.7;
 }
 
 .form-card {
@@ -117,7 +104,17 @@ a {
 
 .form-card h2 {
     margin: 0 0 21.5px;
-    font-size: 20.5px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+}
+
+.card-hint {
+    margin: -11px 0 16px;
+    color: #555;
+    font-size: 12px;
+    line-height: 1.6;
+    word-break: break-word;
 }
 
 .form-card form > input,
@@ -129,6 +126,13 @@ a {
     border: 1px solid #111;
     border-radius: 25px;
     font-size: 12.5px;
+}
+
+.form-card .code-input {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 8px;
+    text-align: center;
 }
 
 .form-error {
@@ -154,15 +158,30 @@ a {
     font-size: 11px;
 }
 
-.forgot-link {
+.link-button {
+    padding: 0;
     color: #111;
-    text-decoration: none;
+    background: none;
+    border: 0;
+    font-size: inherit;
+    cursor: pointer;
 }
 
-.forgot-link:hover,
+.link-button.bold {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.link-button:hover,
 .register-link a:hover,
 .terms a:hover {
     text-decoration: underline;
+}
+
+.link-button:disabled {
+    color: #999;
+    cursor: default;
+    text-decoration: none;
 }
 
 .submit {
@@ -173,12 +192,18 @@ a {
     background: #050505;
     border: 0;
     border-radius: 25px;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: .5px;
     cursor: pointer;
 }
 
 .submit:hover {
     background: #333;
+}
+
+.submit:disabled {
+    background: #777;
+    cursor: wait;
 }
 
 .divider {
@@ -203,13 +228,24 @@ a {
     margin: 16px 0;
 }
 
-.social button {
+.social-button {
     height: 39.5px;
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #111;
     background: #fff;
     border: 1px solid #111;
     border-radius: 21.5px;
-    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.social-button:hover {
+    background: #f4f4f4;
 }
 
 .terms,
@@ -232,6 +268,10 @@ a {
     border-top: 1px solid #eee;
 }
 
+.register-link .link-button {
+    margin-top: 4px;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
@@ -244,9 +284,11 @@ a {
     border: 0;
 }
 
+/* Footer trắng dưới trang: thanh toán, vận chuyển, mạng xã hội */
 .footer {
-    padding: 43px 21.5px 21.5px;
-    background: #f4f4f4;
+    padding: 36px 21.5px 21.5px;
+    background: #fff;
+    border-top: 4px solid #111;
 }
 
 .footer-columns,
@@ -256,32 +298,75 @@ a {
 }
 
 .footer-columns {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 29px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 29px 90px;
 }
 
 .footer h3 {
-    font-size: 11.5px;
+    margin: 0 0 14.5px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 12.5px;
+    font-weight: 400;
+    letter-spacing: .5px;
+    text-transform: uppercase;
 }
 
-.footer a {
+.logo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 66px);
+    gap: 9px;
+    margin-bottom: 29px;
+}
+
+.logo-grid:last-child {
+    margin-bottom: 0;
+}
+
+.logo-tile {
+    width: 66px;
+    height: 33px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+    overflow: hidden;
+}
+
+.logo-tile img {
     display: block;
-    margin: 14.5px 0;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.follow-link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 11px;
     color: #555;
     font-size: 12.5px;
     text-decoration: none;
 }
 
+.follow-link img {
+    width: 16px;
+    height: 16px;
+}
+
+.follow-link:hover {
+    color: #111;
+}
+
 .copyright {
-    display: flex;
-    justify-content: space-between;
-    gap: 14.5px;
     margin-top: 29px;
     padding-top: 18px;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #ddd;
     color: #555;
     font-size: 11.5px;
+    text-align: center;
 }
 
 @media (max-width: 765px) {
@@ -295,12 +380,16 @@ a {
         min-height: auto;
     }
 
+    .content {
+        min-height: auto;
+    }
+
     .intro {
         text-align: center;
     }
 
     .intro p {
-        margin: 14.5px auto;
+        margin: 14.5px auto 0;
     }
 
     .intro-title span {
@@ -308,17 +397,9 @@ a {
         margin-right: auto;
     }
 
-    .features {
-        justify-content: center;
-    }
-
     .form-card {
         width: min(100%, 396px);
         margin: auto;
-    }
-
-    .footer-columns {
-        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -329,17 +410,18 @@ a {
     }
 
     .logo {
-        font-size: 16px;
+        width: 106px;
+        height: 30px;
+    }
+
+    .logo img {
+        width: 106px;
+        margin-top: -11.5px;
     }
 
     .header-title {
         padding-left: 11px;
-        font-size: 16px;
-    }
-
-    .help {
-        padding: 7px 9px;
-        font-size: 11px;
+        font-size: 14.5px;
     }
 
     .form-card {
@@ -347,11 +429,6 @@ a {
     }
 
     .footer-columns {
-        grid-template-columns: 1fr 1fr;
-        gap: 14.5px;
-    }
-
-    .copyright {
-        flex-direction: column;
+        gap: 29px;
     }
 }

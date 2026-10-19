@@ -15,8 +15,9 @@ import java.util.List;
 /** Các hàm nhận Connection từ ChatService để chạy chung một transaction khi cần. */
 public class ConversationDAO {
 
-    /** Kèm tên 2 người (users) và tên, giá, ảnh, tình trạng món (products) để hiển thị. */
+    /** Kèm tên, ảnh đại diện 2 người (users) và tên, giá, ảnh, tình trạng món (products) để hiển thị. */
     private static final String COLUMNS = "SELECT cv.*, ua.fullname AS asker_name, us.fullname AS seller_name,"
+            + " ua.avatar_url AS asker_avatar, us.avatar_url AS seller_avatar,"
             + " p.name AS product_name, p.price AS product_price, p.images AS product_images,"
             + " p.condition AS product_condition";
     private static final String FROM = " FROM conversations cv"
@@ -113,6 +114,8 @@ public class ConversationDAO {
         conv.setLastMessageAt(last == null ? null : last.toLocalDateTime());
         conv.setAskerName(rs.getString("asker_name"));
         conv.setSellerName(rs.getString("seller_name"));
+        conv.setAskerAvatar(rs.getString("asker_avatar"));
+        conv.setSellerAvatar(rs.getString("seller_avatar"));
         conv.setProductName(rs.getString("product_name"));
         double price = rs.getDouble("product_price");
         conv.setProductPrice(rs.wasNull() ? null : price);

@@ -80,7 +80,7 @@ a { color: inherit; text-decoration: none; }
     cursor: pointer;
 }
 .notify-btn[aria-expanded="true"] { background: #000; color: #fff; }
-.notify-btn[aria-expanded="true"] .bell-icon { stroke: #fff; }
+.notify-btn[aria-expanded="true"] .bell-icon { filter: invert(1); }   /* icon là file ảnh đen, nút đang mở thì đảo sang trắng */
 .bell-icon { width: 36px; height: 36px; }
 
 /*DANH SÁCH THÔNG BÁO XỔ XUỐNG (bấm nút Thông báo)*/
@@ -283,7 +283,7 @@ button.menu-item { font: inherit; font-size: 15.5px; color: inherit; background:
     border-radius: 9px;
 }
 .category-item:hover { background-color: #e9e9e9; }
-.category-item .cat-icon { font-size: 23.5px; line-height: 29px; }
+.category-item .cat-icon { width: 29px; height: 29px; object-fit: contain; }
 .category-item span:last-child { font-size: 8.5px; text-align: center; line-height: 1.25; }
 
 /* THẺ BÀI ĐĂNG (dạng post) */

@@ -6,6 +6,7 @@
 
 .order-alert { background: #fff; border: 1.5px solid #000; border-left-width: 5.5px; padding: 9px 12.5px; }
 .order-alert.error { border-color: #c00; color: #c00; }
+.order-alert a { color: inherit; font-weight: 700; text-decoration: underline; }
 
 .order-card { background: #fff; border: 1.5px solid #000; border-radius: 12.5px; padding: 14.5px 18px; margin: 14.5px 0; }
 .order-card form { margin: 9px 0; }

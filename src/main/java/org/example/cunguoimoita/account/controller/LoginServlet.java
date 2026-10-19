@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.User;
 import org.example.cunguoimoita.account.service.LoginAttemptLimiter;
+import org.example.cunguoimoita.common.filter.LoginRequiredFilter;
 import org.example.cunguoimoita.common.model.AccountStatus;
 import org.example.cunguoimoita.common.model.UserRole;
 import org.example.cunguoimoita.common.util.PasswordUtil;
@@ -24,6 +25,12 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        // Lỗi đăng nhập Google/Facebook (SocialLoginServlet) được gửi qua session
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("loginError") != null) {
+            req.setAttribute("errorMessage", session.getAttribute("loginError"));
+            session.removeAttribute("loginError");
+        }
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }
 
@@ -64,6 +71,8 @@ public class LoginServlet extends HttpServlet {
             }
 
             HttpSession session = req.getSession(true);
+            Object wanted = session.getAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
+            session.removeAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
             req.changeSessionId();
             session.setAttribute("userId", user.getId());
             session.setAttribute("userRole", user.getRole().databaseValue());
@@ -71,6 +80,10 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("avatarPath", user.getAvatarPath());
             if (user.getRole() == UserRole.ADMIN) {
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+            } else if (wanted instanceof String && ((String) wanted).startsWith("/")
+                    && !((String) wanted).startsWith("//")) {
+                // Quay lại trang đã định mở trước khi bị yêu cầu đăng nhập
+                resp.sendRedirect(req.getContextPath() + wanted);
             } else {
                 resp.sendRedirect(req.getContextPath() + "/home");
             }

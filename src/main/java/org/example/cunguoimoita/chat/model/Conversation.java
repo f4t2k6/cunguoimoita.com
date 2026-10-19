@@ -25,6 +25,8 @@ public class Conversation {
     private int unreadCount;
     private String askerName;
     private String sellerName;
+    private String askerAvatar;                // users.avatar_url (khung chat nổi hiện ảnh thay cho chữ cái đầu)
+    private String sellerAvatar;
     private String productName;
     private Double productPrice;
     private String productImage;               // ảnh bìa của món (khung sản phẩm đầu đoạn chat)
@@ -48,6 +50,11 @@ public class Conversation {
     public String otherName(String userId) {
         String name = userId.equals(askerId) ? sellerName : askerName;
         return name == null ? otherParty(userId) : name;
+    }
+
+    /** Ảnh đại diện người còn lại, null nếu chưa có. */
+    public String otherAvatar(String userId) {
+        return userId.equals(askerId) ? sellerAvatar : askerAvatar;
     }
 
     /** Chữ cái đầu của tên cuối (Mai Thành → T), dùng làm avatar tạm. */
@@ -93,6 +100,10 @@ public class Conversation {
     public void setAskerName(String askerName) { this.askerName = askerName; }
     public String getSellerName() { return sellerName; }
     public void setSellerName(String sellerName) { this.sellerName = sellerName; }
+    public String getAskerAvatar() { return askerAvatar; }
+    public void setAskerAvatar(String askerAvatar) { this.askerAvatar = askerAvatar; }
+    public String getSellerAvatar() { return sellerAvatar; }
+    public void setSellerAvatar(String sellerAvatar) { this.sellerAvatar = sellerAvatar; }
     public String getProductName() { return productName; }
     public void setProductName(String productName) { this.productName = productName; }
     public Double getProductPrice() { return productPrice; }
