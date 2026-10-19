@@ -156,9 +156,14 @@ public class VNPayConfig {
         return VNP_PAY_URL + "?" + queryUrl;
     }
 
-    /** Kiểm tra chữ ký số trả về từ VNPay. */
+    /** Kiểm tra chữ ký số trả về từ VNPay sử dụng key hiện hành. */
     public static boolean verifySignature(Map<String, String> fields, String secureHash) {
-        if (secureHash == null || secureHash.isBlank()) {
+        return verifySignature(fields, secureHash, getHashSecret());
+    }
+
+    /** Kiểm tra chữ ký số trả về từ VNPay với key chỉ định (hữu ích cho unit test độc lập). */
+    public static boolean verifySignature(Map<String, String> fields, String secureHash, String secretKey) {
+        if (secureHash == null || secureHash.isBlank() || secretKey == null || secretKey.isBlank()) {
             return false;
         }
         List<String> fieldNames = new ArrayList<>(fields.keySet());
@@ -175,7 +180,7 @@ public class VNPayConfig {
                 first = false;
             }
         }
-        String calculated = hmacSHA512(getHashSecret(), sb.toString());
+        String calculated = hmacSHA512(secretKey, sb.toString());
         return calculated.equalsIgnoreCase(secureHash);
     }
 

@@ -77,11 +77,11 @@ class PaymentTest {
         Map<String, String> params = new HashMap<>();
         params.put("vnp_Amount", "133000000");
         params.put("vnp_Command", "pay");
-        params.put("vnp_TmnCode", VNPayConfig.VNP_TMN_CODE);
+        params.put("vnp_TmnCode", VNPayConfig.getTmnCode());
         params.put("vnp_TxnRef", "ORD-001");
 
-        String hashData = "vnp_Amount=133000000&vnp_Command=pay&vnp_TmnCode=" + VNPayConfig.VNP_TMN_CODE + "&vnp_TxnRef=ORD-001";
-        String expectedHash = VNPayConfig.hmacSHA512(VNPayConfig.VNP_HASH_SECRET, hashData);
+        String hashData = "vnp_Amount=133000000&vnp_Command=pay&vnp_TmnCode=" + VNPayConfig.getTmnCode() + "&vnp_TxnRef=ORD-001";
+        String expectedHash = VNPayConfig.hmacSHA512(VNPayConfig.getHashSecret(), hashData);
 
         assertTrue(VNPayConfig.verifySignature(params, expectedHash));
         assertFalse(VNPayConfig.verifySignature(params, "fake_hash_123456"));
