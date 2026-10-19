@@ -46,6 +46,18 @@
                     <%= request.getAttribute("errorMessage") %>
                 </p>
             <% } %>
+            <% String socialError = request.getParameter("socialError");
+               if ("not_configured".equals(socialError)) { %>
+                <p class="form-error" role="alert">Đăng ký mạng xã hội chưa được cấu hình trên máy chủ.</p>
+            <% } else if ("oauth_cancelled".equals(socialError)) { %>
+                <p class="form-error" role="alert">Bạn đã hủy đăng ký bằng mạng xã hội.</p>
+            <% } else if ("email_exists".equals(socialError)) { %>
+                <p class="form-error" role="alert">Email này đã có tài khoản. Hãy đăng nhập bằng mật khẩu trước.</p>
+            <% } else if ("banned".equals(socialError)) { %>
+                <p class="form-error" role="alert">Tài khoản của bạn đang bị khóa.</p>
+            <% } else if ("oauth_failed".equals(socialError)) { %>
+                <p class="form-error" role="alert">Không thể xác thực tài khoản mạng xã hội. Vui lòng thử lại.</p>
+            <% } %>
 
             <form action="${pageContext.request.contextPath}/register"
                   method="post">
@@ -84,8 +96,14 @@
             <div class="divider">HOẶC</div>
 
             <div class="social">
-                <button type="button">🔵 Facebook</button>
-                <button type="button">🌐 Google</button>
+                <form action="${pageContext.request.contextPath}/oauth/facebook/start" method="get">
+                    <input type="hidden" name="from" value="register">
+                    <button type="submit">🔵 Facebook</button>
+                </form>
+                <form action="${pageContext.request.contextPath}/oauth/google/start" method="get">
+                    <input type="hidden" name="from" value="register">
+                    <button type="submit">🌐 Google</button>
+                </form>
             </div>
 
             <p class="terms">

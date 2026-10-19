@@ -16,5 +16,24 @@
               maxIdle="10"
               maxWaitMillis="10000"
               validationQuery="SELECT 1"
+<<<<<<< Updated upstream
               testOnBorrow="true"/>
+=======
+              testOnBorrow="true"
+              validationInterval="30000"
+              testWhileIdle="true"
+              timeBetweenEvictionRunsMillis="60000"
+              minEvictableIdleTimeMillis="120000"
+              defaultAutoCommit="true"
+              rollbackOnReturn="true"
+              jdbcInterceptors="ConnectionState"/>
+
+    <!--
+      Gmail SMTP lấy thông tin đăng nhập từ process environment:
+      MAIL_USERNAME=địa-chỉ-gửi@gmail.com
+      MAIL_PASSWORD=mật-khẩu-ứng-dụng-Google
+      Không đặt hai giá trị này trong file XML. Xem cấu hình Environment variables
+      của cấu hình chạy Tomcat trong IDE. Nếu chưa có, ứng dụng in mã xác nhận vào log Tomcat.
+    -->
+>>>>>>> Stashed changes
 </Context>

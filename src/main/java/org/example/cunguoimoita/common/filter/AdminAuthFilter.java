@@ -29,16 +29,19 @@ public class AdminAuthFilter implements Filter {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        if (!"admin".equals(session.getAttribute("userRole"))) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
         try {
             if (!userDAO.isActiveAdmin(userId)) {
-                session.invalidate();
-                resp.sendRedirect(req.getContextPath() + "/login?banned=1");
+                if (!userDAO.isActive(userId)) {
+                    session.invalidate();
+                    resp.sendRedirect(req.getContextPath() + "/login?banned=1");
+                } else {
+                    // Tài khoản còn hoạt động nhưng không có quyền admin trong database.
+                    resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                }
                 return;
             }
+            // Database là nguồn xác thực quyền; đồng bộ session cũ hoặc role viết hoa.
+            session.setAttribute("userRole", "admin");
         } catch (SQLException e) {
             throw new ServletException("Không thể xác minh trạng thái admin.", e);
         }

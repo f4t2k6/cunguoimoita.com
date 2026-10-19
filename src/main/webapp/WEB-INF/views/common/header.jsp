@@ -69,8 +69,14 @@
 
 <a class="profile-block" href="${ctx}/account/profile">
   <c:choose>
+<<<<<<< Updated upstream
     <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}${sessionScope.avatarPath}" alt="avatar" class="profile-avatar"></c:when>
     <c:otherwise><img src="${ctx}/assets/images/avt.png" alt="avatar" class="profile-avatar"></c:otherwise>
+=======
+    <c:when test="${fn:startsWith(sessionScope.avatarPath, 'https://')}"><img src="<c:out value='${sessionScope.avatarPath}'/>" alt="avatar" class="profile-avatar"></c:when>
+    <c:when test="${not empty sessionScope.avatarPath}"><img src="${ctx}<c:out value='${sessionScope.avatarPath}'/>" alt="avatar" class="profile-avatar"></c:when>
+    <c:otherwise><img src="${ctx}/assets/images/default-avatar.png" alt="avatar" class="profile-avatar"></c:otherwise>
+>>>>>>> Stashed changes
   </c:choose>
   <span class="username-box"><span class="username" id="usernameText"><c:out value="${empty sessionScope.fullName ? 'Khách' : sessionScope.fullName}" /></span></span>
 </a>

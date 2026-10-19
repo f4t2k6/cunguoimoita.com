@@ -59,7 +59,7 @@
                 </div>
                 <c:choose>
                     <c:when test="${not empty customer.avatarPath}">
-                        <img class="account-avatar" src="${pageContext.request.contextPath}<c:out value='${customer.avatarPath}'/>" alt="Ảnh đại diện">
+                        <img class="account-avatar" src="${fn:startsWith(customer.avatarPath, 'https://') ? '' : pageContext.request.contextPath}<c:out value='${customer.avatarPath}'/>" alt="Ảnh đại diện">
                     </c:when>
                     <c:otherwise>
                         <img class="account-avatar" src="${pageContext.request.contextPath}/assets/images/avt.png" alt="Ảnh đại diện mặc định">
