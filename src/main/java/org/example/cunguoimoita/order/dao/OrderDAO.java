@@ -63,6 +63,23 @@ public class OrderDAO {
         return findMany(c, "SELECT * FROM orders WHERE seller_id = ? ORDER BY order_date DESC", sellerId);
     }
 
+    // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất (F6).
+    public List<String> findDeliveredIdsForAutoComplete(Connection c, int days) throws SQLException {
+        String sql = "SELECT o.id FROM orders o JOIN shipments s ON s.order_id = o.id"
+                + " WHERE o.status = 'delivered' AND s.delivered_date <= CURRENT_DATE - ?"
+                + " AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.order_id = o.id AND d.status IN ('open', 'reviewing'))";
+        List<String> ids = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getString(1));
+                }
+            }
+        }
+        return ids;
+    }
+
     // Lưu lại các cột có thể thay đổi sau khi gọi method của Order (chooseAddress, applyVoucher, cancel...).
     public void update(Connection c, Order o) throws SQLException {
         String sql = "UPDATE orders SET shipping_address_id = ?, voucher_id = ?, payment_method = ?,"

@@ -1,5 +1,7 @@
 package org.example.cunguoimoita.chat.model;
 
+import org.example.cunguoimoita.product.model.ProductCondition;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +27,8 @@ public class Conversation {
     private String sellerName;
     private String productName;
     private Double productPrice;
+    private String productImage;               // ảnh bìa của món (khung sản phẩm đầu đoạn chat)
+    private ProductCondition productCondition;
 
     /** + close(): void  (khi món đã bán) */
     public void close() {
@@ -93,4 +97,8 @@ public class Conversation {
     public void setProductName(String productName) { this.productName = productName; }
     public Double getProductPrice() { return productPrice; }
     public void setProductPrice(Double productPrice) { this.productPrice = productPrice; }
+    public String getProductImage() { return productImage; }
+    public void setProductImage(String productImage) { this.productImage = productImage; }
+    public ProductCondition getProductCondition() { return productCondition; }
+    public void setProductCondition(ProductCondition productCondition) { this.productCondition = productCondition; }
 }

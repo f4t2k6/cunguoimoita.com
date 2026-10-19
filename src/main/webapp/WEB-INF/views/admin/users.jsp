@@ -20,6 +20,7 @@
   </form>
 
   <c:if test="${empty users}"><p class="admin-empty">Không tìm thấy người dùng nào.</p></c:if>
+  <c:if test="${fn:length(users) >= 100}"><p class="admin-note">Đang hiện 100 dòng mới nhất. Dùng ô tìm kiếm hoặc bộ lọc để tìm dòng cũ hơn.</p></c:if>
   <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>

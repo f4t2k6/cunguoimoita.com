@@ -2,6 +2,7 @@ package org.example.cunguoimoita.chat.dao;
 
 import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.ConversationStatus;
+import org.example.cunguoimoita.product.model.ProductCondition;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,9 +15,10 @@ import java.util.List;
 /** Các hàm nhận Connection từ ChatService để chạy chung một transaction khi cần. */
 public class ConversationDAO {
 
-    /** Kèm tên 2 người (users) và tên, giá món (products) để hiển thị. */
+    /** Kèm tên 2 người (users) và tên, giá, ảnh, tình trạng món (products) để hiển thị. */
     private static final String COLUMNS = "SELECT cv.*, ua.fullname AS asker_name, us.fullname AS seller_name,"
-            + " p.name AS product_name, p.price AS product_price";
+            + " p.name AS product_name, p.price AS product_price, p.images AS product_images,"
+            + " p.condition AS product_condition";
     private static final String FROM = " FROM conversations cv"
             + " LEFT JOIN users ua ON ua.id = cv.asker_id"
             + " LEFT JOIN users us ON us.id = cv.seller_id"
@@ -114,6 +116,12 @@ public class ConversationDAO {
         conv.setProductName(rs.getString("product_name"));
         double price = rs.getDouble("product_price");
         conv.setProductPrice(rs.wasNull() ? null : price);
+        // products.images lưu nhiều URL cách nhau bởi dấu phẩy, chỉ cần ảnh đầu để làm ảnh bìa
+        String images = rs.getString("product_images");
+        if (images != null && !images.isBlank()) {
+            conv.setProductImage(images.split(",")[0].trim());
+        }
+        conv.setProductCondition(ProductCondition.fromCode(rs.getString("product_condition")));
         return conv;
     }
 }

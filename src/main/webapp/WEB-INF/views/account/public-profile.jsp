@@ -31,12 +31,35 @@
                 <span class="seller-stat-label">Đơn đã bán</span>
             </div>
             <div class="seller-stat">
-                <span class="seller-stat-value"><c:out value="${seller.memberTier}" /></span>
+                <span class="seller-stat-value"><span class="tier-pill tier-${seller.memberTier}"><c:out value="${seller.memberTier}" /></span></span>
                 <span class="seller-stat-label">Hạng thành viên</span>
             </div>
         </div>
-        <p class="public-profile-note">Điểm đánh giá, số đơn đã bán và hạng thành viên được tổng hợp từ dữ liệu F8.</p>
+        <p class="public-profile-note">Điểm đánh giá, số đơn đã bán và hạng thành viên được tổng hợp từ các đơn đã hoàn tất.</p>
+        <c:if test="${not isSelf}">
+            <a class="public-report-link" href="${ctx}/report?type=user&amp;id=${fn:escapeXml(param.id)}">Báo cáo người dùng</a>
+        </c:if>
     </div>
+
+    <%-- F8: đánh giá nhận được --%>
+    <section class="detail-section">
+        <h2 class="section-heading">Đánh giá (${fn:length(reviews)})</h2>
+        <c:choose>
+            <c:when test="${empty reviews}"><p class="muted">Chưa có đánh giá nào.</p></c:when>
+            <c:otherwise>
+                <ul class="public-reviews">
+                    <c:forEach var="r" items="${reviews}">
+                        <li>
+                            <p><strong><c:out value="${r.authorName()}"/></strong>
+                               <span class="public-review-stars" aria-label="${r.rating()} trên 5 sao"><c:forEach begin="1" end="${r.rating()}">★</c:forEach><c:forEach begin="${r.rating() + 1}" end="5">☆</c:forEach></span>
+                               <span class="muted">${r.createdDate().toLocalDate()}</span></p>
+                            <c:if test="${not empty r.content()}"><p><c:out value="${r.content()}"/></p></c:if>
+                        </li>
+                    </c:forEach>
+                </ul>
+            </c:otherwise>
+        </c:choose>
+    </section>
 
     <%-- Bài đang bán của người này (F2); thẻ nhỏ dùng chung với trang chi tiết bài --%>
     <link rel="stylesheet" href="${ctx}/assets/css/product.css?v=${assetVer}">

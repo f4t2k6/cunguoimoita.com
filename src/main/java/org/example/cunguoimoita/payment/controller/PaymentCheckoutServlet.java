@@ -5,64 +5,61 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.cunguoimoita.common.dao.OrderRefDAO;
-import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.order.model.Order;
+import org.example.cunguoimoita.order.service.OrderService;
 import org.example.cunguoimoita.payment.model.Payment;
 import org.example.cunguoimoita.payment.model.PaymentGateway;
 import org.example.cunguoimoita.payment.service.PaymentService;
 import org.example.cunguoimoita.payment.service.VNPayConfig;
 
 import java.io.IOException;
-import java.sql.Connection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /**
- * Controller xử lý quy trình thanh toán Escrow và kiểm tra điều kiện COD.
+ * Trang chọn cổng thanh toán online (F5). Phải đăng nhập và là người mua của đơn.
+ * GET  /payment/checkout?orderId=...  → đơn phải đang "chờ thanh toán" (người mua chọn "Thanh toán online" ở trang đơn).
+ *      Attribute gửi sang JSP: order, gateways, vnpayReal (true nếu đã cấu hình khoá VNPay thật), error
+ * POST /payment/checkout  field: orderId, gateway (vnpay | momo | bank_transfer)
+ *      → tạo Payment với số tiền = tổng đơn trong DB, rồi chuyển sang VNPay thật (nếu có khoá)
+ *        hoặc trang giả lập cổng /payment/sandbox.
+ * COD không đi qua đây: người mua chọn COD ngay ở trang chi tiết đơn.
  */
-@WebServlet(name = "PaymentCheckoutServlet", urlPatterns = {"/payment/checkout", "/payment/process"})
+@WebServlet(name = "PaymentCheckoutServlet", urlPatterns = {"/payment/checkout"})
 public class PaymentCheckoutServlet extends HttpServlet {
 
     private final PaymentService paymentService = new PaymentService();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final OrderService orderService = new OrderService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            userId = "B1"; // Mặc định tài khoản Người Mua mẫu để tiện demo
+            CurrentUser.redirectToLogin(req, resp);
+            return;
         }
-
         String orderId = req.getParameter("orderId");
-        if (orderId == null || orderId.isBlank()) {
-            orderId = "O1"; // Đơn hàng mẫu O1 trong 00_database_chung.sql
+        Order order;
+        try {
+            order = orderService.getOrder(orderId, userId);
+        } catch (IllegalArgumentException | SecurityException e) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        } catch (SQLException e) {
+            throw new ServletException(e);
         }
-
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            OrderRefDAO.OrderRef order = orderDAO.find(c, orderId);
-            if (order != null) {
-                req.setAttribute("order", order);
-                req.setAttribute("orderCode", order.code());
-            } else {
-                req.setAttribute("orderCode", "ORD-2026-0889");
-            }
-
-            boolean canUseCod = paymentService.canUseCod(userId);
-            req.setAttribute("canUseCod", canUseCod);
-            req.setAttribute("buyerId", userId);
-
-            // Cho phép thử nghiệm giả lập kịch bản từ query param
-            String scenario = req.getParameter("scenario");
-            if ("cod_blocked".equals(scenario)) {
-                req.setAttribute("canUseCod", false);
-            }
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            req.setAttribute("error", "Lỗi kết nối cơ sở dữ liệu: " + ex.getMessage());
+        if (!userId.equals(order.getBuyerId()) || order.getStatus() != Order.Status.AWAITING_PAYMENT) {
+            // Đơn đã trả rồi / đang COD / không phải đơn của mình → về trang đơn
+            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId)
+                    + "&error=" + encode("Đơn này không ở bước thanh toán online"));
+            return;
         }
-
-        req.setAttribute("currentPage", "payment");
+        req.setAttribute("order", order);
+        req.setAttribute("gateways", PaymentGateway.values());
+        req.setAttribute("vnpayReal", VNPayConfig.isConfigured());
+        req.setAttribute("error", req.getParameter("error"));
         req.getRequestDispatcher("/WEB-INF/views/payment/checkout-gateway.jsp").forward(req, resp);
     }
 
@@ -71,70 +68,33 @@ public class PaymentCheckoutServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         String userId = CurrentUser.id(req);
         if (userId == null) {
-            userId = "B1";
+            CurrentUser.redirectToLogin(req, resp);
+            return;
         }
-
         String orderId = req.getParameter("orderId");
-        if (orderId == null || orderId.isBlank()) {
-            orderId = "O1";
-        }
-
-        String gatewayStr = req.getParameter("gateway");
-        double amount = 1330000;
+        PaymentGateway gateway = PaymentGateway.fromDb(req.getParameter("gateway"));
         try {
-            String amountStr = req.getParameter("amount");
-            if (amountStr != null && !amountStr.isBlank()) {
-                amount = Double.parseDouble(amountStr);
-            }
-        } catch (NumberFormatException ignored) {
-        }
+            Payment p = paymentService.startPayment(orderId, userId, gateway);
 
-        // Trường hợp người mua chọn COD
-        if ("cod".equalsIgnoreCase(gatewayStr)) {
-            try {
-                boolean canUseCod = paymentService.canUseCod(userId);
-                if (!canUseCod) {
-                    req.setAttribute("errorMessage", "Tài khoản của bạn đã bị khoá tính năng COD do lịch sử từ chối nhận hàng.");
-                    doGet(req, resp);
-                    return;
-                }
-
-                try (Connection c = ConnectionPool.getInstance().getConnection()) {
-                    orderDAO.updateStatus(c, orderId, "new");
-                }
-                resp.sendRedirect(req.getContextPath() + "/ui?page=shipment&orderId=" + orderId);
-                return;
-            } catch (SQLException ex) {
-                throw new ServletException(ex);
-            }
-        }
-
-        // Trường hợp thanh toán Online Escrow
-        PaymentGateway gateway = PaymentGateway.fromDb(gatewayStr);
-        try {
-            Payment p = paymentService.createPayment(orderId, userId, amount, gateway);
-
-            // Nếu chọn VNPay Sandbox
-            if (gateway == PaymentGateway.VNPAY) {
+            if (gateway == PaymentGateway.VNPAY && VNPayConfig.isConfigured()) {
                 String ipAddr = req.getRemoteAddr();
                 if ("0:0:0:0:0:0:0:1".equals(ipAddr)) ipAddr = "127.0.0.1";
-
                 String returnUrl = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort()
                                  + req.getContextPath() + "/payment/vnpay-return";
-
-                String paymentUrl = VNPayConfig.buildPaymentUrl(p.getCode(), (long) amount,
-                        "Thanh toan don hang " + p.getOrderId(), ipAddr, returnUrl);
-
-                // Nếu VNPay sandbox hợp lệ, chuyển hướng sang cổng VNPay
-                resp.sendRedirect(paymentUrl);
+                resp.sendRedirect(VNPayConfig.buildPaymentUrl(p.getCode(), Math.round(p.getAmount()),
+                        "Thanh toan don hang " + p.getCode(), ipAddr, returnUrl));
                 return;
             }
-
-            // Với VietQR hoặc MoMo: Chuyển hướng tới trang xác nhận
-            resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + p.getId() + "&orderCode=" + orderId);
-
+            // Chưa có khoá cổng thật → trang giả lập cổng (người mua tự bấm thành công / thất bại)
+            resp.sendRedirect(req.getContextPath() + "/payment/sandbox?paymentId=" + encode(p.getId()));
+        } catch (IllegalStateException | SecurityException e) {
+            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId) + "&error=" + encode(e.getMessage()));
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private static String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

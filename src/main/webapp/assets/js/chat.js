@@ -19,8 +19,36 @@
   let timer = null;
   let busy = false;
   let again = false;               // có yêu cầu hỏi trong lúc đang hỏi → hỏi lại ngay khi xong
+  let openOfferForm = () => {};    // mở/đóng thanh trả giá (gán lại bên dưới khi đoạn chat còn mở)
+  let counter = null;              // ô trả giá lại đang mở: { offerId, amount, focus } (giữ lại khi khung chat vẽ lại)
 
   const money = n => Number(n).toLocaleString('vi-VN') + ' đ';
+  const productTpl = document.getElementById('chat-product');
+
+  // Ô nhập tiền: gõ tới đâu tự thêm dấu chấm phần nghìn tới đó (1500000 → 1.500.000), giữ đúng vị trí con trỏ.
+  // Khi gửi lên server dùng moneyValue() để lấy lại số không có dấu chấm.
+  function moneyInput(input) {
+    input.addEventListener('input', () => {
+      const caret = input.selectionStart;
+      const digitsBefore = input.value.slice(0, caret).replace(/\D/g, '').length;
+      const digits = input.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 10);
+      input.value = digits ? Number(digits).toLocaleString('vi-VN') : '';
+      // Đặt con trỏ ngay sau chữ số thứ digitsBefore
+      let pos = 0, seenDigits = 0;
+      while (pos < input.value.length && seenDigits < digitsBefore) {
+        if (/\d/.test(input.value[pos])) seenDigits++;
+        pos++;
+      }
+      input.setSelectionRange(pos, pos);
+    });
+  }
+  const moneyValue = input => input.value.replace(/\D/g, '');
+  function checkMoney(input) {
+    const v = Number(moneyValue(input));
+    if (!v) return 'Vui lòng nhập số tiền';
+    if (v < 1000) return 'Số tiền tối thiểu là 1.000 đ';
+    return '';
+  }
   const STATUS = { pending: 'Đang chờ trả lời', accepted: 'Đã chấp nhận', declined: 'Đã từ chối', expired: 'Hết hạn' };
 
   function showError(msg) {
@@ -70,12 +98,74 @@
       btn('Chấp nhận', '', () => post('/chat/offer', { action: 'accept', offerId: o.id }));
       btn('Từ chối', 'light', () => post('/chat/offer', { action: 'decline', offerId: o.id }));
       btn('Trả giá lại', 'light', () => {
-        const v = prompt('Giá bạn muốn trả lại (đ):');
-        return v ? post('/chat/offer', { action: 'counter', offerId: o.id, amount: v }) : Promise.resolve();
+        counter = { offerId: o.id, amount: '', focus: true };
+        renderAll();
+        return Promise.resolve();
       });
-      card.append(actions);
+      card.append(counter && counter.offerId === o.id ? counterForm(o) : actions);
     }
     return card;
+  }
+
+  // Ô "Trả giá lại" ngay trong khung giá (thay cho hộp prompt của trình duyệt)
+  function counterForm(o) {
+    const form = el('form', 'msgr-counter');
+    const input = el('input');
+    Object.assign(input, { type: 'text', inputMode: 'numeric', autocomplete: 'off', name: 'amount', required: true,
+      placeholder: 'Giá mới, VD 1.500.000', value: counter.amount });
+    input.setAttribute('aria-label', 'Giá bạn muốn trả lại (đồng)');
+    moneyInput(input);
+    input.addEventListener('input', () => { counter.amount = input.value; });
+    const send = el('button', 'msgr-pill', 'Gửi');
+    send.type = 'submit';
+    const cancel = el('button', 'msgr-pill light', 'Huỷ');
+    cancel.type = 'button';
+    cancel.onclick = () => { counter = null; renderAll(); };
+    form.onsubmit = e => {
+      e.preventDefault();
+      const problem = checkMoney(input);
+      if (problem) { showError(problem); input.focus(); return; }
+      form.querySelectorAll('button, input').forEach(x => { x.disabled = true; });
+      post('/chat/offer', { action: 'counter', offerId: o.id, amount: moneyValue(input) })
+        .then(() => { counter = null; renderAll(); })
+        .catch(err => {
+          showError(err.message);
+          form.querySelectorAll('button, input').forEach(x => { x.disabled = false; });
+        });
+    };
+    form.append(input, send, cancel);
+    return form;
+  }
+
+  // Nút nhỏ "Xem đơn" dẫn tới trang chi tiết đơn tạo từ giá đã chốt (orderId/orderCode server gửi kèm offer accepted)
+  function orderLink(o) {
+    const a = el('a', 'msgr-order-link', 'Xem đơn ' + o.orderCode + ' →');
+    a.href = ctx + '/order/detail?id=' + encodeURIComponent(o.orderId);
+    return a;
+  }
+
+  // Tin ảnh: content là đường dẫn /uploads/chat/<id>.jpg; bấm để mở ảnh lớn ở tab mới
+  function imageMessage(m) {
+    const a = el('a', 'msgr-image-link');
+    a.href = ctx + m.content;
+    a.target = '_blank';
+    const img = el('img', 'msgr-image');
+    img.src = ctx + m.content;
+    img.alt = 'Ảnh';
+    img.loading = 'lazy';
+    a.append(img);
+    return a;
+  }
+
+  // Tin "Đã chấp nhận giá ... Đơn ORD-xxx đã được tạo." → kèm nút xem đơn ngay dưới bong bóng
+  function textMessage(m) {
+    const bubble = el('div', 'msgr-bubble', m.content);
+    const code = (m.content.match(/Đơn (ORD-[0-9A-F]+) đã được tạo/) || [])[1];
+    const offer = code && messages.map(x => x.offer).find(x => x && x.orderCode === code);
+    if (!offer) return bubble;
+    const stack = el('div', 'msgr-stack');
+    stack.append(bubble, orderLink(offer));
+    return stack;
   }
 
   function timeLabel(ms) {
@@ -92,6 +182,13 @@
     const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     const all = messages.concat(pending);
     const frag = document.createDocumentFragment();
+    // Khung món đang trao đổi luôn nằm đầu đoạn chat
+    if (productTpl) {
+      const product = productTpl.content.cloneNode(true);
+      const openOffer = product.querySelector('[data-open-offer]');
+      if (openOffer) openOffer.onclick = () => openOfferForm(true);
+      frag.append(product);
+    }
     if (!all.length) {
       frag.append(el('p', 'msgr-hint', 'Hãy gửi lời chào hoặc trả giá cho món này.'));
     }
@@ -109,12 +206,19 @@
       if (!m.mine) {
         row.append(el('span', 'msgr-avatar small' + (sameAsNext ? ' ghost' : ''), otherInitial));
       }
-      const content = m.offer ? offerCard(m.offer) : el('div', 'msgr-bubble', m.content);
+      const content = m.offer ? offerCard(m.offer) : m.type === 'image' ? imageMessage(m) : textMessage(m);
       content.title = m.sending ? 'Đang gửi...' : new Date(m.sentAt).toLocaleString('vi-VN');
       row.append(content);
       frag.append(row);
     });
+    // Ô trả giá lại: đặt con trỏ vào khi vừa mở, và giữ con trỏ ở đó nếu đang gõ dở lúc khung chat vẽ lại
+    const typing = document.activeElement && document.activeElement.closest('.msgr-counter');
     box.replaceChildren(frag);
+    const counterInput = box.querySelector('.msgr-counter input');
+    if (counterInput && (typing || counter.focus)) {
+      counter.focus = false;
+      counterInput.focus({ preventScroll: true });
+    }
     if (atBottom) box.scrollTop = box.scrollHeight;
   }
 
@@ -195,17 +299,42 @@
         .then(() => setTimeout(dropTemp, 10000))   // phòng khi không nhận lại được tin từ server
         .catch(err => { dropTemp(); input.value = text; showError(err.message); });
     });
+    // Chọn ảnh xong là gửi luôn (multipart, 1 ảnh tối đa 5 MB)
+    const imageInput = document.getElementById('chat-image');
+    imageInput.addEventListener('change', async () => {
+      const file = imageInput.files[0];
+      imageInput.value = '';
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showError('Ảnh tối đa 5 MB'); return; }
+      const data = new FormData();
+      data.append('conversationId', conversationId);
+      data.append('image', file);
+      try {
+        const res = await fetch(ctx + '/chat/image', { method: 'POST', body: data });
+        const json = await res.json().catch(() => ({ ok: false, error: 'Gửi ảnh không được' }));
+        if (!json.ok) throw new Error(json.error);
+        showError('');
+        idlePolls = 0;
+        await poll();
+        box.scrollTop = box.scrollHeight;
+      } catch (err) {
+        showError(err.message);
+      }
+    });
     const offerForm = document.getElementById('offer-form');
-    const toggleOffer = show => {
+    moneyInput(offerForm.amount);
+    openOfferForm = show => {
       offerForm.hidden = !show;
       if (show) offerForm.amount.focus();
     };
-    document.getElementById('offer-toggle').onclick = () => toggleOffer(offerForm.hidden);
-    document.getElementById('offer-cancel').onclick = () => toggleOffer(false);
+    document.getElementById('offer-toggle').onclick = () => openOfferForm(offerForm.hidden);
+    document.getElementById('offer-cancel').onclick = () => openOfferForm(false);
     offerForm.addEventListener('submit', e => {
       e.preventDefault();
-      post('/chat/offer', { action: 'make', conversationId, amount: offerForm.amount.value })
-        .then(() => { offerForm.amount.value = ''; toggleOffer(false); box.scrollTop = box.scrollHeight; })
+      const problem = checkMoney(offerForm.amount);
+      if (problem) { showError(problem); offerForm.amount.focus(); return; }
+      post('/chat/offer', { action: 'make', conversationId, amount: moneyValue(offerForm.amount) })
+        .then(() => { offerForm.amount.value = ''; openOfferForm(false); box.scrollTop = box.scrollHeight; })
         .catch(err => showError(err.message));
     });
   }

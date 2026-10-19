@@ -1,49 +1,59 @@
 /* F4 Giỏ hàng & đặt hàng (TV3). Tông trắng đen theo style.css chung. */
 .order-page { font-family: 'Poppins', sans-serif; color: #111; }
-.order-page h1 { font-size: 26px; margin-bottom: 16px; }
-.order-page h2 { font-size: 18px; margin: 0 0 12px; }
-.order-page .hint { color: #666; font-size: 14px; }
+.order-page h1 { font-size: 23.5px; margin-bottom: 14.5px; }
+.order-page h2 { font-size: 16px; margin: 0 0 11px; }
+.order-page .hint { color: #666; font-size: 12.5px; }
 
-.order-alert { background: #fff; border: 1.5px solid #000; border-left-width: 6px; padding: 10px 14px; }
+.order-alert { background: #fff; border: 1.5px solid #000; border-left-width: 5.5px; padding: 9px 12.5px; }
 .order-alert.error { border-color: #c00; color: #c00; }
 
-.order-card { background: #fff; border: 1.5px solid #000; border-radius: 14px; padding: 16px 20px; margin: 16px 0; }
-.order-card form { margin: 10px 0; }
-.order-card label { margin-right: 12px; }
+.order-card { background: #fff; border: 1.5px solid #000; border-radius: 12.5px; padding: 14.5px 18px; margin: 14.5px 0; }
+.order-card form { margin: 9px 0; }
+.order-card label { margin-right: 11px; }
 
 .order-table { width: 100%; border-collapse: collapse; background: #fff; }
-.order-table th, .order-table td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+.order-table th, .order-table td { border-bottom: 1px solid #ddd; padding: 9px; text-align: left; }
 .order-table .seller-row td { background: #f3f3f3; font-weight: 600; }
 
-.money { margin-left: auto; margin-top: 12px; }
-.money td { padding: 4px 10px; }
+.money { margin-left: auto; margin-top: 11px; }
+.money td { padding: 3.5px 9px; }
 .money td:last-child { text-align: right; }
-.money .total td { font-weight: 700; font-size: 18px; border-top: 1.5px solid #000; }
+.money .total td { font-weight: 700; font-size: 16px; border-top: 1.5px solid #000; }
 
-.order-summary { text-align: right; margin-top: 16px; }
-.order-page form.inline { display: inline-block; margin-left: 8px; }
-.order-page input, .order-page select { font: inherit; padding: 6px 10px; border: 1px solid #000; border-radius: 8px; }
-.order-page button, .order-page .btn-link { font: inherit; padding: 8px 16px; border: 1.5px solid #000; border-radius: 20px;
+.order-summary { text-align: right; margin-top: 14.5px; }
+.order-page form.inline { display: inline-block; margin-left: 7px; }
+.order-page input, .order-page select { font: inherit; padding: 5.5px 9px; border: 1px solid #000; border-radius: 7px; }
+.order-page button, .order-page .btn-link { font: inherit; padding: 7px 14.5px; border: 1.5px solid #000; border-radius: 18px;
     background: #000; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
 .order-page button.secondary { background: #fff; color: #000; }
-.actions form, .actions a { display: inline-block; margin-right: 10px; }
+.actions form, .actions a { display: inline-block; margin-right: 9px; }
 
-.order-tabs a { display: inline-block; padding: 6px 16px; border: 1.5px solid #000; border-radius: 20px; margin-right: 6px; color: #000; text-decoration: none; }
+.order-tabs a { display: inline-block; padding: 5.5px 14.5px; border: 1.5px solid #000; border-radius: 18px; margin-right: 5.5px; color: #000; text-decoration: none; }
 .order-tabs a.active { background: #000; color: #fff; }
 
-.status { font-size: 13px; padding: 2px 10px; border-radius: 12px; border: 1px solid #000; }
+.status { font-size: 11.5px; padding: 2px 9px; border-radius: 11px; border: 1px solid #000; }
 .status-COMPLETED { background: #000; color: #fff; }
 .status-CANCELLED, .status-REFUNDED { border-color: #999; color: #999; }
-.tag-off { color: #c00; font-size: 13px; }
+.tag-off { color: #c00; font-size: 11.5px; }
 
 /* F8: đánh giá & hạng */
-.stars label { margin-right: 14px; font-size: 18px; }
-.order-page textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid #000; border-radius: 8px; }
-.tier-badge { display: inline-block; padding: 6px 20px; border: 2px solid #000; border-radius: 20px; font-weight: 700; font-size: 20px; }
+.stars label { margin-right: 12.5px; font-size: 16px; }
+.order-page textarea { width: 100%; font: inherit; padding: 7px 9px; border: 1px solid #000; border-radius: 7px; }
+.tier-badge { display: inline-block; padding: 5.5px 18px; border: 2px solid #000; border-radius: 18px; font-weight: 700; font-size: 18px; }
 .tier-Silver { background: #e5e5e5; }
 .tier-Gold { background: #f5d76e; }
 .tier-Diamond { background: #000; color: #fff; }
-.progress { height: 14px; border: 1.5px solid #000; border-radius: 10px; overflow: hidden; margin: 8px 0; }
+.progress { height: 12.5px; border: 1.5px solid #000; border-radius: 9px; overflow: hidden; margin: 7px 0; }
 .progress-bar { height: 100%; background: #000; }
-.review-item { border-top: 1px solid #ddd; padding: 10px 0; }
-.stars-text { margin: 0 8px; }
+.review-item { border-top: 1px solid #ddd; padding: 9px 0; }
+.stars-text { margin: 0 7px; }
+/* Trang đơn: các bước đặt hàng, chọn hãng vận chuyển; trang khiếu nại & thanh toán dùng chung */
+.order-page h3 { font-size: 14px; margin: 14.5px 0 5.5px; }
+.order-page .choice { display: block; margin: 5.5px 0; cursor: pointer; }
+.order-page .choice input { margin-right: 7px; }
+.order-page a.btn-link.secondary { background: #fff; color: #000; }
+.stack-form label { display: block; margin: 9px 0; }
+.stack-form select, .stack-form textarea, .stack-form input[type=file] { display: block; margin-top: 5.5px; max-width: 100%; }
+.pre-line { white-space: pre-line; }
+.evidence-grid { display: flex; flex-wrap: wrap; gap: 7px; margin: 7px 0; }
+.evidence-grid img { width: 108px; height: 108px; object-fit: cover; border: 1px solid #000; border-radius: 7px; }

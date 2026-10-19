@@ -30,8 +30,26 @@ public class ShippingCarrier {
 
     /** + calculateFee(fromCity, toCity): double */
     public double calculateFee(String fromCity, String toCity) {
-        boolean sameCity = fromCity != null && fromCity.trim().equalsIgnoreCase(toCity == null ? "" : toCity.trim());
+        boolean sameCity = fromCity != null && cityKey(fromCity).equals(cityKey(toCity));
         return sameCity ? baseFee : baseFee + INTER_CITY_SURCHARGE;
+    }
+
+    /** Bỏ chữ "Thành phố", "Tỉnh", "TP." ở đầu để "Thành phố Hà Nội" và "Hà Nội" được coi là cùng tỉnh. */
+    static String cityKey(String city) {
+        if (city == null) {
+            return "";
+        }
+        String key = city.trim().toLowerCase();
+        for (String prefix : new String[]{"thành phố ", "tỉnh ", "tp. ", "tp.", "tp "}) {
+            if (key.startsWith(prefix)) {
+                key = key.substring(prefix.length()).trim();
+                break;
+            }
+        }
+        if (key.equals("hcm") || key.equals("hồ chí minh")) {
+            key = "hồ chí minh";
+        }
+        return key;
     }
 
     public String getId() { return id; }

@@ -14,7 +14,36 @@ public final class PasswordUtil {
     private static final int KEY_BITS = 256;
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    /** Độ dài cho phép của mật khẩu. */
+    public static final int MIN_LENGTH = 8;
+    public static final int MAX_LENGTH = 128;
+
     private PasswordUtil() {
+    }
+
+    /**
+     * Kiểm tra mật khẩu mới có đủ mạnh không (dùng khi đăng ký và đổi mật khẩu).
+     * Luật: 8–128 ký tự, có ít nhất 1 chữ cái và 1 chữ số, không có khoảng trắng.
+     * Trang web cũng kiểm tra y hệt bằng assets/js/password.js, nhưng server vẫn phải kiểm tra lại.
+     * @return câu báo lỗi cho người dùng, hoặc null nếu hợp lệ
+     */
+    public static String checkStrength(String password) {
+        if (password == null || password.length() < MIN_LENGTH) {
+            return "Mật khẩu cần có ít nhất " + MIN_LENGTH + " ký tự.";
+        }
+        if (password.length() > MAX_LENGTH) {
+            return "Mật khẩu tối đa " + MAX_LENGTH + " ký tự.";
+        }
+        if (password.chars().anyMatch(Character::isWhitespace)) {
+            return "Mật khẩu không được chứa khoảng trắng.";
+        }
+        if (password.chars().noneMatch(Character::isLetter)) {
+            return "Mật khẩu cần có ít nhất 1 chữ cái.";
+        }
+        if (password.chars().noneMatch(Character::isDigit)) {
+            return "Mật khẩu cần có ít nhất 1 chữ số.";
+        }
+        return null;
     }
 
     public static String hashPassword(String password) {

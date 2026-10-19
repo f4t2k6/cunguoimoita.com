@@ -9,6 +9,8 @@
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/assets/css/register.css">
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/css/password.css">
 </head>
 <body>
 
@@ -68,18 +70,25 @@
                        placeholder="Số điện thoại"
                        required>
 
-                <input name="password"
+                <input id="password"
+                       name="password"
                        type="password"
                        placeholder="Mật khẩu"
                        minlength="8"
+                       maxlength="128"
+                       autocomplete="new-password"
+                       data-pw-new
                        required>
 
-                <p class="hint">Ít nhất 8 ký tự, gồm chữ và số</p>
+                <p class="hint">Ít nhất 8 ký tự, gồm chữ và số, không có khoảng trắng</p>
 
-                <input name="confirmPassword"
+                <input id="confirmPassword"
+                       name="confirmPassword"
                        type="password"
                        placeholder="Nhập lại mật khẩu"
-                       minlength="8"
+                       maxlength="128"
+                       autocomplete="new-password"
+                       data-pw-confirm="password"
                        required>
 
                 <button class="submit" type="submit">ĐĂNG KÝ</button>
@@ -144,5 +153,6 @@
     </div>
 </footer>
 
+<script src="${pageContext.request.contextPath}/assets/js/password.js"></script>
 </body>
 </html>

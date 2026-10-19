@@ -17,7 +17,7 @@
       <section class="admin-card"><h1>Không tìm thấy</h1><p>Bài đăng hoặc người dùng này không còn tồn tại.</p></section>
     </c:when>
     <c:otherwise>
-      <form method="post" class="admin-card admin-form report-form">
+      <form method="post" enctype="multipart/form-data" class="admin-card admin-form report-form">
         <h1>Báo cáo ${type == 'product' ? 'bài đăng' : 'người dùng'}</h1>
         <p class="admin-meta"><c:out value="${targetName}"/></p>
         <c:if test="${not empty error}"><p class="admin-flash error" role="alert"><c:out value="${error}"/></p></c:if>
@@ -32,6 +32,9 @@
         </fieldset>
         <label class="wide">Mô tả thêm (tuỳ chọn)
           <textarea name="description" rows="4" maxlength="2000"><c:out value="${param.description}"/></textarea>
+        </label>
+        <label class="wide">Ảnh bằng chứng (tuỳ chọn, tối đa 3 ảnh, mỗi ảnh ≤ 5 MB)
+          <input type="file" name="images" accept="image/*" multiple>
         </label>
         <button type="submit">Gửi báo cáo</button>
       </form>

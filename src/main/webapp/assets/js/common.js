@@ -153,6 +153,31 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setPanel(false); });
 
+  // ---- Cài đặt ở menu trái: bấm để mở/đóng, bấm ra ngoài hoặc Esc thì đóng ----
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  if (settingsBtn) {
+    const setSettings = open => {
+      settingsPanel.hidden = !open;
+      settingsBtn.setAttribute('aria-expanded', String(open));
+    };
+    settingsBtn.addEventListener('click', e => { e.stopPropagation(); setSettings(settingsPanel.hidden); });
+    document.addEventListener('click', e => { if (!e.target.closest('.menu-settings')) setSettings(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') setSettings(false); });
+  }
+
+  // ---- Nút "← Quay lại" đầu trang ----
+  // Đến từ một trang khác trong web thì quay về đúng trang đó (giữ vị trí cuộn, bộ lọc...).
+  // Mở thẳng link, hoặc trang trước chính là trang này (vừa lưu form xong) thì đi theo href (trang cha của trang này).
+  document.querySelectorAll('[data-back]').forEach(link => link.addEventListener('click', e => {
+    let prev = null;
+    try { prev = document.referrer ? new URL(document.referrer) : null; } catch (err) { /* referrer lạ: bỏ qua */ }
+    if (prev && prev.origin === location.origin && prev.pathname !== location.pathname && history.length > 1) {
+      e.preventDefault();
+      history.back();
+    }
+  }));
+
   // Thanh trên cùng: thêm bóng mờ khi đã cuộn xuống
   const topbar = document.querySelector('.topbar');
   if (topbar) {
@@ -164,9 +189,9 @@
   // Tên người dùng dài thì thu nhỏ chữ cho vừa khung
   const name = document.getElementById('usernameText');
   if (name) {
-    let size = 22;
+    let size = 20;
     name.style.fontSize = size + 'px';
-    while (name.scrollWidth > name.parentElement.clientWidth && size > 10) {
+    while (name.scrollWidth > name.parentElement.clientWidth && size > 9) {
       name.style.fontSize = (--size) + 'px';
     }
   }

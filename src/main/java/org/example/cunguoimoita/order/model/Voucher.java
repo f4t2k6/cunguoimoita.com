@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 /** Class Voucher trong class diagram. Chỉ chứa luật nghiệp vụ, việc lưu DB do VoucherDAO làm. */
 public class Voucher {
-    public enum VoucherStatus {ISSUED, USED, EXPRRIED}
+    public enum VoucherStatus {ISSUED, USED, EXPIRED}
     private String id;
     private String code;
     private String customerId;          // khách sở hữu voucher
@@ -20,7 +20,7 @@ public class Voucher {
             return false;
         }
         if (expiryDate != null && LocalDate.now().isAfter(expiryDate)) {
-            status = VoucherStatus.EXPRRIED;
+            status = VoucherStatus.EXPIRED;
             return false;
         }
         return true;

@@ -7,6 +7,8 @@
     <title>Đăng nhập - Cunguoimoita</title>
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/assets/css/login.css">
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/css/password.css">
 </head>
 <body>
 <header class="header">
@@ -85,4 +87,5 @@
         </section>
     </div>
 </main>
-<footer class="footer">
+<footer class="footer"><script src="${pageContext.request.contextPath}/assets/js/password.js"></script>
+

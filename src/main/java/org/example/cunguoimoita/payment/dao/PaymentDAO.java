@@ -71,6 +71,52 @@ public class PaymentDAO {
         }
     }
 
+    /** Giống findById nhưng khoá dòng thanh toán tới hết transaction (tránh 2 lần xác nhận cùng lúc). */
+    public Payment findByIdForUpdate(Connection c, String id) throws SQLException {
+        String sql = "SELECT * FROM payments WHERE id = ? FOR UPDATE";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
+
+    /** Khoản đã thanh toán thành công của đơn (để hoàn tiền). Không có → null. */
+    public Payment findPaidByOrderId(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT * FROM payments WHERE order_id = ? AND status = 'paid' ORDER BY paid_at DESC LIMIT 1";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        }
+    }
+
+    /** Lịch sử thanh toán của 1 đơn, mới nhất trước (hiện ở trang chi tiết đơn). */
+    public List<Payment> findAllByOrderId(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC";
+        List<Payment> list = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    /** Huỷ các lần thanh toán còn đang chờ của đơn (người mua bắt đầu lần mới hoặc đổi sang COD). */
+    public void failPendingByOrderId(Connection c, String orderId) throws SQLException {
+        String sql = "UPDATE payments SET status = 'failed' WHERE order_id = ? AND status = 'pending'";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            ps.executeUpdate();
+        }
+    }
+
     public Payment findByCode(Connection c, String code) throws SQLException {
         String sql = "SELECT * FROM payments WHERE code = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {

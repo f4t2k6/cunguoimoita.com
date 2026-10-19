@@ -5,6 +5,7 @@
 <c:set var="pageTitle" value="Tin nhắn"/>
 <c:set var="pageCss" value="chat.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
+<c:set var="backUrl" value="/chat/inbox"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <fmt:setLocale value="vi_VN"/>
 <section class="msgr msgr-open">
@@ -35,13 +36,42 @@
          data-conversation="${fn:escapeXml(conversation.id)}"
          data-other-initial="${fn:escapeXml(conversation.otherInitial(userId))}"></div>
 
+    <%-- Khung món đang trao đổi, chat.js luôn đặt ở đầu đoạn chat (kể cả khi chưa có tin nào) --%>
+    <template id="chat-product">
+      <div class="msgr-product">
+        <a class="msgr-product-photo" href="${ctx}/product?id=${fn:escapeXml(conversation.productId)}">
+          <c:choose>
+            <c:when test="${not empty conversation.productImage}">
+              <img src="${ctx}<c:out value='${conversation.productImage}'/>" alt="<c:out value='${conversation.productName}'/>">
+            </c:when>
+            <c:otherwise><span>Chưa có ảnh</span></c:otherwise>
+          </c:choose>
+        </a>
+        <div class="msgr-product-info">
+          <span class="msgr-product-label">${conversation.askerId == userId ? 'Bạn đang hỏi mua' : 'Người mua đang hỏi về'}</span>
+          <a class="msgr-product-name" href="${ctx}/product?id=${fn:escapeXml(conversation.productId)}"><c:out value="${empty conversation.productName ? conversation.productId : conversation.productName}"/></a>
+          <c:if test="${conversation.productPrice != null}">
+            <strong class="msgr-product-price">Giá đăng: <fmt:formatNumber value="${conversation.productPrice}" maxFractionDigits="0"/> đ</strong>
+          </c:if>
+          <c:if test="${not empty conversation.productCondition}">
+            <span class="msgr-product-meta">Tình trạng: ${conversation.productCondition.label}</span>
+          </c:if>
+          <c:if test="${conversation.open and conversation.askerId == userId}">
+            <button type="button" class="msgr-pill" data-open-offer>Trả giá món này</button>
+          </c:if>
+        </div>
+      </div>
+    </template>
+
     <p id="chat-error" class="msgr-error" hidden></p>
 
     <c:choose>
       <c:when test="${conversation.open}">
         <form id="offer-form" class="msgr-offer-bar" hidden>
           <span>Trả giá</span>
-          <input name="amount" type="number" min="1000" step="1000" placeholder="Số tiền muốn trả (đ)">
+          <input name="amount" type="text" inputmode="numeric" autocomplete="off" data-money
+                 placeholder="Số tiền muốn trả, VD 1.500.000" aria-label="Số tiền muốn trả (đồng)">
+          <span class="msgr-offer-unit">đ</span>
           <button type="submit" class="msgr-pill">Gửi giá</button>
           <button type="button" class="msgr-pill light" id="offer-cancel">Huỷ</button>
         </form>
@@ -51,6 +81,12 @@
               <path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1.5"/>
             </svg>
           </button>
+          <label class="msgr-icon-btn" title="Gửi ảnh" aria-label="Gửi ảnh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.8" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>
+            </svg>
+            <input type="file" id="chat-image" accept="image/*" hidden>
+          </label>
           <input name="content" autocomplete="off" placeholder="Aa">
           <button type="submit" class="msgr-icon-btn" title="Gửi" aria-label="Gửi">
             <svg viewBox="0 0 24 24" fill="#000"><path d="M3 20.5l18-8.5L3 3.5l2.5 7.5L15 12l-9.5 1z"/></svg>

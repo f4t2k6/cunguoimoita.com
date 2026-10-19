@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.chat.controller;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +10,9 @@ import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.chat.service.ChatService;
 import org.example.cunguoimoita.chat.service.ChatService.ChatUpdate;
+import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.ImageStore;
 import org.example.cunguoimoita.common.util.JsonUtil;
 
 import java.io.IOException;
@@ -17,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 /**
  * API JSON cho chat.js (khung chat không tải lại trang).
@@ -24,13 +28,17 @@ import java.util.List;
  *                                   Có tin mới thì kèm "offers" (mọi offer của cuộc trò chuyện) để cập nhật khung giá cũ.
  *  GET  /chat/unread                số tin chưa đọc (icon tin nhắn trên header)
  *  POST /chat/send                  conversationId, content
+ *                                   Offer đã chấp nhận kèm orderId, orderCode của đơn tạo ra.
  *  POST /chat/offer                 action=make (conversationId, amount) | accept | decline (offerId) | counter (offerId, amount)
+ *  POST /chat/image   (multipart)   conversationId, image (1 ảnh ≤ 5 MB) → tin nhắn type "image", content = đường dẫn ảnh
  * Lỗi trả {"ok":false,"error":"..."}.
  */
-@WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/send", "/chat/offer"})
+@WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/send", "/chat/offer", "/chat/image"})
+@MultipartConfig(maxFileSize = ImageStore.MAX_FILE_SIZE, maxRequestSize = ImageStore.MAX_FILE_SIZE + 64 * 1024)
 public class ChatApiServlet extends HttpServlet {
 
     private final ChatService chatService = new ChatService();
+    private final ImageStore imageStore = new ImageStore("chat");
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -51,7 +59,7 @@ public class ChatApiServlet extends HttpServlet {
                 if (i > 0) {
                     json.append(',');
                 }
-                appendMessage(json, messages.get(i), userId);
+                appendMessage(json, messages.get(i), userId, update.orders());
             }
             json.append("],\"offers\":[");
             List<PriceOffer> offers = update.offers();
@@ -59,7 +67,7 @@ public class ChatApiServlet extends HttpServlet {
                 if (i > 0) {
                     json.append(',');
                 }
-                appendOffer(json, offers.get(i), userId);
+                appendOffer(json, offers.get(i), userId, update.orders());
             }
             JsonUtil.write(resp, 200, json.append("]}").toString());
         } catch (IllegalArgumentException e) {
@@ -80,6 +88,14 @@ public class ChatApiServlet extends HttpServlet {
         try {
             if ("/chat/send".equals(req.getServletPath())) {
                 chatService.sendMessage(req.getParameter("conversationId"), userId, req.getParameter("content"));
+            } else if ("/chat/image".equals(req.getServletPath())) {
+                String conversationId = req.getParameter("conversationId");
+                chatService.requireCanSend(conversationId, userId);          // kiểm tra quyền trước rồi mới lưu file
+                var part = req.getPart("image");
+                if (part == null || part.getSize() == 0) {
+                    throw new IllegalArgumentException("Chưa chọn ảnh");
+                }
+                chatService.sendImage(conversationId, userId, imageStore.save(part));
             } else {
                 String offerId = req.getParameter("offerId");
                 switch (String.valueOf(req.getParameter("action"))) {
@@ -109,7 +125,8 @@ public class ChatApiServlet extends HttpServlet {
 
     private static double amount(HttpServletRequest req) {
         try {
-            double value = Double.parseDouble(req.getParameter("amount").trim());
+            // Ô nhập giá hiện dấu chấm phần nghìn (1.500.000) nên bỏ dấu chấm, dấu phẩy, khoảng trắng trước khi đọc số
+            double value = Double.parseDouble(req.getParameter("amount").replaceAll("[.,\\s]", ""));
             // Chặn NaN/Infinity và số vượt NUMERIC(12,2) của price_offers.amount
             if (!Double.isFinite(value) || value <= 0 || value >= 1e10) {
                 throw new NumberFormatException();
@@ -142,7 +159,7 @@ public class ChatApiServlet extends HttpServlet {
         return t.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
-    private static void appendMessage(StringBuilder json, Message m, String userId) {
+    private static void appendMessage(StringBuilder json, Message m, String userId, Map<String, NewOrder> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(m.getId()))
             .append(",\"mine\":").append(userId.equals(m.getSenderId()))
             .append(",\"type\":").append(JsonUtil.quote(m.getType().dbValue()))
@@ -150,19 +167,25 @@ public class ChatApiServlet extends HttpServlet {
         PriceOffer o = m.getOffer();
         if (o != null) {
             json.append(",\"offer\":");
-            appendOffer(json, o, userId);
+            appendOffer(json, o, userId, orders);
         } else {
             json.append(",\"content\":").append(JsonUtil.quote(m.getContent()));
         }
         json.append('}');
     }
 
-    private static void appendOffer(StringBuilder json, PriceOffer o, String userId) {
+    /** Offer đã chấp nhận thì kèm orderId/orderCode của đơn vừa tạo (chat.js hiện nút "Xem đơn"). */
+    private static void appendOffer(StringBuilder json, PriceOffer o, String userId, Map<String, NewOrder> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(o.getId()))
             .append(",\"amount\":").append(o.getAmount())
             .append(",\"status\":").append(JsonUtil.quote(o.getStatus().dbValue()))
             .append(",\"canRespond\":").append(o.isPending() && !userId.equals(o.getProposerId()))
-            .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()))
-            .append('}');
+            .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()));
+        NewOrder order = orders.get(o.getId());
+        if (order != null) {
+            json.append(",\"orderId\":").append(JsonUtil.quote(order.id()))
+                .append(",\"orderCode\":").append(JsonUtil.quote(order.code()));
+        }
+        json.append('}');
     }
 }

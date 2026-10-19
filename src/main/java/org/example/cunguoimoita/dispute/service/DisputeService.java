@@ -1,205 +1,229 @@
 package org.example.cunguoimoita.dispute.service;
 
-import org.example.cunguoimoita.common.dao.OrderRefDAO;
+import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.dao.DisputeDAO;
-import org.example.cunguoimoita.dispute.dao.RefundDAO;
 import org.example.cunguoimoita.dispute.model.Dispute;
 import org.example.cunguoimoita.dispute.model.DisputeReason;
 import org.example.cunguoimoita.dispute.model.DisputeStatus;
+import org.example.cunguoimoita.dispute.model.Payout;
 import org.example.cunguoimoita.dispute.model.Refund;
 import org.example.cunguoimoita.dispute.model.RefundReason;
-import org.example.cunguoimoita.dispute.model.RefundStatus;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
-import org.example.cunguoimoita.payment.dao.PaymentDAO;
-import org.example.cunguoimoita.payment.model.Payment;
-import org.example.cunguoimoita.payment.model.PaymentStatus;
+import org.example.cunguoimoita.order.dao.OrderDAO;
+import org.example.cunguoimoita.order.model.Order;
+import org.example.cunguoimoita.order.model.OrderItem;
+import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.shipping.model.CodStatus;
+import org.example.cunguoimoita.shipping.model.Shipment;
+import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Nghiệp vụ Phân hệ F9: Xử lý Khiếu nại (Dispute), Thẩm định bằng chứng và Phán quyết Trọng tài.
+ * Luồng: người mua mở khiếu nại (đơn đang giao / đã giao) → người bán phản hồi kèm ảnh
+ *        → admin xem → hoàn tiền cho người mua (đơn refunded) hoặc trả tiền người bán (đơn completed + payout).
+ * Trong lúc khiếu nại còn mở, đơn không tự hoàn tất và người mua không bấm "Đã nhận hàng" được.
  */
 public class DisputeService {
 
     private final DisputeDAO disputeDAO = new DisputeDAO();
-    private final RefundDAO refundDAO = new RefundDAO();
-    private final PaymentDAO paymentDAO = new PaymentDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
-    private final NotificationService notificationService = new NotificationService();
+    private final OrderDAO orderDAO = new OrderDAO();
+    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final OrderService orderService = new OrderService();
+    private final ShippingService shippingService = new ShippingService();
+    private final RefundService refundService = new RefundService();
     private final PayoutService payoutService = new PayoutService();
+    private final NotificationService notificationService = new NotificationService();
 
     /**
-     * Dispute.openDispute(): Người mua mở yêu cầu khiếu nại đơn hàng.
+     * Dispute.openDispute(): người mua của đơn mở khiếu nại.
+     * Chỉ khi đơn đang giao hoặc đã giao, và đơn chưa có khiếu nại nào đang mở.
      */
-    public Dispute openDispute(String orderId, String raisedById, String againstId,
-                               DisputeReason reason, String description, String evidenceImages) throws SQLException {
-        Dispute d = new Dispute();
-        d.setId(UUID.randomUUID().toString());
-        d.setOrderId(orderId);
-        d.setRaisedById(raisedById);
-        d.setAgainstId(againstId);
-        d.setReason(reason);
-        d.setDescription(description);
-        d.setEvidenceImages(evidenceImages);
-        d.setStatus(DisputeStatus.OPEN);
-        d.setCreatedDate(LocalDate.now());
-
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            disputeDAO.insert(c, d);
+    public Dispute openDispute(String orderId, String buyerId, DisputeReason reason,
+                               String description, String evidenceImages) throws SQLException {
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng mô tả vấn đề của đơn hàng");
         }
+        Dispute d = inTransaction(c -> {
+            Order order = requireOrderForUpdate(c, orderId);
+            if (!order.getBuyerId().equals(buyerId)) {
+                throw new SecurityException("Chỉ người mua của đơn mới mở khiếu nại được");
+            }
+            if (order.getStatus() != Order.Status.SHIPPING && order.getStatus() != Order.Status.DELIVERED) {
+                throw new IllegalStateException("Chỉ khiếu nại được đơn đang giao hoặc đã giao");
+            }
+            if (disputeDAO.hasOpenDispute(c, orderId)) {
+                throw new IllegalStateException("Đơn này đang có khiếu nại chờ xử lý");
+            }
+            Dispute nd = new Dispute();
+            nd.setId(UUID.randomUUID().toString());
+            nd.setOrderId(orderId);
+            nd.setRaisedById(buyerId);
+            nd.setAgainstId(order.getSellerId());
+            nd.setReason(reason);
+            nd.setDescription(description.trim());
+            nd.setEvidenceImages(evidenceImages);
+            nd.setStatus(DisputeStatus.OPEN);
+            nd.setCreatedDate(LocalDate.now());
+            disputeDAO.insert(c, nd);
+            return nd;
+        });
+        notify(d.getAgainstId(), NotificationType.ORDER,
+                "Đơn hàng của bạn đang có khiếu nại (" + reason.getDisplayName() + "). Vui lòng gửi phản hồi và ảnh bằng chứng.",
+                d.getId());
+        return d;
+    }
 
-        // Báo cho bên bị khiếu nại và Admin
-        try {
-            notificationService.send(againstId, NotificationType.ORDER,
-                    "Đơn hàng của bạn đang có khiếu nại (" + reason.getDisplayName() + "). Vui lòng nộp bằng chứng đối chiếu.",
-                    "/dispute?id=" + d.getId());
-        } catch (Exception ignored) {
+    /** Người bán (bên bị khiếu nại) gửi lời giải thích + ảnh bằng chứng. */
+    public void respond(String disputeId, String sellerId, String response, String images) throws SQLException {
+        Dispute d = inTransaction(c -> {
+            Dispute x = requireDisputeForUpdate(c, disputeId);
+            if (!x.getAgainstId().equals(sellerId)) {
+                throw new SecurityException("Chỉ người bán của đơn mới gửi phản hồi được");
+            }
+            x.respond(response, images);
+            disputeDAO.update(c, x);
+            return x;
+        });
+        notify(d.getRaisedById(), NotificationType.ORDER, "Người bán đã phản hồi khiếu nại của bạn.", d.getId());
+    }
+
+    /** Dispute.submitEvidence(): người mua nộp thêm ảnh bằng chứng khi khiếu nại còn mở. */
+    public void submitEvidence(String disputeId, String buyerId, String newImages) throws SQLException {
+        if (newImages == null || newImages.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 ảnh");
+        }
+        inTransaction(c -> {
+            Dispute d = requireDisputeForUpdate(c, disputeId);
+            if (!d.getRaisedById().equals(buyerId)) {
+                throw new SecurityException("Chỉ người mở khiếu nại mới nộp thêm ảnh được");
+            }
+            d.requireOpen();
+            d.submitEvidence(newImages);
+            disputeDAO.update(c, d);
+            return null;
+        });
+    }
+
+    /** Admin đưa tranh chấp vào trạng thái thẩm định. */
+    public void reviewDispute(String disputeId, String adminId) throws SQLException {
+        inTransaction(c -> {
+            Dispute d = requireDisputeForUpdate(c, disputeId);
+            d.review();
+            d.setHandledByAdminId(adminId);
+            disputeDAO.update(c, d);
+            return null;
+        });
+    }
+
+    /**
+     * Dispute.resolveForBuyer(): người mua thắng.
+     * Đơn → refunded, hoàn tiền người mua (đã trả online, hoặc COD shipper đã thu), sản phẩm được ẩn để người bán tự đăng lại.
+     * @return khoản hoàn tiền (null nếu người mua chưa trả đồng nào, vd COD chưa thu)
+     */
+    public Refund resolveForBuyer(String disputeId, String adminId, String resolutionNote) throws SQLException {
+        Resolved r = inTransaction(c -> {
+            Dispute d = requireDisputeForUpdate(c, disputeId);
+            d.resolveForBuyer(adminId, resolutionNote);
+            disputeDAO.update(c, d);
+
+            Order order = requireOrderForUpdate(c, d.getOrderId());
+            order.setStatus(requireRefundable(order));
+            orderDAO.update(c, order);
+            for (OrderItem item : order.getItems()) {
+                productDAO.updateStatus(c, item.getProductId(), "hidden");
+            }
+            Shipment s = shippingService.findByOrder(c, order.getId());
+            boolean codPaid = s != null && (s.getCodStatus() == CodStatus.COLLECTED || s.getCodStatus() == CodStatus.REMITTED);
+            Refund refund = refundService.refundOrder(c, order.getId(), d.getRaisedById(),
+                    codPaid ? s.getCodAmount() : 0, RefundReason.DISPUTE_WON);
+            return new Resolved(d, refund, null);
+        });
+
+        Dispute d = r.dispute();
+        String money = r.refund() == null ? "" : " Đã hoàn " + String.format("%,.0f", r.refund().getAmount()) + " đ.";
+        notify(d.getRaisedById(), NotificationType.PAYMENT,
+                "Khiếu nại của bạn được chấp nhận." + money, d.getId());
+        notify(d.getAgainstId(), NotificationType.ORDER,
+                "Khiếu nại đơn hàng được xử lý: hoàn tiền cho người mua. Bài đăng đã được ẩn, bạn có thể mở lại trong Bài của tôi.",
+                d.getId());
+        return r.refund();
+    }
+
+    /**
+     * Dispute.resolveForSeller(): người bán thắng.
+     * Đơn hoàn tất như bình thường (F4 completeOrder) → tạo khoản trả tiền người bán (F9 Payout).
+     */
+    public void resolveForSeller(String disputeId, String adminId, String resolutionNote) throws SQLException {
+        Resolved r = inTransaction(c -> {
+            Dispute d = requireDisputeForUpdate(c, disputeId);
+            d.resolveForSeller(adminId, resolutionNote);
+            disputeDAO.update(c, d);
+            Order order = requireOrderForUpdate(c, d.getOrderId());
+            Payout payout = null;
+            if (order.getStatus() == Order.Status.SHIPPING || order.getStatus() == Order.Status.DELIVERED) {
+                shippingService.collectCodIfPending(c, order.getId());
+                payout = orderService.completeOrder(c, order);
+            }
+            return new Resolved(d, null, payout);
+        });
+
+        Dispute d = r.dispute();
+        payoutService.notifyCreated(r.payout());
+        notify(d.getAgainstId(), NotificationType.PAYMENT,
+                "Khiếu nại được xử lý có lợi cho bạn, đơn hàng đã hoàn tất.", d.getId());
+        notify(d.getRaisedById(), NotificationType.ORDER,
+                "Khiếu nại đơn hàng của bạn không được chấp nhận, đơn hàng đã hoàn tất.", d.getId());
+    }
+
+    /** Từ chối khiếu nại (không đủ căn cứ): đơn tiếp tục như bình thường, người mua có thể bấm nhận hoặc đơn tự hoàn tất. */
+    public void rejectDispute(String disputeId, String adminId, String resolutionNote) throws SQLException {
+        Dispute d = inTransaction(c -> {
+            Dispute x = requireDisputeForUpdate(c, disputeId);
+            x.reject(adminId, resolutionNote);
+            disputeDAO.update(c, x);
+            return x;
+        });
+        notify(d.getRaisedById(), NotificationType.ORDER,
+                "Khiếu nại đơn hàng của bạn bị từ chối: " + (resolutionNote == null ? "" : resolutionNote), d.getId());
+    }
+
+    /**
+     * Người mua, người bán của khiếu nại hoặc admin mới xem được.
+     * @return khiếu nại, ném SecurityException nếu không có quyền
+     */
+    public Dispute getForUser(String disputeId, String userId, boolean admin) throws SQLException {
+        Dispute d = getById(disputeId);
+        if (d == null || (!admin && !d.getRaisedById().equals(userId) && !d.getAgainstId().equals(userId))) {
+            throw new SecurityException("Không tìm thấy khiếu nại");
         }
         return d;
     }
 
     /**
-     * Dispute.submitEvidence(): Nộp thêm hình ảnh / video bằng chứng.
+     * Đơn này người mua có mở khiếu nại được không (để trang đơn hiện nút "Khiếu nại").
+     * @return null nếu được, ngược lại là lý do
      */
-    public void submitEvidence(String disputeId, String newImages) throws SQLException {
+    public String openProblem(String orderId, String buyerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            Dispute d = disputeDAO.findById(c, disputeId);
-            if (d != null) {
-                d.submitEvidence(newImages);
-                disputeDAO.update(c, d);
+            Order order = orderDAO.findById(c, orderId);
+            if (order == null || !order.getBuyerId().equals(buyerId)) {
+                return "Chỉ người mua của đơn mới mở khiếu nại được";
             }
-        }
-    }
-
-    /**
-     * Admin đưa tranh chấp vào trạng thái thẩm định.
-     */
-    public void reviewDispute(String disputeId, String adminId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            Dispute d = disputeDAO.findById(c, disputeId);
-            if (d != null) {
-                d.review();
-                d.setHandledByAdminId(adminId);
-                disputeDAO.update(c, d);
+            if (order.getStatus() != Order.Status.SHIPPING && order.getStatus() != Order.Status.DELIVERED) {
+                return "Chỉ khiếu nại được đơn đang giao hoặc đã giao";
             }
-        }
-    }
-
-    /**
-     * Dispute.resolveForBuyer(): Phán quyết Người Mua Thắng.
-     * Tự động sinh bản ghi Refund, đổi trạng thái payment sang 'refunded' và cập nhật order sang 'refunded'.
-     */
-    public Refund resolveForBuyer(String disputeId, String adminId, String resolutionNote) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            c.setAutoCommit(false);
-            try {
-                Dispute d = disputeDAO.findById(c, disputeId);
-                if (d == null) {
-                    c.rollback();
-                    return null;
-                }
-
-                d.resolveForBuyer(adminId, resolutionNote);
-                disputeDAO.update(c, d);
-
-                // Cập nhật trạng thái đơn hàng
-                orderDAO.updateStatus(c, d.getOrderId(), "refunded", "paid", "shipping", "delivered", "new");
-
-                // Tìm thanh toán gốc để hoàn
-                Payment p = paymentDAO.findByOrderId(c, d.getOrderId());
-                double refundAmount = p != null ? p.getAmount() : 0.0;
-                String paymentId = p != null ? p.getId() : null;
-
-                if (p != null) {
-                    paymentDAO.updateStatus(c, p.getId(), PaymentStatus.REFUNDED, p.getGatewayTxnId());
-                }
-
-                // Sinh bản ghi Refund
-                Refund r = new Refund();
-                r.setId(UUID.randomUUID().toString());
-                r.setOrderId(d.getOrderId());
-                r.setPaymentId(paymentId);
-                r.setBuyerId(d.getRaisedById());
-                r.setAmount(refundAmount);
-                r.setReason(RefundReason.DISPUTE_WON);
-                r.setStatus(RefundStatus.DONE);
-                r.setRefundDate(LocalDateTime.now());
-                refundDAO.insert(c, r);
-
-                c.commit();
-
-                // Gửi thông báo
-                try {
-                    notificationService.send(d.getRaisedById(), NotificationType.PAYMENT,
-                            "Khiếu nại đơn hàng của bạn đã được giải quyết: Hoàn tiền " + String.format("%,.0f", refundAmount) + " đ.",
-                            "/dispute?id=" + d.getId());
-                    notificationService.send(d.getAgainstId(), NotificationType.ORDER,
-                            "Khiếu nại đơn hàng đã được phán quyết: Hoàn tiền cho người mua.",
-                            "/dispute?id=" + d.getId());
-                } catch (Exception ignored) {
-                }
-
-                return r;
-            } catch (SQLException ex) {
-                c.rollback();
-                throw ex;
-            } finally {
-                c.setAutoCommit(true);
+            if (disputeDAO.hasOpenDispute(c, orderId)) {
+                return "Đơn này đang có khiếu nại chờ xử lý";
             }
-        }
-    }
-
-    /**
-     * Dispute.resolveForSeller(): Phán quyết Người Bán Thắng.
-     * Bác khiếu nại, tự động tạo lệnh Payout giải ngân tiền cho người bán.
-     */
-    public void resolveForSeller(String disputeId, String adminId, String resolutionNote) throws SQLException {
-        Dispute d;
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            d = disputeDAO.findById(c, disputeId);
-            if (d == null) return;
-
-            d.resolveForSeller(adminId, resolutionNote);
-            disputeDAO.update(c, d);
-        }
-
-        // Tạo lệnh Payout giải ngân cho Người bán (againstId hoặc sellerId)
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            Payment p = paymentDAO.findByOrderId(c, d.getOrderId());
-            double grossAmount = p != null ? p.getAmount() : 0.0;
-            if (grossAmount > 0) {
-                payoutService.createPayout(d.getOrderId(), d.getAgainstId(), grossAmount);
-            }
-        }
-
-        try {
-            notificationService.send(d.getAgainstId(), NotificationType.PAYMENT,
-                    "Khiếu nại được phán quyết có lợi cho bạn. Lệnh giải ngân tiền bán hàng đã được tạo.",
-                    "/seller/payouts");
-            notificationService.send(d.getRaisedById(), NotificationType.ORDER,
-                    "Khiếu nại đơn hàng của bạn không được chấp thuận bởi Trọng tài.",
-                    "/dispute?id=" + d.getId());
-        } catch (Exception ignored) {
-        }
-    }
-
-    /**
-     * Từ chối khiếu nại.
-     */
-    public void rejectDispute(String disputeId, String adminId, String resolutionNote) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            Dispute d = disputeDAO.findById(c, disputeId);
-            if (d != null) {
-                d.reject(adminId, resolutionNote);
-                disputeDAO.update(c, d);
-            }
+            return null;
         }
     }
 
@@ -230,6 +254,67 @@ public class DisputeService {
     public List<Dispute> listAll(int limit) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return disputeDAO.listAll(c, limit);
+        }
+    }
+
+    // ===================== HÀM PHỤ =====================
+
+    /** Kết quả phán quyết, để gửi thông báo sau khi commit. */
+    private record Resolved(Dispute dispute, Refund refund, Payout payout) {
+    }
+
+    private Dispute requireDisputeForUpdate(Connection c, String disputeId) throws SQLException {
+        Dispute d = disputeId == null ? null : disputeDAO.findByIdForUpdate(c, disputeId);
+        if (d == null) {
+            throw new IllegalArgumentException("Không tìm thấy khiếu nại");
+        }
+        return d;
+    }
+
+    private Order requireOrderForUpdate(Connection c, String orderId) throws SQLException {
+        Order order = orderId == null ? null : orderDAO.findByIdForUpdate(c, orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("Không tìm thấy đơn hàng");
+        }
+        return order;
+    }
+
+    /** Đơn phải đang giao / đã giao / đã thanh toán mới chuyển refunded được (luật canMoveTo của Order). */
+    private Order.Status requireRefundable(Order order) {
+        if (!order.getStatus().canMoveTo(Order.Status.REFUNDED)) {
+            throw new IllegalStateException("Đơn " + order.getCode() + " không thể hoàn tiền ở trạng thái " + order.getStatus().label());
+        }
+        return Order.Status.REFUNDED;
+    }
+
+    // Thông báo dẫn tới trang khiếu nại; lỗi thông báo không làm hỏng nghiệp vụ đã lưu.
+    private void notify(String userId, NotificationType type, String content, String disputeId) {
+        try {
+            notificationService.send(userId, type, content, "/dispute?id=" + disputeId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FunctionalInterface
+    private interface Work<T> {
+        T run(Connection c) throws SQLException;
+    }
+
+    /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */
+    private <T> T inTransaction(Work<T> work) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                T result = work.run(c);
+                c.commit();
+                return result;
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            } finally {
+                c.setAutoCommit(true);
+            }
         }
     }
 }

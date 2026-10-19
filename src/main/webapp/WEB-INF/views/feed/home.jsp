@@ -5,6 +5,7 @@
 <fmt:setLocale value="vi_VN"/>
 <c:set var="pageTitle" value="Trang chủ"/>
 <c:set var="pageCss" value="product.css"/>
+<c:set var="hideBack" value="true"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
 <nav class="category-bar" aria-label="Danh mục">

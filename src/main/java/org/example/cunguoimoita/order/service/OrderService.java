@@ -5,6 +5,12 @@ import org.example.cunguoimoita.account.model.Address;
 import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.dispute.dao.DisputeDAO;
+import org.example.cunguoimoita.dispute.model.Payout;
+import org.example.cunguoimoita.dispute.model.Refund;
+import org.example.cunguoimoita.dispute.model.RefundReason;
+import org.example.cunguoimoita.dispute.service.PayoutService;
+import org.example.cunguoimoita.dispute.service.RefundService;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
 import org.example.cunguoimoita.order.dao.CartDAO;
@@ -15,7 +21,12 @@ import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.model.Voucher;
+import org.example.cunguoimoita.payment.service.PaymentService;
 import org.example.cunguoimoita.review.service.ReviewService;
+import org.example.cunguoimoita.shipping.model.CodStatus;
+import org.example.cunguoimoita.shipping.model.Shipment;
+import org.example.cunguoimoita.shipping.model.ShipmentStatus;
+import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -36,6 +47,14 @@ public class OrderService {
     private final AddressDAO addressDAO = new AddressDAO();                // sổ địa chỉ (F1)
     private final NotificationService notificationService = new NotificationService();   // thông báo (F7)
     private final ReviewService reviewService = new ReviewService();      // F8: xét hạng khi đơn hoàn tất
+    private final ShippingService shippingService = new ShippingService(); // F6: vận đơn + phí ship
+    private final PaymentService paymentService = new PaymentService();   // F5: điều kiện COD
+    private final PayoutService payoutService = new PayoutService();      // F9: trả tiền người bán khi hoàn tất
+    private final RefundService refundService = new RefundService();      // F9: hoàn tiền khi huỷ đơn đã trả
+    private final DisputeDAO disputeDAO = new DisputeDAO();               // F9: đơn đang khiếu nại thì chưa hoàn tất
+
+    /** Số ngày sau khi giao mà người mua không bấm "Đã nhận hàng" / không khiếu nại thì đơn tự hoàn tất. */
+    public static final int AUTO_COMPLETE_DAYS = 7;
 
     // ===================== CHECKOUT =====================
 
@@ -127,11 +146,50 @@ public class OrderService {
             throw new IllegalArgumentException("Địa chỉ không hợp lệ");
         }
         inTransaction(c -> {
-            Order order = requireBuyerOrder(c, orderId, buyerId);
+            Order order = requireEditableOrder(c, orderId, buyerId);
             order.chooseAddress(addressId);
+            orderDAO.update(c, order);
+            // Đã chọn hãng vận chuyển → tính lại phí ship theo địa chỉ mới
+            Shipment s = shippingService.requote(c, orderId);
+            if (s != null) {
+                order.chooseCarrier(s.getCarrierId(), s.getShippingFee());
+                orderDAO.update(c, order);
+            }
+            return null;
+        });
+    }
+
+    // Order.chooseCarrier(carrierId): người mua chọn hãng → F6 tạo/đổi vận đơn và tính phí → đơn cộng phí ship vào tổng.
+    public void chooseCarrier(String orderId, String buyerId, String carrierId) throws SQLException {
+        inTransaction(c -> {
+            Order order = requireEditableOrder(c, orderId, buyerId);
+            Shipment s = shippingService.chooseCarrier(c, orderId, carrierId);
+            order.chooseCarrier(carrierId, s.getShippingFee());
             orderDAO.update(c, order);
             return null;
         });
+    }
+
+    // Các hãng kèm phí ship của đúng tuyến (người bán → địa chỉ giao), để trang đơn cho chọn.
+    public List<ShippingService.CarrierQuote> getCarrierQuotes(String orderId) throws SQLException {
+        return shippingService.quoteForOrder(orderId);
+    }
+
+    // Vận đơn của đơn (null nếu chưa chọn hãng).
+    public Shipment getShipment(String orderId) throws SQLException {
+        return shippingService.findByOrder(orderId);
+    }
+
+    // Voucher còn dùng được của người mua, để trang đơn gợi ý.
+    public List<Voucher> getUsableVouchers(String buyerId) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return voucherDAO.findUsableByCustomer(c, buyerId);
+        }
+    }
+
+    // Lý do đơn không được trả COD (null = được), để trang đơn ẩn lựa chọn COD.
+    public String getCodProblem(String orderId, String buyerId) throws SQLException {
+        return paymentService.codProblem(orderId, buyerId);
     }
     // Sổ địa chỉ của người mua, để trang chi tiết đơn hiện danh sách cho chọn.
     public List<Address> getBuyerAddresses(String buyerId) throws SQLException {
@@ -141,7 +199,7 @@ public class OrderService {
     // Order.applyVoucher(code): tìm voucher theo mã → Order kiểm tra luật → lưu cả đơn lẫn voucher.
     public void applyVoucher(String orderId, String buyerId, String code) throws SQLException {
         inTransaction(c -> {
-            Order order = requireBuyerOrder(c, orderId, buyerId);
+            Order order = requireEditableOrder(c, orderId, buyerId);
             Voucher voucher = voucherDAO.findByCode(c, code == null ? "" : code.trim());
             if (voucher == null) {
                 throw new IllegalArgumentException("Mã voucher không tồn tại");
@@ -153,52 +211,130 @@ public class OrderService {
         });
     }
 
-    // Order.choosePaymentMethod(): online → chờ thanh toán (F5 xử lý tiếp), COD → giữ new.
+    // Order.choosePaymentMethod(): phải chọn hãng vận chuyển trước (để tổng tiền đã gồm phí ship).
+    //  - online → đơn "chờ thanh toán", Servlet chuyển sang trang thanh toán của F5.
+    //  - COD    → kiểm tra điều kiện COD, đơn giữ "new", vận đơn ghi số tiền shipper phải thu = tổng đơn.
+    //             Từ lúc này người bán được gửi hàng và người mua không sửa đơn được nữa.
     public void choosePaymentMethod(String orderId, String buyerId, Order.PaymentMethod method) throws SQLException {
-        inTransaction(c -> {
-            Order order = requireBuyerOrder(c, orderId, buyerId);
-            order.choosePaymentMethod(method);
-            orderDAO.update(c, order);
-            return null;
+        Order order = inTransaction(c -> {
+            Order o = requireEditableOrder(c, orderId, buyerId);
+            if (method == Order.PaymentMethod.COD) {
+                String problem = paymentService.codProblem(c, orderId, buyerId);
+                if (problem != null) {
+                    throw new IllegalStateException(problem);
+                }
+            }
+            o.choosePaymentMethod(method);
+            orderDAO.update(c, o);
+            shippingService.setCodAmount(c, orderId, method == Order.PaymentMethod.COD ? o.getTotalAmount() : 0);
+            return o;
         });
+        if (method == Order.PaymentMethod.COD) {
+            notify(order.getSellerId(), "Đơn " + order.getCode() + " đã xác nhận thanh toán khi nhận hàng (COD). Bạn có thể gửi hàng.",
+                    order.getId());
+        }
     }
 
     // ===================== HUỶ / HOÀN TẤT =====================
 
     // Order.cancel(): người mua hoặc người bán huỷ → trả sản phẩm về available.
+    // Đơn đã thanh toán online → tạo khoản hoàn tiền (F9) cho người mua trong cùng transaction.
     public void cancel(String orderId, String userId, String reason) throws SQLException {
-        Order order = inTransaction(c -> {
+        Cancelled result = inTransaction(c -> {
             Order o = orderDAO.findByIdForUpdate(c, orderId);
             requireParticipant(o, userId);
+            boolean wasPaid = o.getStatus() == Order.Status.PAID;
             o.cancel(reason);
             orderDAO.update(c, o);
             for (OrderItem item : o.getItems()) {
                 productDAO.updateStatus(c, item.getProductId(), "available");
             }
-            return o;
+            Refund refund = wasPaid
+                    ? refundService.refundOrder(c, o.getId(), o.getBuyerId(), 0, RefundReason.CANCELLED)
+                    : null;
+            return new Cancelled(o, refund);
         });
+        Order order = result.order();
+        Refund refund = result.refund();
         String other = userId.equals(order.getBuyerId()) ? order.getSellerId() : order.getBuyerId();
         notify(other, "Đơn " + order.getCode() + " đã bị huỷ: " + reason, order.getId());
+        if (refund != null) {
+            notify(order.getBuyerId(), "Đã hoàn " + String.format("%,.0f", refund.getAmount()) + " đ cho đơn "
+                    + order.getCode() + " vừa huỷ.", order.getId());
+        }
     }
 
     // Customer.confirmReceived() → Order.confirmReceived(): người mua bấm "Đã nhận hàng" → đơn completed.
+    // Đơn đang khiếu nại thì không bấm được (chờ admin xử). Đơn COD: bấm nhận hàng nghĩa là đã trả tiền cho shipper.
     public void confirmReceived(String orderId, String buyerId) throws SQLException {
-        Order order = inTransaction(c -> {
+        Completed result = inTransaction(c -> {
             Order o = requireBuyerOrder(c, orderId, buyerId);
-            o.confirmReceived();
-            orderDAO.update(c, o);
-            for (OrderItem item : o.getItems()) {
-                productDAO.updateStatus(c, item.getProductId(), "sold");
+            if (disputeDAO.hasOpenDispute(c, orderId)) {
+                throw new IllegalStateException("Đơn đang có khiếu nại, vui lòng chờ admin xử lý");
             }
-            // F8: cộng ecoPoints + xét hạng cho người mua và người bán sẽ gọi ở đây (làm ở phần review)
-            reviewService.recalculateTier(c, o.getBuyerId());    // F8: cộng điểm + xét hạng người mua
-            reviewService.recalculateTier(c, o.getSellerId());   // F8: và người bán
-            return o;
-        }) ;
-        notify(order.getSellerId(), "Đơn " + order.getCode() + " đã hoàn tất", order.getId());
+            shippingService.collectCodIfPending(c, orderId);
+            return new Completed(o, completeOrder(c, o));
+        });
+        notify(result.order().getSellerId(), "Đơn " + result.order().getCode() + " đã hoàn tất", orderId);
+        payoutService.notifyCreated(result.payout());
+    }
+
+    /**
+     * Order.complete(): đơn hoàn tất (người mua bấm nhận, tự hoàn tất sau 7 ngày, hoặc admin xử khiếu nại cho người bán).
+     * Chạy trên Connection của nơi gọi: chuyển completed, sản phẩm sold, cộng điểm + xét hạng 2 bên (F8),
+     * tạo khoản trả tiền người bán (F9). Gọi notifyCreated(payout) sau khi commit.
+     * @return khoản trả tiền vừa tạo (null nếu đã có)
+     */
+    public Payout completeOrder(Connection c, Order o) throws SQLException {
+        o.confirmReceived();              // shipping → delivered → completed
+        orderDAO.update(c, o);
+        for (OrderItem item : o.getItems()) {
+            productDAO.updateStatus(c, item.getProductId(), "sold");
+        }
+        reviewService.recalculateTier(c, o.getBuyerId());    // F8: cộng điểm + xét hạng người mua
+        reviewService.recalculateTier(c, o.getSellerId());   // F8: và người bán
+        return payoutService.createForOrder(c, o.getId(), o.getSellerId(), o.getSubTotal());
+    }
+
+    /**
+     * F6: đơn đã giao quá AUTO_COMPLETE_DAYS ngày mà người mua chưa bấm nhận và không khiếu nại → tự hoàn tất.
+     * Tác vụ nền (OrderJobs) gọi mỗi giờ; admin cũng bấm chạy ngay được. Mỗi đơn 1 transaction riêng.
+     * @return số đơn đã hoàn tất
+     */
+    public int autoCompleteDelivered() throws SQLException {
+        List<String> ids;
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            ids = orderDAO.findDeliveredIdsForAutoComplete(c, AUTO_COMPLETE_DAYS);
+        }
+        int done = 0;
+        for (String id : ids) {
+            Completed result = inTransaction(c -> {
+                Order o = orderDAO.findByIdForUpdate(c, id);
+                if (o == null || o.getStatus() != Order.Status.DELIVERED || disputeDAO.hasOpenDispute(c, id)) {
+                    return null;          // trong lúc chờ, người mua đã bấm nhận hoặc vừa mở khiếu nại
+                }
+                return new Completed(o, completeOrder(c, o));
+            });
+            if (result != null) {
+                Order o = result.order();
+                notify(o.getBuyerId(), "Đơn " + o.getCode() + " đã tự hoàn tất sau " + AUTO_COMPLETE_DAYS
+                        + " ngày kể từ khi giao. Hãy đánh giá người bán nhé!", o.getId());
+                notify(o.getSellerId(), "Đơn " + o.getCode() + " đã tự hoàn tất", o.getId());
+                payoutService.notifyCreated(result.payout());
+                done++;
+            }
+        }
+        return done;
     }
 
     // ===================== HÀM PHỤ =====================
+
+    // Kết quả trả ra khỏi transaction để gửi thông báo sau khi commit.
+    private record Cancelled(Order order, Refund refund) {
+    }
+
+    private record Completed(Order order, Payout payout) {
+    }
 
     // Tạo object Order mới (chưa lưu DB).
     private Order newOrder(String buyerId, String sellerId, String addressId, String offerId) {
@@ -259,6 +395,17 @@ public class OrderService {
         requireParticipant(order, buyerId);
         if (!buyerId.equals(order.getBuyerId())) {
             throw new SecurityException("Chỉ người mua mới làm được thao tác này");
+        }
+        return order;
+    }
+
+    // Như requireBuyerOrder, thêm: đơn đã xác nhận COD (vận đơn đang chờ thu tiền) thì không sửa được nữa,
+    // vì người bán có thể đã gửi hàng theo số tiền đó. Muốn đổi thì huỷ đơn và đặt lại.
+    private Order requireEditableOrder(Connection c, String orderId, String buyerId) throws SQLException {
+        Order order = requireBuyerOrder(c, orderId, buyerId);
+        Shipment s = shippingService.findByOrder(c, orderId);
+        if (s != null && (s.getCodStatus() != CodStatus.NONE || s.getStatus() != ShipmentStatus.CREATED)) {
+            throw new IllegalStateException("Đơn đã xác nhận COD, không sửa được nữa. Muốn đổi hãy huỷ đơn rồi đặt lại.");
         }
         return order;
     }

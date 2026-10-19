@@ -1,16 +1,16 @@
 /* F6 Vận chuyển (TV5). Tông trắng đen theo style.css chung. */
 .shipping-page { margin: 0; font-family: 'Poppins', sans-serif; color: #111; }
-.shipping-page h1 { font-size: 26px; margin-bottom: 20px; }
-.ship-error { background: #fff; border: 1.5px solid #000; border-left-width: 6px; padding: 10px 14px; }
-.ship-card { background: #fff; border: 1.5px solid #000; border-radius: 14px; padding: 16px 20px; margin: 16px 0; }
-.ship-card label, .ship-form-inline label { display: inline-block; margin: 6px 12px 6px 0; }
-.shipping-page input, .shipping-page select { font: inherit; padding: 6px 10px; border: 1px solid #000; border-radius: 8px; }
-.shipping-page button { font: inherit; padding: 8px 16px; border: 1.5px solid #000; border-radius: 20px; background: #000; color: #fff; cursor: pointer; }
+.shipping-page h1 { font-size: 23.5px; margin-bottom: 18px; }
+.ship-error { background: #fff; border: 1.5px solid #000; border-left-width: 5.5px; padding: 9px 12.5px; }
+.ship-card { background: #fff; border: 1.5px solid #000; border-radius: 12.5px; padding: 14.5px 18px; margin: 14.5px 0; }
+.ship-card label, .ship-form-inline label { display: inline-block; margin: 5.5px 11px 5.5px 0; }
+.shipping-page input, .shipping-page select { font: inherit; padding: 5.5px 9px; border: 1px solid #000; border-radius: 7px; }
+.shipping-page button { font: inherit; padding: 7px 14.5px; border: 1.5px solid #000; border-radius: 18px; background: #000; color: #fff; cursor: pointer; }
 .shipping-page button.secondary { background: #fff; color: #000; }
-.ship-table { width: 100%; border-collapse: collapse; background: #fff; margin: 16px 0; }
-.ship-table th, .ship-table td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-.ship-timeline { list-style: none; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
-.ship-timeline li { flex: 1; min-width: 140px; padding: 10px; border: 1.5px solid #bbb; border-radius: 10px; color: #888; text-align: center; }
+.ship-table { width: 100%; border-collapse: collapse; background: #fff; margin: 14.5px 0; }
+.ship-table th, .ship-table td { border-bottom: 1px solid #ddd; padding: 9px; text-align: left; }
+.ship-timeline { list-style: none; padding: 0; display: flex; gap: 7px; flex-wrap: wrap; }
+.ship-timeline li { flex: 1; min-width: 126px; padding: 9px; border: 1.5px solid #bbb; border-radius: 9px; color: #888; text-align: center; }
 .ship-timeline li.done { border-color: #000; color: #000; font-weight: 600; }
 .ship-timeline li.returned { background: #000; color: #fff; }
-.ship-actions form { display: inline-block; margin: 8px 8px 0 0; }
+.ship-actions form { display: inline-block; margin: 7px 7px 0 0; }

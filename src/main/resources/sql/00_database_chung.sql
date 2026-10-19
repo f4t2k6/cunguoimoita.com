@@ -325,6 +325,9 @@ CREATE TABLE IF NOT EXISTS disputes (
     resolved_date TIMESTAMP,
     handled_by_admin_id VARCHAR(36),
     resolution_note TEXT,
+    seller_response        TEXT,          -- người bán giải thích (F9)
+    seller_evidence_images TEXT,          -- ảnh bằng chứng của người bán, cách nhau bởi dấu phẩy
+    seller_response_date   TIMESTAMP,
     CONSTRAINT fk_disputes_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     CONSTRAINT fk_disputes_raised_by FOREIGN KEY (raised_by_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT fk_disputes_against FOREIGN KEY (against_id) REFERENCES users(id) ON DELETE RESTRICT,
@@ -462,4 +465,27 @@ INSERT INTO orders (id, code, buyer_id, seller_id, shipping_address_id, payment_
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES
 ('OI1', 'O1', 'P2', 1, 850000)
+ON CONFLICT (id) DO NOTHING;
+
+-- Mỗi đơn tối đa 1 khoản trả tiền người bán và 1 khoản hoàn tiền (xem 11_hoan_thien_don_hang.sql)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payouts_order ON payouts (order_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_refunds_order ON refunds (order_id);
+
+-- /avgRating, /totalSales và hạng của Customer (F8), dùng cho hồ sơ công khai và trang Hạng thành viên
+CREATE OR REPLACE VIEW seller_public_stats AS
+SELECT cu.user_id,
+       COALESCE((SELECT ROUND(AVG(r.rating), 1)
+                 FROM reviews r
+                 WHERE r.target_user_id = cu.user_id), 0)                     AS avg_rating,
+       (SELECT COUNT(*)
+        FROM orders o
+        WHERE o.seller_id = cu.user_id AND o.status = 'completed')           AS total_sales,
+       mt.name                                                               AS member_tier
+FROM customers cu
+         JOIN member_tiers mt ON mt.id = cu.tier_id;
+
+-- Voucher mẫu của B1: GIAM50K còn hạn (đơn từ 500.000 đ), HETHAN20K đã hết hạn
+INSERT INTO vouchers (id, code, customer_id, discount_value, min_order_value, status, expiry_date) VALUES
+('V-B1-50K', 'GIAM50K', 'B1', 50000, 500000, 'issued', CURRENT_DATE + 30),
+('V-B1-OLD', 'HETHAN20K', 'B1', 20000, 0, 'issued', CURRENT_DATE - 1)
 ON CONFLICT (id) DO NOTHING;

@@ -5,6 +5,7 @@
 <fmt:setLocale value="vi_VN"/>
 <c:set var="pageTitle" value="${editing ? 'Sửa bài đăng' : 'Đăng bài'}"/>
 <c:set var="pageCss" value="product.css"/>
+<c:set var="backUrl" value="/product/mine"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
 <%-- Danh mục đang chọn: nếu là danh mục con thì ô cha chọn cha của nó, ô con chọn nó --%>

@@ -6,6 +6,7 @@ import org.example.cunguoimoita.chat.dao.PriceOfferDAO;
 import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.MessageType;
+import org.example.cunguoimoita.chat.model.OfferStatus;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.common.dao.OrderRefDAO;
 import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
@@ -14,6 +15,8 @@ import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
+import org.example.cunguoimoita.order.model.Order;
+import org.example.cunguoimoita.order.service.OrderService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,7 +42,8 @@ public class ChatService {
     private final MessageDAO messageDAO = new MessageDAO();
     private final PriceOfferDAO offerDAO = new PriceOfferDAO();
     private final ProductRefDAO productDAO = new ProductRefDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final OrderRefDAO orderDAO = new OrderRefDAO();             // chỉ còn dùng để tìm đơn của các offer (nút "Xem đơn")
+    private final OrderService orderService = new OrderService();       // F4: tạo đơn khi chấp nhận giá
     private final NotificationService notificationService = new NotificationService();
 
     /** Kết quả khi chấp nhận giá: offer đã accepted và đơn hàng vừa tạo. */
@@ -49,8 +53,9 @@ public class ChatService {
     /**
      * Kết quả loadMessages: tin nhắn (tin price_offer có kèm khung giá) và mọi offer của cuộc trò chuyện.
      * offers dùng để chat.js cập nhật trạng thái các khung giá cũ; rỗng khi không có tin mới.
+     * orders: đơn đã tạo từ offer được chấp nhận (theo id offer), để hiện nút "Xem đơn".
      */
-    public record ChatUpdate(List<Message> messages, List<PriceOffer> offers) {
+    public record ChatUpdate(List<Message> messages, List<PriceOffer> offers, Map<String, NewOrder> orders) {
     }
 
     /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán (lấy từ bài đăng) cho một bài. */
@@ -106,7 +111,7 @@ public class ChatService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             List<Message> messages = messageDAO.findForParticipant(c, conversationId, userId, after);
             if (messages.isEmpty()) {
-                return new ChatUpdate(messages, List.of());
+                return new ChatUpdate(messages, List.of(), Map.of());
             }
             List<PriceOffer> offers = offerDAO.findByConversation(c, conversationId);
             Map<String, PriceOffer> byId = offers.stream().collect(Collectors.toMap(PriceOffer::getId, Function.identity()));
@@ -120,7 +125,11 @@ public class ChatService {
             if (hasUnread) {
                 messageDAO.markAllRead(c, conversationId, userId);
             }
-            return new ChatUpdate(messages, offers);
+            // Chỉ hỏi bảng orders khi đã có offer được chấp nhận
+            Map<String, NewOrder> orders = offers.stream().anyMatch(o -> o.getStatus() == OfferStatus.ACCEPTED)
+                    ? orderDAO.findByConversationOffers(c, conversationId)
+                    : Map.of();
+            return new ChatUpdate(messages, offers, orders);
         }
     }
 
@@ -133,6 +142,28 @@ public class ChatService {
             Conversation conv = requireParticipant(c, conversationId, senderId);
             requireOpen(conv);
             return insertMessage(c, conversationId, senderId, MessageType.TEXT, content.trim());
+        }
+    }
+
+    /**
+     * Gửi ảnh: servlet lưu file qua ImageStore("chat") trước, ở đây ghi tin type = image, content = đường dẫn ảnh.
+     * Kiểm tra quyền trước khi lưu file thì gọi requireCanSend(...).
+     */
+    public Message sendImage(String conversationId, String senderId, String imageUrl) throws SQLException {
+        if (imageUrl == null || !imageUrl.startsWith("/uploads/chat/")) {
+            throw new IllegalArgumentException("Ảnh không hợp lệ");
+        }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            Conversation conv = requireParticipant(c, conversationId, senderId);
+            requireOpen(conv);
+            return insertMessage(c, conversationId, senderId, MessageType.IMAGE, imageUrl);
+        }
+    }
+
+    /** Người gửi phải ở trong cuộc trò chuyện và cuộc trò chuyện còn mở (để chặn trước khi lưu file ảnh). */
+    public void requireCanSend(String conversationId, String senderId) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            requireOpen(requireParticipant(c, conversationId, senderId));
         }
     }
 
@@ -176,8 +207,10 @@ public class ChatService {
                 offerDAO.updateStatus(c, other);
             }
             productDAO.updateStatus(c, product.id(), "reserved");
-            NewOrder order = orderDAO.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
+            // F4: tạo đơn qua OrderService để dùng chung luật với đơn từ giỏ hàng
+            Order created = orderService.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
                     product.id(), offer.getAmount());
+            NewOrder order = new NewOrder(created.getId(), created.getCode());
             insertMessage(c, conv.getId(), userId, MessageType.TEXT,
                     "Đã chấp nhận giá " + money(offer.getAmount()) + ". Đơn " + order.code() + " đã được tạo.");
             convHolder[0] = conv;
@@ -187,8 +220,7 @@ public class ChatService {
         String other = userId.equals(conv.getAskerId()) ? conv.getSellerId() : conv.getAskerId();
         notificationService.send(other, NotificationType.ORDER,
                 "Giá " + money(result.offer().getAmount()) + " đã được chấp nhận, đơn " + result.orderCode() + " đã được tạo",
-                "/chat/conversation?id=" + conv.getId());
-        // TODO F4 (TV3): đưa người mua sang trang thanh toán của đơn result.orderId()
+                "/order/detail?id=" + result.orderId());
         return result;
     }
 

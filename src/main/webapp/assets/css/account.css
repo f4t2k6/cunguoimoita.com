@@ -10,9 +10,9 @@
 
 .account-page {
     width: 100%;
-    max-width: 1040px;
-    margin: 24px auto 56px;
-    padding: 0 16px;
+    max-width: 936px;
+    margin: 21.5px auto 50.5px;
+    padding: 0 14.5px;
 }
 
 /* ---------- Tiêu đề trang ---------- */
@@ -20,14 +20,14 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 22px;
+    gap: 14.5px;
+    margin-bottom: 20px;
 }
 
 .account-eyebrow {
-    margin: 0 0 6px;
+    margin: 0 0 5.5px;
     color: #666;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: .12em;
 }
@@ -35,23 +35,23 @@
 .account-heading h1 {
     margin: 0;
     font-family: 'Bungee', sans-serif;
-    font-size: clamp(24px, 3vw, 34px);
+    font-size: clamp(21.5px, 3vw, 30.5px);
     line-height: 1.15;
 }
 
 .account-subtitle {
-    margin: 8px 0 0;
+    margin: 7px 0 0;
     color: #666;
     line-height: 1.5;
 }
 
 /* ---------- Thông báo ---------- */
 .account-alert {
-    margin-bottom: 14px;
-    padding: 12px 16px;
+    margin-bottom: 12.5px;
+    padding: 11px 14.5px;
     border: 1.5px solid #111;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 11px;
+    font-size: 12.5px;
     font-weight: 600;
 }
 
@@ -72,16 +72,16 @@
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     align-items: start;
-    gap: 20px;
+    gap: 18px;
 }
 
 .account-card {
     min-width: 0;
-    padding: 24px;
+    padding: 21.5px;
     background: #fff;
     border: 1.5px solid #111;
-    border-radius: 18px;
-    box-shadow: 4px 4px 0 #111;
+    border-radius: 16px;
+    box-shadow: 3.5px 3.5px 0 #111;
 }
 
 .account-address-card {
@@ -91,14 +91,14 @@
 .account-card h2 {
     margin: 0;
     font-family: 'Bungee', sans-serif;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .account-card > p,
 .account-card-heading p {
-    margin: 6px 0 18px;
+    margin: 5.5px 0 16px;
     color: #666;
-    font-size: 14px;
+    font-size: 12.5px;
     line-height: 1.5;
 }
 
@@ -106,14 +106,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14.5px;
 }
 
 /* ---------- Ảnh đại diện ---------- */
 .account-avatar {
     flex: 0 0 auto;
-    width: 84px;
-    height: 84px;
+    width: 75.5px;
+    height: 75.5px;
     object-fit: cover;
     background: #e8ebee;
     border: 1.5px solid #111;
@@ -121,8 +121,8 @@
 }
 
 .avatar-form {
-    margin-top: 22px;
-    padding-top: 20px;
+    margin-top: 20px;
+    padding-top: 18px;
     border-top: 1px dashed #bbb;
 }
 
@@ -130,27 +130,27 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px 12px;
+    gap: 9px 11px;
 }
 
 .avatar-input-row input[type="file"] {
-    flex: 1 1 240px;
+    flex: 1 1 216px;
     min-width: 0;
     height: auto;
-    padding: 9px 12px;
-    font-size: 13px;
+    padding: 8px 11px;
+    font-size: 11.5px;
     background: #fafafa;
     border-style: dashed;
     cursor: pointer;
 }
 
 .avatar-input-row input[type="file"]::file-selector-button {
-    margin-right: 12px;
-    padding: 6px 14px;
+    margin-right: 11px;
+    padding: 5.5px 12.5px;
     color: #fff;
     background: #111;
     border: 0;
-    border-radius: 999px;
+    border-radius: 899px;
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -160,30 +160,46 @@
 .account-form {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5.5px;
 }
 
 .account-form label {
-    margin-top: 8px;
-    font-size: 13px;
+    margin-top: 7px;
+    font-size: 11.5px;
     font-weight: 700;
 }
 
-.account-form input {
+.account-form input,
+.account-form select {
     width: 100%;
-    height: 44px;
-    padding: 0 14px;
+    height: 39.5px;
+    padding: 0 12.5px;
     color: #111;
     background: #fff;
     border: 1.5px solid #111;
-    border-radius: 12px;
+    border-radius: 11px;
     font: inherit;
-    font-size: 14px;
+    font-size: 12.5px;
 }
 
-.account-form input:focus {
+/* Ô chọn Tỉnh/Quận/Phường (address.js): mũi tên riêng thay cho mũi tên mặc định */
+.account-form select {
+    appearance: none;
+    padding-right: 34px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12.5px center / 14.5px;
+    cursor: pointer;
+}
+
+.account-form select:disabled {
+    color: #999;
+    border-color: #bbb;
+    cursor: not-allowed;
+}
+
+.account-form input:focus,
+.account-form select:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, .15);
+    box-shadow: 0 0 0 2.5px rgba(0, 0, 0, .15);
 }
 
 .account-form input[readonly] {
@@ -195,14 +211,14 @@
 
 .account-button {
     align-self: flex-start;
-    margin-top: 14px;
-    padding: 11px 22px;
+    margin-top: 12.5px;
+    padding: 10px 20px;
     color: #fff;
     background: #111;
     border: 1.5px solid #111;
-    border-radius: 999px;
+    border-radius: 899px;
     font: inherit;
-    font-size: 14px;
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
@@ -230,87 +246,87 @@
 
 /* ---------- Sổ địa chỉ ---------- */
 .account-empty {
-    margin: 0 0 18px;
-    padding: 18px;
+    margin: 0 0 16px;
+    padding: 16px;
     color: #666;
     background: #f6f6f6;
-    border-radius: 12px;
+    border-radius: 11px;
     text-align: center;
 }
 
 .address-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
+    gap: 12.5px;
+    margin-bottom: 18px;
 }
 
 .address-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px;
+    gap: 7px;
+    padding: 14.5px;
     border: 1.5px solid #ccc;
-    border-radius: 14px;
+    border-radius: 12.5px;
 }
 
 .address-item.is-default {
     border-color: #111;
-    box-shadow: 3px 3px 0 #111;
+    box-shadow: 2.5px 2.5px 0 #111;
 }
 
 .address-item-heading {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3.5px;
 }
 
 .address-item-heading > div {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 
 .address-item-heading > span {
     color: #666;
-    font-size: 13px;
+    font-size: 11.5px;
 }
 
 .default-badge {
-    padding: 2px 8px;
+    padding: 2px 7px;
     color: #fff;
     background: #111;
-    border-radius: 999px;
-    font-size: 10px;
+    border-radius: 899px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: .06em;
 }
 
 .address-text {
     margin: 0;
-    font-size: 14px;
+    font-size: 12.5px;
     line-height: 1.5;
 }
 
 .address-edit summary,
 .add-address summary {
     width: fit-content;
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 700;
     text-decoration: underline;
     cursor: pointer;
 }
 
 .address-edit[open] summary {
-    margin-bottom: 4px;
+    margin-bottom: 3.5px;
 }
 
 .address-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 12.5px;
     margin-top: auto;
-    padding-top: 8px;
+    padding-top: 7px;
     border-top: 1px solid #eee;
 }
 
@@ -324,7 +340,7 @@
     background: none;
     border: 0;
     font: inherit;
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -338,12 +354,12 @@
 }
 
 .add-address {
-    padding-top: 18px;
+    padding-top: 16px;
     border-top: 1px dashed #bbb;
 }
 
 .add-address summary {
-    font-size: 15px;
+    font-size: 13.5px;
     text-decoration: none;
 }
 
@@ -351,18 +367,22 @@
 .compact-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 14px;
+    gap: 3.5px 12.5px;
 }
 
 .compact-form label {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5.5px;
 }
 
 .compact-form button {
     grid-column: 1 / -1;
     justify-self: start;
+}
+
+.compact-form .span-2 {
+    grid-column: 1 / -1;
 }
 
 .address-item .compact-form {
@@ -371,7 +391,7 @@
 
 /* ---------- Hồ sơ công khai người bán ---------- */
 .public-profile-page {
-    max-width: 720px;
+    max-width: 648px;
 }
 
 .public-seller-card {
@@ -379,64 +399,64 @@
 }
 
 .public-avatar {
-    width: 112px;
-    height: 112px;
-    margin: 0 auto 12px;
+    width: 101px;
+    height: 101px;
+    margin: 0 auto 11px;
     display: block;
 }
 
 .public-seller-card h1 {
     margin: 0;
     font-family: 'Bungee', sans-serif;
-    font-size: clamp(22px, 3vw, 30px);
+    font-size: clamp(20px, 3vw, 27px);
 }
 
 .public-seller-id {
-    margin: 6px 0 20px;
+    margin: 5.5px 0 18px;
     color: #666;
 }
 
 .seller-stat-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 11px;
 }
 
 .seller-stat {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 14px 8px;
+    gap: 3.5px;
+    padding: 12.5px 7px;
     border: 1.5px solid #111;
-    border-radius: 14px;
+    border-radius: 12.5px;
 }
 
 .seller-stat-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 .seller-stat-label {
     color: #666;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .public-profile-note {
-    margin: 18px 0 0;
+    margin: 16px 0 0;
     color: #888;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 /* ---------- Màn hình hẹp ---------- */
-@media (max-width: 860px) {
+@media (max-width: 774px) {
     .account-grid {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 504px) {
     .account-page {
-        margin-top: 12px;
+        margin-top: 11px;
         padding: 0;
     }
 
@@ -446,7 +466,7 @@
     }
 
     .account-card {
-        padding: 18px;
+        padding: 16px;
     }
 
     .account-card-heading {
@@ -467,4 +487,21 @@
     .seller-stat-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Hồ sơ công khai: huy hiệu hạng, nút báo cáo, danh sách đánh giá */
+.tier-pill { display: inline-block; padding: 2px 12.5px; border: 1.5px solid #000; border-radius: 14.5px; font-size: 14.5px; }
+.tier-Silver { background: #e5e5e5; }
+.tier-Gold { background: #f5d76e; }
+.tier-Diamond { background: #000; color: #fff; }
+.public-report-link { display: inline-block; margin-top: 9px; font-size: 12.5px; color: #555; }
+.public-reviews { list-style: none; padding: 0; margin: 0; }
+.public-reviews li { border-top: 1px solid #ddd; padding: 9px 0; }
+.public-reviews p { margin: 2px 0; }
+.public-review-stars { margin: 0 7px; letter-spacing: 1px; }
+
+.address-old-note {
+    margin: 4.5px 0 0;
+    color: #8a5a00;
+    font-size: 11.5px;
 }

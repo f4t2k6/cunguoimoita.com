@@ -27,6 +27,14 @@ public class VNPayConfig {
     public static final String VNP_TMN_CODE = System.getenv("VNP_TMN_CODE") != null ? System.getenv("VNP_TMN_CODE") : "CNMTDEMO";
     public static final String VNP_HASH_SECRET = System.getenv("VNP_HASH_SECRET") != null ? System.getenv("VNP_HASH_SECRET") : "RAKHMOSUPOIKZAGACFOPURKVAARZNLOP";
     public static final String VNP_VERSION = "2.1.0";
+
+    /**
+     * Đã có khoá VNPay sandbox thật chưa (đặt biến môi trường VNP_TMN_CODE và VNP_HASH_SECRET trước khi chạy Tomcat).
+     * Chưa có thì trang thanh toán dùng cổng giả lập /payment/sandbox thay vì chuyển sang VNPay.
+     */
+    public static boolean isConfigured() {
+        return System.getenv("VNP_TMN_CODE") != null && System.getenv("VNP_HASH_SECRET") != null;
+    }
     public static final String VNP_COMMAND = "pay";
 
     public static String buildPaymentUrl(String orderCode, long amountVnd, String orderInfo, String ipAddress, String returnUrl) {

@@ -13,7 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-// GET  /review/create?orderId=...  → form đánh giá (review-form.jsp). Gửi sang JSP: orderId, error
+// GET  /review/create?orderId=...  → form đánh giá (review_form.jsp). Gửi sang JSP: orderId, error
 // POST /review/create              → lưu đánh giá. Field: orderId, rating (1–5), content
 // GET  /review/tier                → hạng thành viên + điểm + đánh giá nhận được (tier.jsp)
 //      Gửi sang JSP: progress (TierProgress), summary (RatingSummary), reviews (List<ReviewLine>)
@@ -45,7 +45,7 @@ public class ReviewServlet extends HttpServlet {
             }
             req.setAttribute("orderId", orderId);
             req.setAttribute("error", req.getParameter("error"));
-            req.getRequestDispatcher("/WEB-INF/views/review/review-form.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/review/review_form.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);
         }

@@ -6,8 +6,14 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.dispute.service.DisputeService;
+import org.example.cunguoimoita.dispute.service.PayoutService;
+import org.example.cunguoimoita.dispute.service.RefundService;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.payment.service.PaymentService;
+import org.example.cunguoimoita.shipping.model.Shipment;
+import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,17 +23,24 @@ import java.sql.SQLException;
 // GET  /order/list?as=buyer|seller → "Đơn mua của tôi" / "Đơn bán của tôi" (order-list.jsp)
 //      Gửi sang JSP: orders (List<Order>), as, message
 // GET  /order/detail?id=...         → chi tiết + thanh toán 1 đơn (order-detail.jsp)
-//      Gửi sang JSP: order, isBuyer, isSeller, addresses (nếu là người mua), error, message
+//      Gửi sang JSP: order, isBuyer, isSeller, shipment, payments, dispute, refund, payout, error, message
+//      + khi người mua còn sửa được đơn: addresses, quotes (hãng + phí ship), vouchers, codProblem
 // POST /order/detail                → các nút trên trang chi tiết. Field: id, action, + dữ liệu của action
-//      action = address  (addressId)   người mua chọn địa chỉ giao
+//      action = address  (addressId)   người mua chọn địa chỉ giao (phí ship tính lại)
+//               carrier  (carrierId)   người mua chọn đơn vị vận chuyển → phí ship cộng vào tổng
 //               voucher  (code)        người mua áp mã giảm giá
-//               payment  (method)      người mua chọn online / cod
+//               payment  (method)      người mua chọn cod (xác nhận đặt hàng) / online (sang trang thanh toán F5)
 //               cancel   (reason)      người mua hoặc người bán huỷ đơn
 //               received               người mua bấm "Đã nhận hàng"
 @WebServlet(urlPatterns = {"/order/list", "/order/detail"})
 public class OrderServlet extends HttpServlet {
 
     private final OrderService orderService = new OrderService();
+    private final PaymentService paymentService = new PaymentService();
+    private final DisputeService disputeService = new DisputeService();
+    private final RefundService refundService = new RefundService();
+    private final PayoutService payoutService = new PayoutService();
+    private final ShippingService shippingService = new ShippingService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -65,12 +78,21 @@ public class OrderServlet extends HttpServlet {
                 case "address":
                     orderService.chooseAddress(orderId, userId, req.getParameter("addressId"));
                     break;
+                case "carrier":
+                    orderService.chooseCarrier(orderId, userId, req.getParameter("carrierId"));
+                    break;
                 case "voucher":
                     orderService.applyVoucher(orderId, userId, req.getParameter("code"));
                     break;
-                case "payment":
-                    orderService.choosePaymentMethod(orderId, userId, parseMethod(req.getParameter("method")));
+                case "payment": {
+                    Order.PaymentMethod method = parseMethod(req.getParameter("method"));
+                    orderService.choosePaymentMethod(orderId, userId, method);
+                    if (method == Order.PaymentMethod.ONLINE) {      // sang trang chọn cổng của F5
+                        resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + encode(orderId));
+                        return;
+                    }
                     break;
+                }
                 case "cancel":
                     orderService.cancel(orderId, userId, req.getParameter("reason"));
                     break;
@@ -109,11 +131,29 @@ public class OrderServlet extends HttpServlet {
             return;
         }
         boolean isBuyer = userId.equals(order.getBuyerId());
+        Shipment shipment = orderService.getShipment(order.getId());
+        // Đã xác nhận COD = đơn còn "new" nhưng vận đơn đang chờ thu tiền → người mua không sửa được nữa
+        boolean codConfirmed = shipment != null && shipment.isCod();
+        boolean editable = (order.getStatus() == Order.Status.NEW || order.getStatus() == Order.Status.AWAITING_PAYMENT)
+                && !codConfirmed;
         req.setAttribute("order", order);
         req.setAttribute("isBuyer", isBuyer);
         req.setAttribute("isSeller", !isBuyer);
-        if (isBuyer) {
+        req.setAttribute("shipment", shipment);
+        req.setAttribute("carrierName", shipment == null ? null : shippingService.carrierName(shipment.getCarrierId()));
+        req.setAttribute("codConfirmed", codConfirmed);
+        req.setAttribute("editable", editable);
+        req.setAttribute("payments", paymentService.getHistory(order.getId()));
+        req.setAttribute("dispute", disputeService.getByOrderId(order.getId()));
+        req.setAttribute("refund", refundService.getByOrderId(order.getId()));
+        if (!isBuyer) {
+            req.setAttribute("payout", payoutService.getByOrderId(order.getId()));
+        }
+        if (isBuyer && editable) {
             req.setAttribute("addresses", orderService.getBuyerAddresses(userId));
+            req.setAttribute("quotes", orderService.getCarrierQuotes(order.getId()));
+            req.setAttribute("vouchers", orderService.getUsableVouchers(userId));
+            req.setAttribute("codProblem", orderService.getCodProblem(order.getId(), userId));
         }
         req.getRequestDispatcher("/WEB-INF/views/order/order-detail.jsp").forward(req, resp);
     }

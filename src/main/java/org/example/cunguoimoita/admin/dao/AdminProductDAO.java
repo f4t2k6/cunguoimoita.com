@@ -28,6 +28,14 @@ public class AdminProductDAO {
      * @param keyword tìm theo tên bài hoặc tên người bán, null để bỏ qua
      */
     public List<AdminProductRow> find(Connection c, String filter, String keyword) throws SQLException {
+        return find(c, filter, keyword, LIST_LIMIT);
+    }
+
+    /** Số dòng tối đa của trang danh sách (nhiều hơn thì admin dùng ô tìm kiếm). */
+    public static final int LIST_LIMIT = 100;
+
+    /** @param limit số dòng tối đa (trang tổng quan chỉ lấy vài bài mới nhất) */
+    public List<AdminProductRow> find(Connection c, String filter, String keyword, int limit) throws SQLException {
         String where;
         switch (filter) {
             case "approved":
@@ -48,7 +56,7 @@ public class AdminProductDAO {
         boolean search = keyword != null && !keyword.isBlank();
         String sql = SELECT + where
                 + (search ? " AND (p.name ILIKE ? OR u.fullname ILIKE ?)" : "")
-                + " ORDER BY p.posted_date DESC, p.name LIMIT 100";
+                + " ORDER BY p.posted_date DESC, p.name LIMIT " + Math.max(1, limit);
         List<AdminProductRow> list = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             if (search) {

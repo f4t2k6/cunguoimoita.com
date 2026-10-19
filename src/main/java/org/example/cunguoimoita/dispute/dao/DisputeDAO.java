@@ -9,6 +9,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,15 +41,40 @@ public class DisputeDAO {
 
     public void update(Connection c, Dispute d) throws SQLException {
         String sql = "UPDATE disputes SET evidence_images = ?, status = ?, resolved_date = ?, "
-                   + "handled_by_admin_id = ?, resolution_note = ? WHERE id = ?";
+                   + "handled_by_admin_id = ?, resolution_note = ?, "
+                   + "seller_response = ?, seller_evidence_images = ?, seller_response_date = ? WHERE id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, d.getEvidenceImages());
             ps.setString(2, d.getStatus().dbValue());
             ps.setDate(3, d.getResolvedDate() != null ? Date.valueOf(d.getResolvedDate()) : null);
             ps.setString(4, d.getHandledByAdminId());
             ps.setString(5, d.getResolutionNote());
-            ps.setString(6, d.getId());
+            ps.setString(6, d.getSellerResponse());
+            ps.setString(7, d.getSellerEvidenceImages());
+            ps.setTimestamp(8, d.getSellerResponseDate() != null ? Timestamp.valueOf(d.getSellerResponseDate()) : null);
+            ps.setString(9, d.getId());
             ps.executeUpdate();
+        }
+    }
+
+    /** Đơn đang có khiếu nại chưa xử lý xong (open / reviewing) không? */
+    public boolean hasOpenDispute(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT 1 FROM disputes WHERE order_id = ? AND status IN ('open', 'reviewing')";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public Dispute findByIdForUpdate(Connection c, String id) throws SQLException {
+        String sql = "SELECT * FROM disputes WHERE id = ? FOR UPDATE";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
         }
     }
 
@@ -133,6 +159,10 @@ public class DisputeDAO {
 
         d.setHandledByAdminId(rs.getString("handled_by_admin_id"));
         d.setResolutionNote(rs.getString("resolution_note"));
+        d.setSellerResponse(rs.getString("seller_response"));
+        d.setSellerEvidenceImages(rs.getString("seller_evidence_images"));
+        Timestamp sDate = rs.getTimestamp("seller_response_date");
+        if (sDate != null) d.setSellerResponseDate(sDate.toLocalDateTime());
         return d;
     }
 }

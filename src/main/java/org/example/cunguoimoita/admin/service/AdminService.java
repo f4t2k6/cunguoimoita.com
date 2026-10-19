@@ -7,10 +7,12 @@ import org.example.cunguoimoita.admin.dao.DashboardDAO;
 import org.example.cunguoimoita.admin.dao.MemberTierDAO;
 import org.example.cunguoimoita.admin.dao.ReportDAO;
 import org.example.cunguoimoita.admin.model.AdminProductRow;
+import org.example.cunguoimoita.admin.model.AdminTodo;
 import org.example.cunguoimoita.admin.model.AdminUserRow;
 import org.example.cunguoimoita.admin.model.Category;
 import org.example.cunguoimoita.admin.model.DashboardStats;
 import org.example.cunguoimoita.admin.model.MemberTier;
+import org.example.cunguoimoita.admin.model.OrderStatusCount;
 import org.example.cunguoimoita.admin.model.Report;
 import org.example.cunguoimoita.admin.model.ReportReason;
 import org.example.cunguoimoita.common.db.ConnectionPool;
@@ -56,6 +58,26 @@ public class AdminService {
     public DashboardStats stats() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return dashboardDAO.load(c);
+        }
+    }
+
+    /** Số việc đang chờ (bài, báo cáo, khiếu nại) cho thanh menu admin. */
+    public AdminTodo todo() throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return dashboardDAO.todo(c);
+        }
+    }
+
+    /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
+    public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
+                           List<Report> latestReports) {
+    }
+
+    public Overview overview(int limit) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return new Overview(dashboardDAO.orderStatusCounts(c),
+                    productDAO.find(c, "pending", null, limit),
+                    reportDAO.find(c, "pending", limit));
         }
     }
 
@@ -184,7 +206,7 @@ public class AdminService {
      * @param targetType product | user
      */
     public void submitReport(String reporterId, String targetType, String targetId, String reason,
-                             String description) throws SQLException {
+                             String description, String evidenceImages) throws SQLException {
         if (!"product".equals(targetType) && !"user".equals(targetType)) {
             throw new IllegalArgumentException("Đối tượng báo cáo không hợp lệ");
         }
@@ -216,6 +238,7 @@ public class AdminService {
             r.setTargetId(targetId);
             r.setReason(why);
             r.setDescription(isBlank(desc) ? null : desc);
+            r.setEvidenceImages(isBlank(evidenceImages) ? null : evidenceImages);
             r.setCreatedDate(LocalDateTime.now());
             reportDAO.insert(c, r);
             return null;

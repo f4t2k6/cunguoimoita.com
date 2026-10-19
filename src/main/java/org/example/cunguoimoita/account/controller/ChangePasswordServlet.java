@@ -24,8 +24,11 @@ public class ChangePasswordServlet extends HttpServlet {
         String oldPassword = req.getParameter("currentPassword");
         String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");
-        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 128
-                || !newPassword.equals(confirmPassword)) {
+        if (PasswordUtil.checkStrength(newPassword) != null) {
+            resp.sendRedirect(req.getContextPath() + "/account/profile?password=weak");
+            return;
+        }
+        if (!newPassword.equals(confirmPassword)) {
             resp.sendRedirect(req.getContextPath() + "/account/profile?password=invalid");
             return;
         }

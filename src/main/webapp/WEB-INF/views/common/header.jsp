@@ -12,7 +12,7 @@
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
-<c:set var="assetVer" value="20261019"/>
+<c:set var="assetVer" value="20261019d"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -67,9 +67,6 @@
   <a class="menu-item" href="${ctx}/feed/bucket-list">
     <img src="${ctx}/assets/images/saved-icon.png" alt="" class="menu-icon"><span>Đã lưu</span>
   </a>
-  <a class="menu-item" href="${ctx}/group">
-    <img src="${ctx}/assets/images/group-icon.png" alt="" class="menu-icon"><span>Hội nhóm</span>
-  </a>
   <%-- Đăng bài và quản lý bài (F2): admin không bán hàng nên không thấy --%>
   <c:if test="${sessionScope.userRole != 'admin'}">
     <a class="menu-item" href="${ctx}/product/new">
@@ -98,14 +95,37 @@
   </c:if>
   <c:choose>
     <c:when test="${not empty sessionScope.userId}">
-      <form method="post" action="${ctx}/logout" class="menu-form">
-        <button type="submit" class="menu-item">
+      <%-- Cài đặt: bấm để mở danh sách tài khoản, đơn hàng và nút Đăng xuất (common.js) --%>
+      <div class="menu-settings">
+        <button type="button" class="menu-item" id="settingsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="settingsPanel">
           <svg class="menu-icon" viewBox="0 0 32 32" fill="none" stroke="#000" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M13 6H7v20h6"/><path d="M19 10l6 6-6 6"/><path d="M25 16H12"/>
+            <circle cx="16" cy="16" r="4"/>
+            <path d="M16 4.5v3M16 24.5v3M4.5 16h3M24.5 16h3M7.9 7.9l2.1 2.1M22 22l2.1 2.1M7.9 24.1L10 22M22 10l2.1-2.1"/>
+            <circle cx="16" cy="16" r="8.5"/>
           </svg>
-          <span>Đăng xuất</span>
+          <span>Cài đặt</span>
         </button>
-      </form>
+        <div class="settings-panel" id="settingsPanel" hidden>
+          <c:choose>
+            <c:when test="${sessionScope.userRole == 'admin'}">
+              <a href="${ctx}/admin/dashboard">Trang quản trị</a>
+            </c:when>
+            <c:otherwise>
+              <a href="${ctx}/account/profile">Hồ sơ cá nhân</a>
+              <a href="${ctx}/account/profile#so-dia-chi">Sổ địa chỉ</a>
+              <a href="${ctx}/account/profile#doi-mat-khau">Đổi mật khẩu</a>
+              <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
+              <a href="${ctx}/order/list?as=seller">Đơn bán</a>
+              <a href="${ctx}/seller/payouts">Thu nhập</a>
+              <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
+              <a href="${ctx}/review/tier">Hạng thành viên</a>
+            </c:otherwise>
+          </c:choose>
+          <form method="post" action="${ctx}/logout">
+            <button type="submit" class="settings-logout">Đăng xuất</button>
+          </form>
+        </div>
+      </div>
     </c:when>
     <c:otherwise>
       <a class="menu-item" href="${ctx}/login">
@@ -127,3 +147,11 @@
 </a>
 
 <main class="page-main ${pageMainClass}">
+<%-- Nút quay lại nhỏ đầu mỗi trang (trừ trang chủ, đặt hideBack). Có trang trước trong web thì quay về trang đó,
+     không thì tới backUrl (trang đặt <c:set var="backUrl" value="/đường-dẫn"/>), mặc định là trang chủ. --%>
+<c:if test="${empty hideBack}">
+  <a class="back-link" href="${ctx}${empty backUrl ? '/home' : backUrl}" data-back>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    <span>Quay lại</span>
+  </a>
+</c:if>
