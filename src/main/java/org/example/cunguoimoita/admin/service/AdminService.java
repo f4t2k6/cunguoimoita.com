@@ -71,6 +71,9 @@ public class AdminService {
     /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
     public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
                            List<Report> latestReports) {
+        public List<OrderStatusCount> getOrderStatuses() { return orderStatuses; }
+        public List<AdminProductRow> getLatestPending() { return latestPending; }
+        public List<Report> getLatestReports() { return latestReports; }
     }
 
     public Overview overview(int limit) throws SQLException {

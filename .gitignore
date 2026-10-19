@@ -39,6 +39,7 @@ build/
 .DS_Store
 ### Cấu hình DB riêng từng máy ###
 src/main/webapp/META-INF/context.xml
+src/main/resources/vnpay.properties
 
 ### agents kit###
 .agents/

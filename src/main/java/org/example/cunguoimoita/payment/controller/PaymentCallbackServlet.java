@@ -86,6 +86,7 @@ public class PaymentCallbackServlet extends HttpServlet {
     /** Return URL của VNPay: chữ ký đúng + mã 00 + số tiền khớp → markPaid; còn lại → markFailed. */
     private void handleVnpayReturn(HttpServletRequest req, HttpServletResponse resp)
             throws SQLException, ServletException, IOException {
+        VNPayConfig.init(getServletContext());
         Map<String, String> fields = new HashMap<>();
         for (Enumeration<String> params = req.getParameterNames(); params.hasMoreElements(); ) {
             String fieldName = params.nextElement();
