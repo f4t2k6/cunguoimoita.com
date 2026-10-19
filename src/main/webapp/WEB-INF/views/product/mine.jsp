@@ -11,7 +11,11 @@
   <div>
     <p class="page-eyebrow">NGƯỜI BÁN</p>
     <h1 class="page-title">Bài đăng của tôi</h1>
-    <p class="page-subtitle">Theo dõi bài chờ duyệt, sửa, tạm ẩn hoặc xoá bài của bạn.</p>
+    <p class="page-subtitle">
+      Theo dõi bài chờ duyệt, sửa, tạm ẩn hoặc xoá bài của bạn.
+      · <a href="${ctx}/order/list?as=seller">Đơn bán hàng</a>
+      · <a href="${ctx}/seller/payouts">Ví thu nhập &amp; Rút tiền</a>
+    </p>
   </div>
   <a class="btn btn-dark btn-lg" href="${ctx}/product/new">＋ Đăng bài mới</a>
 </section>

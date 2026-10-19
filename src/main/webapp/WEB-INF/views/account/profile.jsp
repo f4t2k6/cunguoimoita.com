@@ -16,6 +16,15 @@
         </form>
     </div>
 
+    <%-- Lối tắt các phân hệ giao dịch, đơn hàng, thu nhập và khiếu nại --%>
+    <nav class="account-shortcuts" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;">
+        <a href="${pageContext.request.contextPath}/order/list?as=buyer" class="account-button account-button-light">📦 Đơn mua của tôi</a>
+        <a href="${pageContext.request.contextPath}/order/list?as=seller" class="account-button account-button-light">🏷️ Đơn bán hàng</a>
+        <a href="${pageContext.request.contextPath}/seller/payouts" class="account-button account-button-light">💰 Thu nhập bán hàng &amp; Rút tiền</a>
+        <a href="${pageContext.request.contextPath}/dispute" class="account-button account-button-light">🛡️ Khiếu nại &amp; Hoàn tiền</a>
+        <a href="${pageContext.request.contextPath}/review/tier" class="account-button account-button-light">🌟 Hạng thành viên</a>
+    </nav>
+
     <c:if test="${not empty profileError}">
         <div class="account-alert account-alert-error"><c:out value="${profileError}" /></div>
     </c:if>
@@ -86,6 +95,9 @@
                 <input id="payoutAccountRef" name="payoutAccountRef" type="text" maxlength="255"
                        placeholder="Ví dụ: ngân hàng, số tài khoản, tên chủ tài khoản"
                        value="<c:out value='${customer.payoutAccountRef}'/>">
+                <p class="account-hint" style="margin:4px 0 12px; font-size:12px; color:#555;">
+                    Dùng để đối soát và nhận tiền bán hàng (F9). <a href="${pageContext.request.contextPath}/seller/payouts">Xem ví thu nhập của bạn &rarr;</a>
+                </p>
 
                 <button class="account-button" type="submit">Lưu thay đổi</button>
             </form>

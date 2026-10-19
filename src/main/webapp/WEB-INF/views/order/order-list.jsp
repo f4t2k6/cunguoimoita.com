@@ -8,11 +8,13 @@
 <div class="order-page">
   <h1>${pageTitle}</h1>
 
-  <%-- 2 tab: đang ở tab nào thì tab đó có class "active" --%>
+  <%-- Điều hướng danh mục đơn hàng & quyền lợi --%>
   <nav class="order-tabs">
     <a href="${ctx}/order/cart">Giỏ hàng</a>
     <a href="${ctx}/order/list?as=buyer" class="${as == 'buyer' ? 'active' : ''}">Đơn mua</a>
     <a href="${ctx}/order/list?as=seller" class="${as == 'seller' ? 'active' : ''}">Đơn bán</a>
+    <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
+    <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
     <a href="${ctx}/review/tier">Hạng thành viên</a>
   </nav>
 
@@ -24,7 +26,7 @@
     </c:when>
     <c:otherwise>
       <table class="order-table">
-        <tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th></th></tr>
+        <tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th>Thao tác</th></tr>
         <c:forEach var="o" items="${orders}">
           <tr>
             <td><strong><c:out value="${o.code}"/></strong></td>
@@ -32,7 +34,15 @@
             <td><fmt:formatNumber value="${o.totalAmount}" pattern="#,##0"/> đ</td>
             <td>${o.paymentMethod == 'ONLINE' ? 'Online' : 'COD'}</td>
             <td><span class="status status-${o.status}">${o.status.label()}</span></td>
-            <td><a href="${ctx}/order/detail?id=${o.id}">Xem</a></td>
+            <td>
+              <a href="${ctx}/order/detail?id=${o.id}">Xem</a>
+              <c:if test="${as == 'buyer' and o.status == 'AWAITING_PAYMENT'}">
+                · <a href="${ctx}/payment/checkout?orderId=${o.id}"><strong>Thanh toán</strong></a>
+              </c:if>
+              <c:if test="${as == 'buyer' and (o.status == 'SHIPPING' or o.status == 'DELIVERED')}">
+                · <a href="${ctx}/dispute?orderId=${o.id}">Khiếu nại</a>
+              </c:if>
+            </td>
           </tr>
         </c:forEach>
       </table>
