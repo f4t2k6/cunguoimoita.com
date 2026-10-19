@@ -14,6 +14,7 @@ import org.example.cunguoimoita.dispute.service.DisputeService;
 import org.example.cunguoimoita.dispute.service.RefundService;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -32,7 +33,7 @@ import java.util.List;
  * POST /dispute/evidence (multipart) disputeId, images                                   — người mua nộp thêm ảnh
  */
 @WebServlet(name = "DisputeServlet", urlPatterns = {"/dispute", "/dispute/create", "/dispute/respond", "/dispute/evidence"})
-@MultipartConfig(maxFileSize = ImageStore.MAX_FILE_SIZE, maxRequestSize = 6 * ImageStore.MAX_FILE_SIZE)
+@MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = 6 * MediaStore.MAX_FILE_SIZE)
 public class DisputeServlet extends HttpServlet {
 
     private static final int MAX_IMAGES = 5;
@@ -40,7 +41,7 @@ public class DisputeServlet extends HttpServlet {
     private final DisputeService disputeService = new DisputeService();
     private final RefundService refundService = new RefundService();
     private final OrderService orderService = new OrderService();
-    private final ImageStore imageStore = new ImageStore("disputes");
+    private final MediaStore mediaStore = new MediaStore();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -92,7 +93,7 @@ public class DisputeServlet extends HttpServlet {
         // Lỗi thì quay lại đúng trang đang mở (form mở khiếu nại hoặc chi tiết khiếu nại)
         String back = "/dispute/create".equals(path) ? "/dispute?orderId=" + encode(orderId) : "/dispute?id=" + encode(disputeId);
         try {
-            String images = String.join(",", imageStore.saveAll(req.getParts(), "images", MAX_IMAGES));
+            String images = String.join(",", mediaStore.saveAll(req.getParts(), "images", MAX_IMAGES, userId));
             switch (path) {
                 case "/dispute/create": {
                     Dispute d = disputeService.openDispute(orderId, userId, DisputeReason.fromDb(req.getParameter("reason")),
