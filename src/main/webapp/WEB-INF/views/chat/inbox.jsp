@@ -6,7 +6,7 @@
 <c:set var="pageMainClass" value="page-wide"/>
 <c:set var="hideChatDock" value="true"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<section class="msgr msgr-inbox">
+<section class="msgr msgr-inbox page-card page-card-flush">
   <%@ include file="/WEB-INF/views/chat/_danh-sach.jsp" %>
   <div class="msgr-chat msgr-placeholder">
     <svg viewBox="0 0 48 48" fill="none" stroke="#000" stroke-width="1.6" aria-hidden="true">

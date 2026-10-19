@@ -7,17 +7,12 @@
 <c:set var="pageCss" value="order.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <c:set var="p" value="${progress}"/>
-<div class="order-page">
-  <h1>Hạng thành viên</h1>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">THÀNH VIÊN</p>
+    <h1 class="page-title">Hạng thành viên</h1>
+  </div>
 
-  <nav class="order-tabs">
-    <a href="${ctx}/order/cart">Giỏ hàng</a>
-    <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
-    <a href="${ctx}/order/list?as=seller">Đơn bán</a>
-    <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
-    <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
-    <a href="${ctx}/review/tier" class="active">Hạng thành viên</a>
-  </nav>
 
   <%-- ========== HUY HIỆU + THANH TIẾN ĐỘ ========== --%>
   <section class="order-card">

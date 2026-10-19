@@ -6,9 +6,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">QUẢN TRỊ</p>
+    <h1 class="page-title">Tổng quan</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Tổng quan</h1>
 
   <%-- Việc đang chờ admin --%>
   <div class="admin-stats">

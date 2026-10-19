@@ -14,3 +14,4 @@
 .ship-timeline li.done { border-color: #000; color: #000; font-weight: 600; }
 .ship-timeline li.returned { background: #000; color: #fff; }
 .ship-actions form { display: inline-block; margin: 7px 7px 0 0; }
+.shipping-page a.btn-link { display: inline-block; padding: 7px 14.5px; border: 1.5px solid #000; border-radius: 18px; background: #000; color: #fff; }

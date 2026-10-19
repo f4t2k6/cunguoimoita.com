@@ -9,17 +9,12 @@
 <c:set var="pageCss" value="order.css"/>
 <c:set var="backUrl" value="${not empty order ? '/order/detail?id='.concat(order.id) : '/order/list'}"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="order-page">
-  <h1>Khiếu nại &amp; hoàn tiền</h1>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">HỖ TRỢ</p>
+    <h1 class="page-title">Khiếu nại &amp; hoàn tiền</h1>
+  </div>
 
-  <nav class="order-tabs">
-    <a href="${ctx}/order/cart">Giỏ hàng</a>
-    <a href="${ctx}/order/list?as=buyer">Đơn mua</a>
-    <a href="${ctx}/order/list?as=seller">Đơn bán</a>
-    <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
-    <a href="${ctx}/dispute" class="active">Khiếu nại &amp; hoàn tiền</a>
-    <a href="${ctx}/review/tier">Hạng thành viên</a>
-  </nav>
 
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
   <c:if test="${not empty message}"><p class="order-alert"><c:out value="${message}"/></p></c:if>
@@ -120,7 +115,7 @@
     <h2>Khiếu nại của tôi</h2>
     <c:choose>
       <c:when test="${empty userDisputes}">
-        <p class="hint">Chưa có khiếu nại nào. Muốn khiếu nại, mở đơn hàng đang giao hoặc đã giao và bấm "Khiếu nại".</p>
+        <p class="hint">Chưa có khiếu nại nào. Muốn khiếu nại, mở đơn hàng đã giao và bấm "Trả hàng/Hoàn tiền".</p>
       </c:when>
       <c:otherwise>
         <table class="order-table">

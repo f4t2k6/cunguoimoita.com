@@ -30,7 +30,7 @@ public class ReviewService {
 
     // ===================== ĐÁNH GIÁ =====================
 
-    // Customer.rateUser(targetId, rating): người mua/bán chấm điểm bên còn lại của 1 đơn đã hoàn tất.
+    // Customer.rateUser(targetId, rating): người mua chấm điểm người bán của 1 đơn đã hoàn tất.
     // Người được đánh giá tự suy ra từ đơn, không lấy từ form → không ai đánh giá bừa người ngoài đơn.
     public void rateUser(String orderId, String authorId, int rating, String content) throws SQLException {
         String targetId;
@@ -116,7 +116,7 @@ public class ReviewService {
 
     // ===================== HÀM PHỤ =====================
 
-    // Luật đánh giá: đơn tồn tại, người này là người mua/bán của đơn, đơn COMPLETED, chưa đánh giá đơn này.
+    // Luật đánh giá: đơn tồn tại, người này là người mua của đơn (người bán không đánh giá), đơn COMPLETED, chưa đánh giá đơn này.
     private Order requireReviewable(Connection c, String orderId, String userId) throws SQLException {
         Order order = orderDAO.findById(c, orderId);
         if (order == null) {
@@ -124,6 +124,9 @@ public class ReviewService {
         }
         if (!userId.equals(order.getBuyerId()) && !userId.equals(order.getSellerId())) {
             throw new SecurityException("Bạn không thuộc đơn hàng này");
+        }
+        if (!userId.equals(order.getBuyerId())) {
+            throw new SecurityException("Chỉ người mua mới đánh giá được giao dịch");
         }
         if (order.getStatus() != Order.Status.COMPLETED) {
             throw new IllegalStateException("Chỉ đánh giá được khi đơn đã hoàn tất");

@@ -144,6 +144,7 @@ public class ChatApiServlet extends HttpServlet {
                 .append(",\"otherAvatar\":").append(JsonUtil.quote(c.otherAvatar(userId)))
                 .append(",\"asker\":").append(userId.equals(c.getAskerId()))
                 .append(",\"open\":").append(c.isOpen())
+                .append(",\"buyable\":").append(c.isProductBuyable())
                 .append(",\"productId\":").append(JsonUtil.quote(c.getProductId()))
                 .append(",\"productName\":").append(JsonUtil.quote(c.getProductName() == null ? c.getProductId() : c.getProductName()))
                 .append(",\"productPrice\":").append(c.getProductPrice() == null ? "null" : String.valueOf(c.getProductPrice().longValue()))

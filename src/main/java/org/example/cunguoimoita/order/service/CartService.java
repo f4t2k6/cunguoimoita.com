@@ -46,6 +46,28 @@ public class CartService {
         }
     }
 
+    // "Mua ngay": bảo đảm món có trong giỏ (đã có thì thôi) để checkout riêng món đó với giá đang đăng.
+    public void ensureInCart(String userId, String productId) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            Cart cart = findOrCreateCart(c, userId);
+            if (cart.contains(productId)) {
+                return;
+            }
+        }
+        addToCart(userId, productId);
+    }
+
+    // Bỏ nhiều món đã tick chọn khỏi giỏ.
+    public void removeFromCart(String userId, List<String> productIds) throws SQLException {
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn sản phẩm để xoá");
+        }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            Cart cart = findOrCreateCart(c, userId);
+            cartDAO.deleteItems(c, cart.getId(), productIds);
+        }
+    }
+
     // Bỏ 1 sản phẩm khỏi giỏ.
     public void removeFromCart(String userId, String productId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {

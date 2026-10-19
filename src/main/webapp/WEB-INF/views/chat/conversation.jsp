@@ -9,7 +9,7 @@
 <c:set var="backUrl" value="/chat/inbox"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <fmt:setLocale value="vi_VN"/>
-<section class="msgr msgr-open">
+<section class="msgr msgr-open page-card page-card-flush">
   <%@ include file="/WEB-INF/views/chat/_danh-sach.jsp" %>
 
   <div class="msgr-chat" data-chat-root>
@@ -59,7 +59,16 @@
             <span class="msgr-product-meta">Tình trạng: ${conversation.productCondition.label}</span>
           </c:if>
           <c:if test="${conversation.open and conversation.askerId == userId}">
-            <button type="button" class="msgr-pill" data-open-offer>Trả giá món này</button>
+            <div class="msgr-product-actions">
+              <button type="button" class="msgr-pill light" data-open-offer>Trả giá món này</button>
+              <%-- Mua ngay với giá đăng: chỉ người mua, món còn hàng và có bán (ẩn với người bán, món đã đặt/đã bán) --%>
+              <c:if test="${conversation.productBuyable}">
+                <form method="post" action="${ctx}/order/checkout" class="msgr-buy-form">
+                  <input type="hidden" name="buyNow" value="${fn:escapeXml(conversation.productId)}">
+                  <button type="submit" class="msgr-pill">Mua ngay</button>
+                </form>
+              </c:if>
+            </div>
           </c:if>
         </div>
       </div>

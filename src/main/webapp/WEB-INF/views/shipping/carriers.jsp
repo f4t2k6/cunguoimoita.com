@@ -6,8 +6,11 @@
 <c:set var="pageTitle" value="Đơn vị vận chuyển"/>
 <c:set var="pageCss" value="shipping.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="shipping-page">
-  <h1>Đơn vị vận chuyển</h1>
+<div class="shipping-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">VẬN CHUYỂN</p>
+    <h1 class="page-title">Đơn vị vận chuyển</h1>
+  </div>
 
   <c:if test="${not empty error}"><p class="ship-error"><c:out value="${error}"/></p></c:if>
 

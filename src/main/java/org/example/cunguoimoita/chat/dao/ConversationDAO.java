@@ -19,7 +19,7 @@ public class ConversationDAO {
     private static final String COLUMNS = "SELECT cv.*, ua.fullname AS asker_name, us.fullname AS seller_name,"
             + " ua.avatar_url AS asker_avatar, us.avatar_url AS seller_avatar,"
             + " p.name AS product_name, p.price AS product_price, p.images AS product_images,"
-            + " p.condition AS product_condition";
+            + " p.condition AS product_condition, p.status AS product_status, p.listing_type AS product_listing_type";
     private static final String FROM = " FROM conversations cv"
             + " LEFT JOIN users ua ON ua.id = cv.asker_id"
             + " LEFT JOIN users us ON us.id = cv.seller_id"
@@ -125,6 +125,9 @@ public class ConversationDAO {
             conv.setProductImage(images.split(",")[0].trim());
         }
         conv.setProductCondition(ProductCondition.fromCode(rs.getString("product_condition")));
+        // "Mua ngay" trong khung chat: món còn bán (chưa có người đặt / chưa bán) và bài có bán lấy tiền
+        conv.setProductBuyable("available".equals(rs.getString("product_status"))
+                && !"swap".equals(rs.getString("product_listing_type")));
         return conv;
     }
 }

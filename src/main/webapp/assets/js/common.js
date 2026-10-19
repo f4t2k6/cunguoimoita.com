@@ -13,6 +13,7 @@
   let badgeTimer = null;
   async function refreshBadges() {
     clearTimeout(badgeTimer);
+    if (!document.getElementById('notifyBtn')) return;   // khách chưa đăng nhập: không có thông báo
     try {
       const res = await fetch(ctx + '/notifications/count', { headers: { Accept: 'application/json' } });
       const json = res.ok ? await res.json() : null;

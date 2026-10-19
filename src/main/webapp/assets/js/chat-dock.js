@@ -148,10 +148,26 @@
     if (c.productPrice != null) info.append(el('strong', 'msgr-product-price', 'Giá đăng: ' + money(c.productPrice)));
     if (c.productCondition) info.append(el('span', 'msgr-product-meta', 'Tình trạng: ' + c.productCondition));
     if (c.open && c.asker) {
-      const btn = el('button', 'msgr-pill', 'Trả giá món này');
+      const actions = el('div', 'msgr-product-actions');
+      const btn = el('button', 'msgr-pill light', 'Trả giá món này');
       btn.type = 'button';
       btn.setAttribute('data-open-offer', '');
-      info.append(btn);
+      actions.append(btn);
+      // Mua ngay với giá đăng (người mua, món còn hàng và có bán) → tạo đơn như nút Mua hàng ở giỏ
+      if (c.buyable) {
+        const buy = el('form', 'msgr-buy-form');
+        buy.method = 'post';
+        buy.action = ctx + '/order/checkout';
+        const id = el('input');
+        id.type = 'hidden';
+        id.name = 'buyNow';
+        id.value = c.productId;
+        const go = el('button', 'msgr-pill', 'Mua ngay');
+        go.type = 'submit';
+        buy.append(id, go);
+        actions.append(buy);
+      }
+      info.append(actions);
     }
     card.append(photo, info);
     tpl.content.append(card);

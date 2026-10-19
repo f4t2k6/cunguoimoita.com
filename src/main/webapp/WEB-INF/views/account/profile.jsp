@@ -1,10 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="pageTitle" value="Hồ sơ cá nhân" />
 <c:set var="pageCss" value="account.css" />
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
-<section class="account-page">
+<section class="account-page page-card">
     <div class="account-heading">
         <div>
             <p class="account-eyebrow">TÀI KHOẢN CỦA BẠN</p>
@@ -22,7 +23,7 @@
         <a href="${pageContext.request.contextPath}/order/list?as=seller" class="account-button account-button-light">🏷️ Đơn bán hàng</a>
         <a href="${pageContext.request.contextPath}/seller/payouts" class="account-button account-button-light">💰 Thu nhập bán hàng &amp; Rút tiền</a>
         <a href="${pageContext.request.contextPath}/dispute" class="account-button account-button-light">🛡️ Khiếu nại &amp; Hoàn tiền</a>
-        <a href="${pageContext.request.contextPath}/review/tier" class="account-button account-button-light">🌟 Hạng thành viên</a>
+        <a href="#hang-thanh-vien" class="account-button account-button-light">🌟 Hạng thành viên</a>
     </nav>
 
     <c:if test="${not empty profileError}">
@@ -61,6 +62,45 @@
     <c:if test="${param.address == 'invalidAddress'}">
         <div class="account-alert account-alert-error">Vui lòng kiểm tra lại thông tin địa chỉ.</div>
     </c:if>
+
+    <%-- ========== HẠNG THÀNH VIÊN (F8): dữ liệu ProfileServlet lấy từ ReviewService, giống trang /review/tier ========== --%>
+    <c:set var="p" value="${progress}"/>
+    <section class="account-card account-tier-card" id="hang-thanh-vien">
+        <div class="account-card-heading">
+            <h2>Hạng thành viên</h2>
+        </div>
+        <div class="tier-row">
+            <span class="tier-badge tier-${p.current().name}"><c:out value="${p.current().name}"/></span>
+            <div class="tier-info">
+                <p><strong>${p.points()}</strong> ecoPoints <span class="account-muted">(10.000đ giao dịch hoàn tất = 1 điểm)</span></p>
+                <p>Ưu đãi hiện tại: <strong><c:out value="${p.current().benefitNote}"/></strong></p>
+            </div>
+        </div>
+        <c:choose>
+            <c:when test="${p.next() != null}">
+                <div class="tier-progress"><div class="tier-progress-bar" style="width: ${p.percent()}%"></div></div>
+                <p class="account-muted">Còn ${p.next().minEcoPoints - p.points()} điểm nữa để lên <strong><c:out value="${p.next().name}"/></strong></p>
+            </c:when>
+            <c:otherwise><p class="account-muted">Bạn đã đạt hạng cao nhất 🎉</p></c:otherwise>
+        </c:choose>
+        <div class="tier-reviews">
+            <p><strong>Đánh giá về bạn:</strong>
+                <fmt:formatNumber value="${summary.avgRating()}" pattern="0.0"/> ★ · Đã bán ${summary.totalSales()} đơn</p>
+            <c:choose>
+                <c:when test="${empty reviews}"><p class="account-muted">Chưa có đánh giá nào.</p></c:when>
+                <c:otherwise>
+                    <c:forEach var="r" items="${reviews}" end="4">
+                        <div class="tier-review">
+                            <strong><c:out value="${r.authorName()}"/></strong>
+                            <span><c:forEach begin="1" end="${r.rating()}">★</c:forEach></span>
+                            <span class="account-muted">${r.createdDate().toLocalDate()}</span>
+                            <c:if test="${not empty r.content()}"><p><c:out value="${r.content()}"/></p></c:if>
+                        </div>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </section>
 
     <div class="account-grid">
         <section class="account-card account-profile-card">

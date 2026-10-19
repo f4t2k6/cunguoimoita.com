@@ -7,6 +7,7 @@
 <c:set var="pageCss" value="product.css"/>
 <c:set var="backUrl" value="/product/mine"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
+<div class="page-card">
 
 <%-- Danh mục đang chọn: nếu là danh mục con thì ô cha chọn cha của nó, ô con chọn nó --%>
 <c:set var="selectedParent" value="${product.categoryId}"/>
@@ -161,6 +162,7 @@
     <button class="btn btn-dark btn-lg" type="submit">${editing ? 'Lưu thay đổi' : 'Đăng bài'}</button>
   </div>
 </form>
+</div>
 
 <script src="${ctx}/assets/js/product.js?v=${assetVer}" defer></script>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

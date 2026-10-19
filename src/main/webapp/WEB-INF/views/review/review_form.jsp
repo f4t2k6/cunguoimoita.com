@@ -4,8 +4,11 @@
 <c:set var="pageTitle" value="Đánh giá giao dịch"/>
 <c:set var="pageCss" value="order.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="order-page">
-  <h1>Đánh giá giao dịch</h1>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">ĐÁNH GIÁ</p>
+    <h1 class="page-title">Đánh giá giao dịch</h1>
+  </div>
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
 
   <form method="post" action="${ctx}/review/create" class="order-card">

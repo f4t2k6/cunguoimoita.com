@@ -7,12 +7,12 @@
 <c:set var="pageCss" value="order.css"/>
 <c:set var="backUrl" value="/order/detail?id=${payment.orderId}"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="order-page">
+<div class="order-page page-card">
   <c:choose>
-    <c:when test="${payStatus == 'paid'}"><h1>Thanh toán thành công ✔</h1></c:when>
-    <c:when test="${payStatus == 'pending'}"><h1>Đang chờ cổng thanh toán xác nhận</h1></c:when>
-    <c:when test="${payStatus == 'refunded'}"><h1>Khoản thanh toán đã được hoàn</h1></c:when>
-    <c:otherwise><h1>Thanh toán không thành công</h1></c:otherwise>
+    <c:when test="${payStatus == 'paid'}"><h1 class="page-title">Thanh toán thành công ✔</h1></c:when>
+    <c:when test="${payStatus == 'pending'}"><h1 class="page-title">Đang chờ cổng thanh toán xác nhận</h1></c:when>
+    <c:when test="${payStatus == 'refunded'}"><h1 class="page-title">Khoản thanh toán đã được hoàn</h1></c:when>
+    <c:otherwise><h1 class="page-title">Thanh toán không thành công</h1></c:otherwise>
   </c:choose>
   <section class="order-card">
     <p>Mã giao dịch: <strong><c:out value="${payment.code}"/></strong> · ${payment.gateway.displayName}</p>

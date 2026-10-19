@@ -13,11 +13,12 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 // GET  /order/cart  → hiện trang giỏ hàng (cart.jsp).
 //      Gửi sang JSP: lines (List<CartLine>), total (double), error, message
-// POST /order/cart  → các nút trên trang. Field: action (add | remove | clear), productId
+// POST /order/cart  → các nút trên trang. Field: action (add | remove | clear | removeSelected), productId (removeSelected: nhiều productId)
 @WebServlet("/order/cart")
 public class CartServlet extends HttpServlet {
 
@@ -32,7 +33,7 @@ public class CartServlet extends HttpServlet {
         }
         try {
             List<CartLine> lines = cartService.getLines(userId);
-            double total = 0;
+            double total = 0;                                // tổng cả giỏ (trang tự tính lại theo các món được tick)
             for (CartLine line : lines) {
                 total += line.price();
             }
@@ -69,6 +70,11 @@ public class CartServlet extends HttpServlet {
                 case "clear":
                     cartService.clearCart(userId);
                     break;
+                case "removeSelected": {     // nút "Xoá mục đã chọn" (các ô tick productId)
+                    String[] ids = req.getParameterValues("productId");
+                    cartService.removeFromCart(userId, ids == null ? List.of() : Arrays.asList(ids));
+                    break;
+                }
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }

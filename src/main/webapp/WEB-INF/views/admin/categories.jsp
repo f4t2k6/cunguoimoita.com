@@ -5,9 +5,12 @@
 <c:set var="pageCss" value="admin.css"/>
 <c:set var="pageMainClass" value="page-wide"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">QUẢN LÝ</p>
+    <h1 class="page-title">Danh mục</h1>
+  </div>
   <%@ include file="/WEB-INF/views/admin/_menu.jsp" %>
-  <h1>Danh mục</h1>
 
   <form method="post" class="admin-card admin-form">
     <h2>Thêm danh mục</h2>

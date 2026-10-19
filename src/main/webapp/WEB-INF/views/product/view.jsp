@@ -104,6 +104,15 @@
           </c:if>
           <a class="btn btn-lg" href="${ctx}/product/mine">Bài đăng của tôi</a>
         </c:when>
+        <c:when test="${empty sessionScope.userId}">
+          <%-- Khách: xem được chi tiết, muốn mua / nhắn tin / lưu thì đăng nhập (xong quay lại trang này) --%>
+          <c:if test="${product.listingType.forSale}">
+            <a class="btn btn-dark btn-lg" href="${loginUrl}">Thêm vào giỏ</a>
+          </c:if>
+          <a class="btn btn-lg" href="${loginUrl}">${product.listingType.forSwap ? 'Nhắn tin / đề nghị đổi' : 'Nhắn tin, trả giá'}</a>
+          <a class="btn btn-lg" href="${loginUrl}">Lưu</a>
+          <p class="hint guest-hint">Bạn đang xem với tư cách khách. <a href="${loginUrl}">Đăng nhập</a> hoặc <a href="${registerUrl}">đăng ký</a> để mua, nhắn tin và lưu bài.</p>
+        </c:when>
         <c:when test="${sessionScope.userRole == 'admin'}">
           <a class="btn btn-dark btn-lg" href="${ctx}/admin/products?filter=all&amp;q=${fn:escapeXml(product.name)}">Mở ở trang quản trị</a>
         </c:when>

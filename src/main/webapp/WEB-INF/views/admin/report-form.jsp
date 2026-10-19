@@ -4,7 +4,7 @@
 <c:set var="pageTitle" value="Báo cáo vi phạm"/>
 <c:set var="pageCss" value="admin.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="admin-page">
+<div class="admin-page page-card">
   <c:choose>
     <c:when test="${sent}">
       <section class="admin-card report-done">

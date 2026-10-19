@@ -7,7 +7,7 @@
 <c:set var="pageCss" value="account.css" />
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
-<section class="account-page public-profile-page">
+<section class="account-page public-profile-page page-card">
     <p class="account-eyebrow">HỒ SƠ NGƯỜI BÁN</p>
     <div class="account-card public-seller-card">
         <c:choose>

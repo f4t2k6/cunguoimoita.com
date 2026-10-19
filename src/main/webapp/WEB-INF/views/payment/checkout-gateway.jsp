@@ -9,8 +9,11 @@
 <c:set var="pageCss" value="order.css"/>
 <c:set var="backUrl" value="/order/detail?id=${order.id}"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="order-page">
-  <h1>Thanh toán đơn <c:out value="${order.code}"/></h1>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">THANH TOÁN</p>
+    <h1 class="page-title">Thanh toán đơn <c:out value="${order.code}"/></h1>
+  </div>
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
 
   <section class="order-card">

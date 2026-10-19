@@ -8,8 +8,11 @@
 <c:set var="pageCss" value="order.css"/>
 <c:set var="hideBack" value="${true}"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
-<div class="order-page">
-  <h1>Cổng ${payment.gateway.displayName} <span class="status">giả lập</span></h1>
+<div class="order-page page-card">
+  <div class="page-card-head">
+    <p class="page-eyebrow">THANH TOÁN</p>
+    <h1 class="page-title">Cổng ${payment.gateway.displayName} <span class="status">giả lập</span></h1>
+  </div>
   <section class="order-card">
     <p>Mã giao dịch: <strong><c:out value="${payment.code}"/></strong></p>
     <p>Số tiền: <strong><fmt:formatNumber value="${payment.amount}" pattern="#,##0"/> đ</strong></p>
