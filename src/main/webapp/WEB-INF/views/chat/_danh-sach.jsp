@@ -11,7 +11,7 @@
       <li>
         <a href="${ctx}/chat/conversation?id=${cv.id}"
            class="msgr-item ${cv.id == conversation.id ? 'active' : ''} ${cv.unreadCount > 0 ? 'unread' : ''}">
-          <span class="msgr-avatar"><c:out value="${cv.otherInitial(userId)}"/></span>
+          <span class="msgr-avatar"><c:choose><c:when test="${not empty cv.otherAvatar(userId)}"><img src="${ctx}${fn:escapeXml(cv.otherAvatar(userId))}" alt=""></c:when><c:otherwise><c:out value="${cv.otherInitial(userId)}"/></c:otherwise></c:choose></span>
           <span class="msgr-item-body">
             <span class="msgr-item-name"><c:out value="${cv.otherName(userId)}"/></span>
             <span class="msgr-item-product"><c:out value="${empty cv.productName ? cv.productId : cv.productName}"/><c:if test="${!cv.open}"> · đã bán</c:if></span>

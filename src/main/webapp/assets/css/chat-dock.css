@@ -1,0 +1,100 @@
+/* Khung chat nổi góc phải dưới kiểu Messenger (chat-dock.js). Dùng lại kiểu .msgr-* của chat.css. */
+.chat-dock [hidden] { display: none !important; }
+
+/* Cột bên phải: avatar 3 người gần nhất + nút tin nhắn */
+.dock-side {
+  position: fixed; right: 18px; bottom: 18px; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; gap: 11px;
+}
+.dock-heads { display: flex; flex-direction: column; gap: 9px; }
+.dock-head, .dock-launcher {
+  position: relative; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+  box-shadow: 0 2px 9px rgba(0, 0, 0, .22); transition: transform .15s;
+}
+.dock-head { width: 45px; height: 45px; background: #fff; }
+.dock-head:hover, .dock-launcher:hover { transform: scale(1.06); }
+.dock-head .msgr-avatar { width: 45px; height: 45px; flex-basis: 45px; font-size: 16px; }
+.dock-head.unread .msgr-avatar { box-shadow: 0 0 0 2.5px #fff, 0 0 0 4.5px #000; }
+.dock-head .count-badge, .dock-launcher .count-badge { position: absolute; top: -4px; right: -4px; }
+.dock-launcher {
+  width: 54px; height: 54px; background: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+.dock-launcher svg { width: 27px; height: 27px; }
+.dock-launcher[aria-expanded="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #000; }
+
+/* Danh sách đoạn chat bật lên từ nút tin nhắn */
+.dock-panel {
+  position: fixed; right: 84px; bottom: 18px; z-index: 41;
+  width: 324px; max-height: min(486px, calc(100vh - 120px));
+  display: flex; flex-direction: column;
+  background: #fff; border: 1.5px solid #000; border-radius: 18px; box-shadow: 0 8px 28px rgba(0, 0, 0, .18);
+}
+.dock-panel-head { display: flex; align-items: baseline; justify-content: space-between; padding: 12.5px 14.5px 7px; }
+.dock-panel-head strong { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: 16px; }
+.dock-panel-head a { font-size: 11.5px; text-decoration: underline; color: #555; }
+.dock-list { list-style: none; margin: 0; padding: 0 7px 9px; overflow-y: auto; }
+.dock-list .msgr-item { width: 100%; border: none; background: none; font: inherit; text-align: left; cursor: pointer; }
+.dock-list .msgr-avatar { flex-basis: 40px; width: 40px; height: 40px; font-size: 15.5px; }
+.dock-empty { padding: 9px 9px 14.5px; color: #666; font-size: 12.5px; }
+
+/* Cửa sổ chat nhỏ, xếp từ phải sang trái cạnh cột avatar */
+.dock-windows {
+  position: fixed; right: 84px; bottom: 0; z-index: 39;
+  display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 11px;
+  pointer-events: none;
+}
+.dock-window {
+  pointer-events: auto;
+  width: 328px; height: min(455px, calc(100vh - 110px));
+  display: flex; flex-direction: column;
+  background: #fff; border: 1.5px solid #000; border-bottom: none; border-radius: 14.5px 14.5px 0 0;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .2); overflow: hidden;
+}
+.dock-window.minimized { height: auto; }
+.dock-window.minimized .dock-win-body { display: none; }
+.dock-win-head { display: flex; align-items: center; gap: 2px; padding: 5.5px 5.5px 5.5px 7px; border-bottom: 1px solid #ddd; }
+.dock-win-who {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; padding: 3.5px; border: none; border-radius: 9px;
+  background: none; font: inherit; text-align: left; cursor: pointer;
+}
+.dock-win-who:hover { background: #f2f2f2; }
+.dock-win-who .msgr-avatar { flex-basis: 32px; width: 32px; height: 32px; font-size: 13.5px; }
+.dock-win-text { display: flex; flex-direction: column; min-width: 0; }
+.dock-win-text strong { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-win-text span { font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-win-btn {
+  flex: none; width: 29px; height: 29px; padding: 5.5px; border: none; border-radius: 50%; background: none; color: #000;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.dock-win-btn:hover { background: #f0f0f0; }
+.dock-win-btn svg { width: 100%; height: 100%; }
+
+/* Bên trong cửa sổ: thu gọn khoảng cách so với trang tin nhắn */
+.dock-win-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dock-win-body .msgr-thread { padding: 9px 9px 7px; }
+.dock-win-body .msgr-row { max-width: 85%; }
+.dock-win-body .msgr-bubble { font-size: 12.5px; padding: 6px 11px; }
+.dock-win-body .msgr-image { max-width: 180px; max-height: 216px; }
+.dock-win-body .msgr-offer { min-width: 0; }
+.dock-win-body .msgr-product { gap: 9px; padding: 9px; margin-top: 0; }
+.dock-win-body .msgr-product-photo { width: 63px; height: 63px; }
+.dock-win-body .msgr-product-price { font-size: 13.5px; }
+.dock-win-body .msgr-error { margin: 0 9px 5.5px; font-size: 12px; }
+.dock-win-body .msgr-offer-bar { padding: 7px 9px; gap: 5.5px; }
+.dock-win-body .msgr-offer-bar input { padding: 5.5px 11px; font-size: 12.5px; }
+.dock-win-body .msgr-offer-bar .msgr-pill { padding: 4.5px 9px; font-size: 11.5px; }
+.dock-win-body .msgr-composer { padding: 5.5px 7px; gap: 2px; }
+.dock-win-body .msgr-composer input { padding: 7px 12.5px; font-size: 12.5px; }
+.dock-win-body .msgr-icon-btn { width: 32px; height: 32px; padding: 6px; }
+
+/* Điện thoại: cửa sổ chat gần full màn hình, danh sách đoạn chat full bề ngang */
+@media (max-width: 684px) {
+  .dock-side { right: 11px; bottom: 11px; }
+  .dock-heads { display: none; }
+  .dock-launcher { width: 50px; height: 50px; }
+  .dock-panel { left: 11px; right: 11px; width: auto; bottom: 72px; }
+  .dock-windows { left: 0; right: 0; }
+  .dock-window { width: 100%; height: min(540px, calc(100vh - 72px)); border-radius: 14.5px 14.5px 0 0; }
+  .dock-window:not(.minimized) ~ .dock-window { display: none; }
+}

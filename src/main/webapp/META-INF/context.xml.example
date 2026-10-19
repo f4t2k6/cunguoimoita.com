@@ -46,4 +46,19 @@
     -->
     <Parameter name="mail.username" value="ĐỔI_EMAIL_GỬI@gmail.com" override="false"/>
     <Parameter name="mail.password" value="ĐỔI_MẬT_KHẨU_ỨNG_DỤNG" override="false"/>
+
+    <!--
+      Đăng nhập bằng Google / Facebook (SocialLoginServlet.java). Để nguyên ĐỔI_... thì bấm nút sẽ báo "chưa được cấu hình".
+      Google: https://console.cloud.google.com > APIs & Services > Credentials > Create OAuth client ID (Web application),
+        Authorized redirect URI: http://localhost:8080/<context-path>/oauth/google/callback
+      Facebook: https://developers.facebook.com > My Apps > Create App (Facebook Login),
+        Valid OAuth Redirect URI: http://localhost:8080/<context-path>/oauth/facebook/callback
+      <context-path> là đường dẫn của web trên Tomcat (bỏ trống nếu chạy ở gốc /). Deploy lên host thật thì thêm
+      địa chỉ của host vào 2 trang trên và điền app.baseUrl (vd https://cunguoimoita.onrender.com).
+    -->
+    <Parameter name="oauth.google.clientId" value="ĐỔI_GOOGLE_CLIENT_ID" override="false"/>
+    <Parameter name="oauth.google.clientSecret" value="ĐỔI_GOOGLE_CLIENT_SECRET" override="false"/>
+    <Parameter name="oauth.facebook.appId" value="ĐỔI_FACEBOOK_APP_ID" override="false"/>
+    <Parameter name="oauth.facebook.appSecret" value="ĐỔI_FACEBOOK_APP_SECRET" override="false"/>
+    <!-- <Parameter name="app.baseUrl" value="https://ten-mien-cua-ban" override="false"/> -->
 </Context>

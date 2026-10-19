@@ -51,7 +51,7 @@ public class UserDAO {
         return (Customer) user;
     }
 
-    /** Đăng ký luôn tạo customer; role không được lấy từ form. */
+    /** Đăng ký luôn tạo customer; role không được lấy từ form. phone có thể null (đăng nhập Google/Facebook). */
     public String registerCustomer(String email, String passwordHash,
                                    String fullName, String phone) throws SQLException {
         String id = UUID.randomUUID().toString();
@@ -69,7 +69,7 @@ public class UserDAO {
                 userPs.setString(2, email.trim().toLowerCase());
                 userPs.setString(3, passwordHash);
                 userPs.setString(4, fullName.trim());
-                userPs.setString(5, phone.trim());
+                userPs.setString(5, phone == null || phone.isBlank() ? null : phone.trim());
                 userPs.executeUpdate();
 
                 customerPs.setString(1, id);

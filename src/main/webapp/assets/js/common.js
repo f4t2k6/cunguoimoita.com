@@ -19,6 +19,8 @@
       if (json && json.ok) {
         setBadge('notifyBadge', json.count);
         setBadge('chatBadge', json.chat);
+        // Khung chat nổi (chat-dock.js) cập nhật huy hiệu và danh sách theo con số này
+        document.dispatchEvent(new CustomEvent('chat:count', { detail: json.chat }));
       }
     } catch (e) { /* chưa đăng nhập hoặc mất mạng: bỏ qua */ }
     if (!document.hidden) badgeTimer = setTimeout(refreshBadges, 20000);

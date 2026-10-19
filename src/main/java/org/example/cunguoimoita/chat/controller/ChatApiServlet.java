@@ -6,6 +6,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.chat.service.ChatService;
@@ -28,13 +29,15 @@ import java.util.Map;
  *  GET  /chat/messages?id=&after=   tin nhắn mới hơn mốc after (epoch ms), after bỏ trống để lấy hết.
  *                                   Có tin mới thì kèm "offers" (mọi offer của cuộc trò chuyện) để cập nhật khung giá cũ.
  *  GET  /chat/unread                số tin chưa đọc (icon tin nhắn trên header)
+ *  GET  /chat/list                  các đoạn chat, mới nhất trước (khung chat nổi góc phải dưới, chat-dock.js):
+ *                                   tên/ảnh người kia, món đang trao đổi, tin cuối, số tin chưa đọc
  *  POST /chat/send                  conversationId, content
  *                                   Offer đã chấp nhận kèm orderId, orderCode của đơn tạo ra.
  *  POST /chat/offer                 action=make (conversationId, amount) | accept | decline (offerId) | counter (offerId, amount)
  *  POST /chat/image   (multipart)   conversationId, image (1 ảnh ≤ 5 MB) → tin nhắn type "image", content = đường dẫn ảnh
  * Lỗi trả {"ok":false,"error":"..."}.
  */
-@WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/send", "/chat/offer", "/chat/image"})
+@WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/list", "/chat/send", "/chat/offer", "/chat/image"})
 @MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = MediaStore.MAX_FILE_SIZE + 64 * 1024)
 public class ChatApiServlet extends HttpServlet {
 
@@ -51,6 +54,10 @@ public class ChatApiServlet extends HttpServlet {
         try {
             if ("/chat/unread".equals(req.getServletPath())) {
                 JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + chatService.unreadCount(userId) + "}");
+                return;
+            }
+            if ("/chat/list".equals(req.getServletPath())) {
+                writeList(resp, chatService.inbox(userId), userId);
                 return;
             }
             ChatUpdate update = chatService.loadMessages(req.getParameter("id"), userId, afterParam(req));
@@ -122,6 +129,32 @@ public class ChatApiServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException(e);
         }
+    }
+
+    private static void writeList(HttpServletResponse resp, List<Conversation> list, String userId) throws IOException {
+        StringBuilder json = new StringBuilder("{\"ok\":true,\"conversations\":[");
+        for (int i = 0; i < list.size(); i++) {
+            Conversation c = list.get(i);
+            if (i > 0) {
+                json.append(',');
+            }
+            json.append("{\"id\":").append(JsonUtil.quote(c.getId()))
+                .append(",\"otherName\":").append(JsonUtil.quote(c.otherName(userId)))
+                .append(",\"otherInitial\":").append(JsonUtil.quote(c.otherInitial(userId)))
+                .append(",\"otherAvatar\":").append(JsonUtil.quote(c.otherAvatar(userId)))
+                .append(",\"asker\":").append(userId.equals(c.getAskerId()))
+                .append(",\"open\":").append(c.isOpen())
+                .append(",\"productId\":").append(JsonUtil.quote(c.getProductId()))
+                .append(",\"productName\":").append(JsonUtil.quote(c.getProductName() == null ? c.getProductId() : c.getProductName()))
+                .append(",\"productPrice\":").append(c.getProductPrice() == null ? "null" : String.valueOf(c.getProductPrice().longValue()))
+                .append(",\"productImage\":").append(JsonUtil.quote(c.getProductImage()))
+                .append(",\"productCondition\":").append(JsonUtil.quote(c.getProductCondition() == null ? null : c.getProductCondition().getLabel()))
+                .append(",\"preview\":").append(JsonUtil.quote(c.getLastMessagePreview()))
+                .append(",\"time\":").append(JsonUtil.quote(c.getLastTimeLabel()))
+                .append(",\"unread\":").append(c.getUnreadCount())
+                .append('}');
+        }
+        JsonUtil.write(resp, 200, json.append("]}").toString());
     }
 
     private static double amount(HttpServletRequest req) {

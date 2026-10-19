@@ -33,7 +33,7 @@
       <c:choose>
         <c:when test="${empty info.payoutAccount()}">
           <p class="order-alert error">Bạn chưa khai tài khoản nhận tiền nên các khoản đang chờ chưa chuyển được.
-            <a href="${ctx}/account/profile">Khai trong Hồ sơ</a></p>
+            <a href="${ctx}/account/profile#payoutAccountRef">Khai ngay trong Hồ sơ →</a></p>
         </c:when>
         <c:otherwise><p class="hint">Tài khoản nhận tiền: <c:out value="${info.payoutAccount()}"/></p></c:otherwise>
       </c:choose>

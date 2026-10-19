@@ -11,7 +11,7 @@
 <nav class="category-bar" aria-label="Danh mục">
   <c:forEach var="cat" items="${categories}">
     <a class="category-item" href="${ctx}/feed/search?category=${fn:escapeXml(cat.slug)}">
-      <span class="cat-icon">${cat.icon}</span>
+      <img class="cat-icon" src="${ctx}${cat.icon}" alt="">
       <span><c:out value="${cat.name}"/></span>
     </a>
   </c:forEach>

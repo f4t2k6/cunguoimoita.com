@@ -1,15 +1,22 @@
 // F7 khung chat kiểu Messenger (TV5). Tải tin nhắn qua /chat/messages rồi định kỳ hỏi tin mới.
 // Để chạy nhẹ: chỉ hỏi phần tin mới (after), không hỏi khi tab bị ẩn, giãn dần nhịp hỏi khi không có tin,
 // không gửi 2 yêu cầu chồng nhau, và chỉ vẽ lại khi thật sự có thay đổi.
+// Dùng chung cho trang /chat/conversation và khung chat nổi góc phải dưới (chat-dock.js):
+//   ChatThread(root) với root là phần tử chứa .msgr-thread (data-ctx, data-conversation, data-other-initial,
+//   data-other-avatar), .msgr-error, template[data-chat-product], form.msgr-composer, form.msgr-offer-bar,
+//   [data-offer-toggle], [data-offer-cancel], input[type=file]. Trả về { stop() } để ngừng hỏi khi đóng khung.
+//   Trang có sẵn phần tử [data-chat-root] thì tự chạy.
 // TODO: chuyển sang Jakarta WebSocket để tin đến ngay, không cần hỏi định kỳ.
-(function () {
-  const box = document.getElementById('chat-box');
-  if (!box) return;
+window.ChatThread = function (root) {
+  const box = root.querySelector('.msgr-thread');
+  if (!box) return null;
   const ctx = box.dataset.ctx;
   const conversationId = box.dataset.conversation;
   const otherInitial = box.dataset.otherInitial || '?';
-  const errorEl = document.getElementById('chat-error');
+  const otherAvatar = box.dataset.otherAvatar || '';
+  const errorEl = root.querySelector('.msgr-error');
   const GAP_MS = 15 * 60 * 1000;   // cách nhau hơn 15 phút thì hiện mốc giờ ở giữa
+  let stopped = false;
 
   let messages = [];               // toàn bộ tin đã tải, cũ trước mới sau
   const seen = new Set();          // id các tin đã có, để không thêm trùng
@@ -23,7 +30,7 @@
   let counter = null;              // ô trả giá lại đang mở: { offerId, amount, focus } (giữ lại khi khung chat vẽ lại)
 
   const money = n => Number(n).toLocaleString('vi-VN') + ' đ';
-  const productTpl = document.getElementById('chat-product');
+  const productTpl = root.querySelector('template[data-chat-product]');
 
   // Ô nhập tiền: gõ tới đâu tự thêm dấu chấm phần nghìn tới đó (1500000 → 1.500.000), giữ đúng vị trí con trỏ.
   // Khi gửi lên server dùng moneyValue() để lấy lại số không có dấu chấm.
@@ -204,7 +211,14 @@
           + (sameAsPrev ? ' join-prev' : '') + (sameAsNext ? ' join-next' : '')
           + (m.sending ? ' sending' : ''));
       if (!m.mine) {
-        row.append(el('span', 'msgr-avatar small' + (sameAsNext ? ' ghost' : ''), otherInitial));
+        const avatar = el('span', 'msgr-avatar small' + (sameAsNext ? ' ghost' : ''), otherAvatar ? null : otherInitial);
+        if (otherAvatar) {
+          const img = el('img');
+          img.src = ctx + otherAvatar;
+          img.alt = '';
+          avatar.append(img);
+        }
+        row.append(avatar);
       }
       const content = m.offer ? offerCard(m.offer) : m.type === 'image' ? imageMessage(m) : textMessage(m);
       content.title = m.sending ? 'Đang gửi...' : new Date(m.sentAt).toLocaleString('vi-VN');
@@ -254,10 +268,11 @@
 
   function schedule() {
     clearTimeout(timer);
-    if (!document.hidden) timer = setTimeout(poll, nextDelay());
+    if (!document.hidden && !stopped) timer = setTimeout(poll, nextDelay());
   }
 
   async function poll() {
+    if (stopped) return;
     if (busy) { again = true; return; }
     busy = true;
     clearTimeout(timer);
@@ -272,12 +287,13 @@
   }
 
   // Tab bị ẩn thì ngừng hỏi; quay lại thì hỏi ngay
-  document.addEventListener('visibilitychange', () => {
+  const onVisibility = () => {
     if (document.hidden) clearTimeout(timer);
     else { idlePolls = 0; poll(); }
-  });
+  };
+  document.addEventListener('visibilitychange', onVisibility);
 
-  const chatForm = document.getElementById('chat-form');
+  const chatForm = root.querySelector('form.msgr-composer');
   if (chatForm) {
     chatForm.addEventListener('submit', e => {
       e.preventDefault();
@@ -300,7 +316,7 @@
         .catch(err => { dropTemp(); input.value = text; showError(err.message); });
     });
     // Chọn ảnh xong là gửi luôn (multipart, 1 ảnh tối đa 5 MB)
-    const imageInput = document.getElementById('chat-image');
+    const imageInput = chatForm.querySelector('input[type=file]');
     imageInput.addEventListener('change', async () => {
       const file = imageInput.files[0];
       imageInput.value = '';
@@ -321,14 +337,14 @@
         showError(err.message);
       }
     });
-    const offerForm = document.getElementById('offer-form');
+    const offerForm = root.querySelector('form.msgr-offer-bar');
     moneyInput(offerForm.amount);
     openOfferForm = show => {
       offerForm.hidden = !show;
       if (show) offerForm.amount.focus();
     };
-    document.getElementById('offer-toggle').onclick = () => openOfferForm(offerForm.hidden);
-    document.getElementById('offer-cancel').onclick = () => openOfferForm(false);
+    root.querySelector('[data-offer-toggle]').onclick = () => openOfferForm(offerForm.hidden);
+    root.querySelector('[data-offer-cancel]').onclick = () => openOfferForm(false);
     offerForm.addEventListener('submit', e => {
       e.preventDefault();
       const problem = checkMoney(offerForm.amount);
@@ -343,4 +359,14 @@
     .then(() => { box.scrollTop = box.scrollHeight; })
     .catch(() => showError('Không tải được tin nhắn, đang thử lại...'))
     .finally(schedule);
-})();
+
+  return {
+    stop() {
+      stopped = true;
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    }
+  };
+};
+
+document.querySelectorAll('[data-chat-root]').forEach(root => window.ChatThread(root));

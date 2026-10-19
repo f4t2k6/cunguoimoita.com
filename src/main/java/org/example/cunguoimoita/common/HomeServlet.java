@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * GET /home?page= → trang chủ: các bài đã duyệt, mới nhất trước, mỗi bài hiện như một post.
@@ -29,13 +30,15 @@ import java.util.Map;
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
 
-    /** Biểu tượng cho các danh mục có sẵn; danh mục admin mới thêm dùng biểu tượng mặc định. */
-    private static final Map<String, String> CATEGORY_ICONS = Map.ofEntries(
-            Map.entry("dien-thoai", "📱"), Map.entry("noxh", "🏢"), Map.entry("bat-dong-san", "🏠"),
-            Map.entry("xe-co", "🚗"), Map.entry("viec-lam", "👷"), Map.entry("dien-tu", "💻"),
-            Map.entry("thu-cung", "🐕"), Map.entry("dien-lanh", "🧊"), Map.entry("noi-that", "🛋️"),
-            Map.entry("ban-phim", "⌨️"));
-    private static final String DEFAULT_ICON = "🏷️";
+    /**
+     * Icon của từng danh mục gốc: file ảnh trong assets/images, tên là category-<id danh mục>.png.
+     * Danh mục chưa có ảnh riêng thì dùng category-mac-dinh.png. Muốn đổi icon chỉ cần thay file ảnh.
+     */
+    private static final Set<String> CATEGORY_ICONS = Set.of(
+            "dien-thoai", "noxh", "bat-dong-san", "xe-co", "viec-lam", "dien-tu",
+            "thu-cung", "dien-lanh", "noi-that", "ban-phim");
+    private static final String ICON_DIR = "/assets/images/";
+    private static final String DEFAULT_ICON = ICON_DIR + "category-mac-dinh.png";
 
     private final FeedService feedService = new FeedService();
     private final ProductService productService = new ProductService();
@@ -61,7 +64,7 @@ public class HomeServlet extends HttpServlet {
         for (Category cg : all) {
             if (cg.isTopLevel()) {
                 list.add(Map.of("slug", cg.getId(), "name", cg.getName(),
-                        "icon", CATEGORY_ICONS.getOrDefault(cg.getId(), DEFAULT_ICON)));
+                        "icon", CATEGORY_ICONS.contains(cg.getId()) ? ICON_DIR + "category-" + cg.getId() + ".png" : DEFAULT_ICON));
             }
         }
         return list;
