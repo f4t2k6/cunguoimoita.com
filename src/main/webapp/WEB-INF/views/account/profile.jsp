@@ -38,7 +38,10 @@
         <div class="account-alert account-alert-error">Mật khẩu hiện tại chưa đúng.</div>
     </c:if>
     <c:if test="${param.password == 'invalid'}">
-        <div class="account-alert account-alert-error">Mật khẩu mới cần từ 8 ký tự và hai ô xác nhận phải trùng nhau.</div>
+        <div class="account-alert account-alert-error">Hai ô mật khẩu mới chưa trùng nhau.</div>
+    </c:if>
+    <c:if test="${param.password == 'weak'}">
+        <div class="account-alert account-alert-error">Mật khẩu mới cần ít nhất 8 ký tự, có chữ cái và chữ số, không có khoảng trắng.</div>
     </c:if>
     <c:if test="${param.address == 'addressSaved'}">
         <div class="account-alert account-alert-success">Sổ địa chỉ đã được cập nhật.</div>
@@ -97,26 +100,26 @@
             </form>
         </section>
 
-        <section class="account-card">
+        <section class="account-card" id="doi-mat-khau">
             <h2>Đổi mật khẩu</h2>
-            <p>Dùng mật khẩu hiện tại để xác nhận thay đổi.</p>
+            <p>Dùng mật khẩu hiện tại để xác nhận thay đổi. Bấm "Hiện" để xem lại chữ đã gõ.</p>
             <form action="${pageContext.request.contextPath}/account/password" method="post" class="account-form">
                 <label for="currentPassword">Mật khẩu hiện tại</label>
                 <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required>
 
                 <label for="newPassword">Mật khẩu mới</label>
                 <input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="128"
-                       autocomplete="new-password" required>
+                       autocomplete="new-password" data-pw-new required>
 
                 <label for="confirmPassword">Nhập lại mật khẩu mới</label>
-                <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="128"
-                       autocomplete="new-password" required>
+                <input id="confirmPassword" name="confirmPassword" type="password" maxlength="128"
+                       autocomplete="new-password" data-pw-confirm="newPassword" required>
 
                 <button class="account-button" type="submit">Đổi mật khẩu</button>
             </form>
         </section>
 
-        <section class="account-card account-address-card">
+        <section class="account-card account-address-card" id="so-dia-chi">
             <div class="account-card-heading">
                 <div>
                     <h2>Sổ địa chỉ</h2>
@@ -145,17 +148,19 @@
                                     <c:if test="${not empty address.district}"><c:out value="${address.district}" />, </c:if>
                                     <c:out value="${address.province}" />
                                 </p>
+                                <c:if test="${not empty address.district}">
+                                    <p class="address-old-note">Địa chỉ này còn theo 3 cấp cũ (có quận/huyện). Bấm "Sửa địa chỉ" để chọn lại phường/xã mới.</p>
+                                </c:if>
 
                                 <details class="address-edit">
                                     <summary>Sửa địa chỉ</summary>
-                                    <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form">
+                                    <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form" data-address-picker>
                                         <input type="hidden" name="action" value="update">
                                         <input type="hidden" name="id" value="<c:out value='${address.id}'/>">
                                         <label>Nhãn địa chỉ<input name="label" maxlength="50" value="<c:out value='${address.label}'/>" required></label>
-                                        <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" value="<c:out value='${address.addressLine}'/>" required></label>
-                                        <label>Phường/xã<input name="ward" maxlength="100" value="<c:out value='${address.ward}'/>" /></label>
-                                        <label>Quận/huyện<input name="district" maxlength="100" value="<c:out value='${address.district}'/>" /></label>
                                         <label>Tỉnh/thành phố<input name="province" maxlength="100" value="<c:out value='${address.province}'/>" required></label>
+                                        <label>Phường/xã<input name="ward" maxlength="100" value="<c:out value='${address.ward}'/>" required></label>
+                                        <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" placeholder="Số nhà, tên đường" value="<c:out value='${address.addressLine}'/>" required></label>
                                         <button class="account-button" type="submit">Lưu địa chỉ</button>
                                     </form>
                                 </details>
@@ -183,13 +188,14 @@
 
             <details class="add-address" open>
                 <summary>Thêm địa chỉ mới</summary>
-                <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form">
+                <%-- address.js đổi 2 ô Tỉnh/Phường thành ô chọn có sẵn danh sách 34 tỉnh mới (form có data-address-picker).
+                     Từ 01/07/2025 không còn cấp quận/huyện nên form không có ô quận/huyện nữa. --%>
+                <form action="${pageContext.request.contextPath}/account/addresses" method="post" class="account-form compact-form" data-address-picker>
                     <input type="hidden" name="action" value="add">
-                    <label>Nhãn địa chỉ<input name="label" maxlength="50" placeholder="Nhà, ký túc xá..." value="Nhà" required></label>
-                    <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" placeholder="Số nhà, tên đường" required></label>
-                    <label>Phường/xã<input name="ward" maxlength="100"></label>
-                    <label>Quận/huyện<input name="district" maxlength="100"></label>
                     <label>Tỉnh/thành phố<input name="province" maxlength="100" required></label>
+                    <label>Phường/xã<input name="ward" maxlength="100" required></label>
+                    <label>Địa chỉ cụ thể<input name="addressLine" maxlength="255" placeholder="Số nhà, tên đường" required></label>
+                    <label>Nhãn địa chỉ<input name="label" maxlength="50" placeholder="Nhà, ký túc xá..." value="Nhà" required></label>
                     <button class="account-button" type="submit">Thêm địa chỉ</button>
                 </form>
             </details>
@@ -197,4 +203,7 @@
     </div>
 </section>
 
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/password.css?v=${assetVer}">
+<script src="${pageContext.request.contextPath}/assets/js/address.js?v=${assetVer}"></script>
+<script src="${pageContext.request.contextPath}/assets/js/password.js?v=${assetVer}"></script>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

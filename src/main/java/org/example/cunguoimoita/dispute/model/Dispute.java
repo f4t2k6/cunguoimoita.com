@@ -2,11 +2,13 @@ package org.example.cunguoimoita.dispute.model;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Thực thể Dispute ánh xạ từ Class Diagram Final:
  * Dispute (id, orderId, raisedById, againstId, reason, description, evidenceImages,
  *          status, createdDate, resolvedDate, handledByAdminId, resolutionNote)
+ * Thêm phần phản hồi của người bán (sellerResponse, sellerEvidenceImages, sellerResponseDate), xem 11_hoan_thien_don_hang.sql.
  */
 public class Dispute implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -23,6 +25,9 @@ public class Dispute implements Serializable {
     private LocalDate resolvedDate;
     private String handledByAdminId;
     private String resolutionNote;
+    private String sellerResponse;              // người bán giải thích
+    private String sellerEvidenceImages;        // ảnh của người bán, cách nhau bởi dấu phẩy
+    private LocalDateTime sellerResponseDate;
 
     public Dispute() {
         this.status = DisputeStatus.OPEN;
@@ -55,11 +60,60 @@ public class Dispute implements Serializable {
         }
     }
 
+    /** Người bán gửi lời giải thích + ảnh. Gửi lại thì ghi đè lời giải thích, ảnh được cộng thêm. */
+    public void respond(String response, String images) {
+        requireOpen();
+        if (response == null || response.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập lời giải thích");
+        }
+        this.sellerResponse = response.trim();
+        if (images != null && !images.isBlank()) {
+            this.sellerEvidenceImages = (sellerEvidenceImages == null || sellerEvidenceImages.isBlank())
+                    ? images : sellerEvidenceImages + "," + images;
+        }
+        this.sellerResponseDate = LocalDateTime.now();
+    }
+
+    /** Còn đang xử lý (open / reviewing) không. */
+    public boolean isOpen() {
+        return status == DisputeStatus.OPEN || status == DisputeStatus.REVIEWING;
+    }
+
+    /** Khiếu nại đã có kết quả thì không đổi được nữa. */
+    public void requireOpen() {
+        if (!isOpen()) {
+            throw new IllegalStateException("Khiếu nại đã được xử lý xong");
+        }
+    }
+
+    /** Ảnh bằng chứng của người mua dạng danh sách (để JSP lặp). */
+    public java.util.List<String> getEvidenceList() {
+        return split(evidenceImages);
+    }
+
+    public java.util.List<String> getSellerEvidenceList() {
+        return split(sellerEvidenceImages);
+    }
+
+    private static java.util.List<String> split(String images) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (images != null) {
+            for (String part : images.split(",")) {
+                if (!part.isBlank()) {
+                    list.add(part.trim());
+                }
+            }
+        }
+        return list;
+    }
+
     public void review() {
+        requireOpen();
         this.status = DisputeStatus.REVIEWING;
     }
 
     public void resolveForBuyer(String adminId, String note) {
+        requireOpen();
         this.status = DisputeStatus.RESOLVED_REFUND;
         this.handledByAdminId = adminId;
         this.resolutionNote = note;
@@ -67,6 +121,7 @@ public class Dispute implements Serializable {
     }
 
     public void resolveForSeller(String adminId, String note) {
+        requireOpen();
         this.status = DisputeStatus.RESOLVED_PAYOUT;
         this.handledByAdminId = adminId;
         this.resolutionNote = note;
@@ -74,6 +129,7 @@ public class Dispute implements Serializable {
     }
 
     public void reject(String adminId, String note) {
+        requireOpen();
         this.status = DisputeStatus.REJECTED;
         this.handledByAdminId = adminId;
         this.resolutionNote = note;
@@ -81,6 +137,30 @@ public class Dispute implements Serializable {
     }
 
     // Getters and Setters
+    public String getSellerResponse() {
+        return sellerResponse;
+    }
+
+    public void setSellerResponse(String sellerResponse) {
+        this.sellerResponse = sellerResponse;
+    }
+
+    public String getSellerEvidenceImages() {
+        return sellerEvidenceImages;
+    }
+
+    public void setSellerEvidenceImages(String sellerEvidenceImages) {
+        this.sellerEvidenceImages = sellerEvidenceImages;
+    }
+
+    public LocalDateTime getSellerResponseDate() {
+        return sellerResponseDate;
+    }
+
+    public void setSellerResponseDate(LocalDateTime sellerResponseDate) {
+        this.sellerResponseDate = sellerResponseDate;
+    }
+
     public String getId() {
         return id;
     }

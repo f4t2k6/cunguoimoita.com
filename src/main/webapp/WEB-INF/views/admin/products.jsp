@@ -25,6 +25,7 @@
   </form>
 
   <c:if test="${empty products}"><p class="admin-empty">Không có bài nào.</p></c:if>
+  <c:if test="${fn:length(products) >= 100}"><p class="admin-note">Đang hiện 100 dòng mới nhất. Dùng ô tìm kiếm hoặc bộ lọc để tìm dòng cũ hơn.</p></c:if>
   <div class="admin-cards">
     <c:forEach var="p" items="${products}">
       <article class="admin-card">

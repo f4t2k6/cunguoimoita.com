@@ -41,23 +41,6 @@
     </tbody>
   </table>
 
-  <%-- TẠM: tạo vận đơn thử trong lúc F4 (TV3) chưa có trang thanh toán. Xoá khi ghép với trang thanh toán. --%>
-  <section class="ship-card">
-    <h2>Tạo vận đơn thử</h2>
-    <form method="post">
-      <label>Mã đơn (id) <input name="orderId" required placeholder="VD: O1"></label>
-      <label>Đơn vị
-        <select name="carrierId">
-          <c:forEach var="carrier" items="${carriers}">
-            <option value="${fn:escapeXml(carrier.id)}"><c:out value="${carrier.name}"/></option>
-          </c:forEach>
-        </select>
-      </label>
-      <label>Gửi từ <input name="from" value="${fn:escapeXml(from)}" placeholder="Để trống: theo địa chỉ người bán"></label>
-      <label>Giao tới <input name="to" value="${fn:escapeXml(to)}" placeholder="Để trống: theo địa chỉ giao của đơn"></label>
-      <label>Tiền thu hộ COD <input name="codAmount" type="number" min="0" value="0"></label>
-      <button type="submit">Tạo vận đơn</button>
-    </form>
-  </section>
+  <p class="hint">Người mua chọn đơn vị vận chuyển ngay trong trang chi tiết đơn hàng, phí ship được cộng vào tổng trước khi thanh toán.</p>
 </div>
 <%@ include file="/WEB-INF/views/common/footer.jsp" %>

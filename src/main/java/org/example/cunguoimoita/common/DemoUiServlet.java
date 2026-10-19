@@ -7,9 +7,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.common.util.CurrentUser;
 
 /**
  * Bản demo giao diện (/ui), gộp từ nhánh main. Trang chủ chính là /home (HomeServlet).
+ * Chỉ admin mở được (để tham khảo giao diện cũ); người dùng khác được chuyển về /home vì các trang thật đã thay thế.
  * Controller điều hướng giao diện 10 chức năng dự án (F1 -> F10)
  * và xuất báo cáo đối soát giải ngân CSV (F9 Payout - Tuấn Anh).
  */
@@ -20,6 +22,10 @@ public class DemoUiServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        if (!CurrentUser.isAdmin(request)) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
         String servletPath = request.getServletPath();
         if ("/payout-export".equals(servletPath)) {
             exportPayoutCsv(response);

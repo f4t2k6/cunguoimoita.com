@@ -40,6 +40,40 @@ public class RefundService {
         return r;
     }
 
+    /**
+     * Hoàn tiền cho người mua của 1 đơn (huỷ đơn đã trả tiền, hoặc admin xử khiếu nại cho người mua).
+     * Chạy trên Connection của nghiệp vụ gọi nó để chung transaction.
+     * - Đơn trả online: hoàn đúng số tiền đã thanh toán, khoản thanh toán chuyển refunded.
+     * - Đơn COD: chỉ hoàn khi shipper đã thu tiền (codCollectedAmount > 0).
+     * Hoàn tiền là giả lập nên ghi luôn trạng thái done. Mỗi đơn tối đa 1 khoản hoàn.
+     * @return khoản hoàn vừa tạo, null nếu người mua chưa trả đồng nào hoặc đơn đã được hoàn trước đó
+     */
+    public Refund refundOrder(Connection c, String orderId, String buyerId, double codCollectedAmount,
+                              RefundReason reason) throws SQLException {
+        if (refundDAO.findByOrderId(c, orderId) != null) {
+            return null;
+        }
+        Payment paid = paymentDAO.findPaidByOrderId(c, orderId);
+        double amount = paid != null ? paid.getAmount() : codCollectedAmount;
+        if (amount <= 0) {
+            return null;
+        }
+        if (paid != null) {
+            paymentDAO.updateStatus(c, paid.getId(), PaymentStatus.REFUNDED, paid.getGatewayTxnId());
+        }
+        Refund r = new Refund();
+        r.setId(UUID.randomUUID().toString());
+        r.setOrderId(orderId);
+        r.setPaymentId(paid != null ? paid.getId() : null);
+        r.setBuyerId(buyerId);
+        r.setAmount(amount);
+        r.setReason(reason);
+        r.setStatus(RefundStatus.DONE);
+        r.setRefundDate(LocalDateTime.now());
+        refundDAO.insert(c, r);
+        return r;
+    }
+
     public void processRefund(String refundId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             c.setAutoCommit(false);

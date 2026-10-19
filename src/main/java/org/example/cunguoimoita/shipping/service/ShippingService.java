@@ -15,14 +15,16 @@ import org.example.cunguoimoita.shipping.model.ShippingCarrier;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
  * Nghiệp vụ F6. Các chức năng khác gọi vào đây, không gọi thẳng DAO:
- *  - F4 (TV3) trang thanh toán: listCarriers(), calculateFee(...)
- *  - F4 (TV3) Order.chooseCarrier(carrierId): createShipment(...)
+ *  - F4 trang chi tiết đơn: quoteForOrder(orderId) để hiện các hãng kèm phí ship của đúng tuyến
+ *  - F4 Order.chooseCarrier(carrierId): chooseCarrier(c, orderId, carrierId) tạo/đổi vận đơn trong transaction của F4
+ *  - F4 xác nhận COD / thanh toán online: setCodAmount(c, orderId, amount)
  * Mỗi thao tác dùng 1 kết nối (1 transaction) cho mọi câu lệnh, thông báo gửi sau khi commit.
  */
 public class ShippingService {
@@ -48,6 +50,16 @@ public class ShippingService {
         return cached;
     }
 
+    /** Tên hãng để hiển thị (hãng đã ngừng hoạt động vẫn trả về id). */
+    public String carrierName(String carrierId) throws SQLException {
+        for (ShippingCarrier carrier : listCarriers()) {
+            if (carrier.getId().equals(carrierId)) {
+                return carrier.getName();
+            }
+        }
+        return carrierId;
+    }
+
     /** Admin vừa sửa danh sách hãng (F10): bỏ bản lưu tạm để trang thanh toán thấy ngay. */
     public static void clearCarrierCache() {
         carrierCache = null;
@@ -57,33 +69,88 @@ public class ShippingService {
         return requireCarrier(carrierId).calculateFee(fromCity, toCity);
     }
 
+    /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
+    public record CarrierQuote(ShippingCarrier carrier, double fee) {
+    }
+
+    /** Các hãng đang hoạt động kèm phí ship tính theo tỉnh người bán → tỉnh giao của đơn. */
+    public List<CarrierQuote> quoteForOrder(String orderId) throws SQLException {
+        OrderRef order;
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            order = requireOrder(c, orderId);
+        }
+        List<CarrierQuote> quotes = new ArrayList<>();
+        for (ShippingCarrier carrier : listCarriers()) {
+            quotes.add(new CarrierQuote(carrier, carrier.calculateFee(order.fromCity(), order.toCity())));
+        }
+        return quotes;
+    }
+
     /**
-     * Order.chooseCarrier(carrierId): Shipment — tạo vận đơn và ghi phí ship vào đơn (cùng một transaction).
-     * fromCity/toCity để trống thì lấy theo địa chỉ mặc định người bán và địa chỉ giao của đơn.
-     * @param codAmount số tiền shipper phải thu; 0 nếu đơn trả trước online
+     * Người mua chọn (hoặc đổi) hãng vận chuyển ở trang đơn, trước khi thanh toán.
+     * Chưa có vận đơn → tạo mới; đã có nhưng chưa gửi hàng → đổi hãng và tính lại phí.
+     * Chạy trên Connection của OrderService để chung transaction với việc ghi phí vào đơn.
+     * @return vận đơn sau khi chọn (phí ship nằm trong getShippingFee())
      */
-    public Shipment createShipment(String orderId, String carrierId, String fromCity, String toCity,
-                                   double codAmount) throws SQLException {
+    public Shipment chooseCarrier(Connection c, String orderId, String carrierId) throws SQLException {
         ShippingCarrier carrier = requireCarrier(carrierId);
-        return inTransaction(c -> {
-            OrderRef order = requireOrder(c, orderId);
-            if (shipmentDAO.findByOrderId(c, orderId) != null) {
-                throw new IllegalArgumentException("Đơn " + order.code() + " đã có vận đơn");
-            }
-            String from = isBlank(fromCity) ? order.fromCity() : fromCity;
-            String to = isBlank(toCity) ? order.toCity() : toCity;
-            Shipment s = new Shipment();
+        OrderRef order = requireOrder(c, orderId);
+        double fee = carrier.calculateFee(order.fromCity(), order.toCity());
+        Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
+        if (s == null) {
+            s = new Shipment();
             s.setId(UUID.randomUUID().toString());
             s.setOrderId(orderId);
             s.setCarrierId(carrierId);
-            s.setShippingFee(carrier.calculateFee(from, to));
+            s.setShippingFee(fee);
             s.setCreatedDate(LocalDate.now());
-            s.setCodAmount(codAmount);
-            s.setCodStatus(codAmount > 0 ? CodStatus.PENDING : CodStatus.NONE);
             shipmentDAO.insert(c, s);
-            orderDAO.updateShippingFee(c, orderId, s.getShippingFee());
             return s;
-        });
+        }
+        if (s.getStatus() != ShipmentStatus.CREATED) {
+            throw new IllegalStateException("Hàng đã được gửi, không đổi đơn vị vận chuyển được nữa");
+        }
+        s.setCarrierId(carrierId);
+        s.setShippingFee(fee);
+        shipmentDAO.update(c, s);
+        return s;
+    }
+
+    /** Địa chỉ giao của đơn vừa đổi: tính lại phí theo hãng đã chọn. Chưa chọn hãng → null. */
+    public Shipment requote(Connection c, String orderId) throws SQLException {
+        Shipment s = shipmentDAO.findByOrderId(c, orderId);
+        return s == null ? null : chooseCarrier(c, orderId, s.getCarrierId());
+    }
+
+    /**
+     * Ghi số tiền shipper phải thu: COD → tổng đơn (chờ thu), trả online → 0.
+     * Gọi khi người mua xác nhận COD hoặc chuyển sang thanh toán online.
+     */
+    public void setCodAmount(Connection c, String orderId, double codAmount) throws SQLException {
+        Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
+        if (s == null) {
+            throw new IllegalStateException("Vui lòng chọn đơn vị vận chuyển trước");
+        }
+        if (s.getStatus() != ShipmentStatus.CREATED) {
+            throw new IllegalStateException("Hàng đã được gửi, không đổi cách thanh toán được nữa");
+        }
+        s.setCodAmount(codAmount);
+        s.setCodStatus(codAmount > 0 ? CodStatus.PENDING : CodStatus.NONE);
+        shipmentDAO.update(c, s);
+    }
+
+    /** Người mua bấm "Đã nhận hàng" ở đơn COD = đã trả tiền cho shipper: ghi nhận đã thu nếu shipper chưa bấm. */
+    public void collectCodIfPending(Connection c, String orderId) throws SQLException {
+        Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
+        if (s != null && s.getCodStatus() == CodStatus.PENDING) {
+            s.confirmCodCollected();
+            shipmentDAO.update(c, s);
+        }
+    }
+
+    /** Vận đơn của đơn, trên Connection có sẵn (F4/F9 dùng trong transaction của mình). */
+    public Shipment findByOrder(Connection c, String orderId) throws SQLException {
+        return shipmentDAO.findByOrderId(c, orderId);
     }
 
     /**
@@ -110,10 +177,24 @@ public class ShippingService {
         }
     }
 
-    /** Người bán bấm "Đã gửi hàng" và nhập mã vận đơn. */
+    /**
+     * Người bán bấm "Đã gửi hàng" và nhập mã vận đơn.
+     * Chỉ gửi được khi người mua đã trả tiền online (đơn paid) hoặc đã xác nhận COD (đơn new, COD chờ thu).
+     */
     public void markShipped(String orderId, String trackingCode) throws SQLException {
+        if (isBlank(trackingCode)) {
+            throw new IllegalArgumentException("Vui lòng nhập mã vận đơn");
+        }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            OrderRef order = requireOrder(c, orderId);
+            Shipment s = shipmentDAO.findByOrderId(c, orderId);
+            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (!"paid".equals(order.status()) && !codConfirmed) {
+                throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa gửi hàng được");
+            }
+        }
         changeShipment(orderId, s -> {
-            s.setTrackingCode(trackingCode);
+            s.setTrackingCode(trackingCode.trim());
             s.updateStatus(ShipmentStatus.PICKED_UP);
         }, true);
     }

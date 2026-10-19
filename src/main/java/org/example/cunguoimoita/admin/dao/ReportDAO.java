@@ -40,8 +40,13 @@ public class ReportDAO {
 
     /** @param status pending | resolved | rejected | null (tất cả) */
     public List<Report> find(Connection c, String status) throws SQLException {
+        return find(c, status, 100);
+    }
+
+    /** @param limit số dòng tối đa (trang tổng quan chỉ lấy vài báo cáo mới nhất) */
+    public List<Report> find(Connection c, String status, int limit) throws SQLException {
         boolean byStatus = status != null && !status.isBlank() && !"all".equals(status);
-        String sql = SELECT + (byStatus ? " WHERE r.status = ?" : "") + " ORDER BY r.created_date DESC LIMIT 100";
+        String sql = SELECT + (byStatus ? " WHERE r.status = ?" : "") + " ORDER BY r.created_date DESC LIMIT " + Math.max(1, limit);
         List<Report> list = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             if (byStatus) {

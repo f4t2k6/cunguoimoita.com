@@ -107,6 +107,21 @@ public class PayoutDAO {
         }
     }
 
+    /** Khoản đang chờ trả mà người bán đã khai tài khoản nhận tiền → tác vụ định kỳ chuyển tiền. */
+    public List<Payout> findScheduledWithAccount(Connection c) throws SQLException {
+        String sql = "SELECT p.* FROM payouts p JOIN customers cu ON cu.user_id = p.seller_id"
+                   + " WHERE p.status = 'scheduled' AND COALESCE(cu.payout_account_ref, '') <> ''";
+        List<Payout> list = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     private Payout map(ResultSet rs) throws SQLException {
         Payout p = new Payout();
         p.setId(rs.getString("id"));

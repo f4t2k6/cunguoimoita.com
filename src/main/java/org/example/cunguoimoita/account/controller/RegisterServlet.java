@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.account.service.EmailVerificationService;
 import org.example.cunguoimoita.account.service.VerificationException;
 import org.example.cunguoimoita.common.util.MailSender;
+import org.example.cunguoimoita.common.util.PasswordUtil;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -71,8 +72,9 @@ public class RegisterServlet extends HttpServlet {
         if (!PHONE.matcher(phone).matches()) {
             return "Vui lòng nhập số điện thoại hợp lệ.";
         }
-        if (password == null || password.length() < 8 || password.length() > 128) {
-            return "Mật khẩu cần có từ 8 đến 128 ký tự.";
+        String weak = PasswordUtil.checkStrength(password);
+        if (weak != null) {
+            return weak;
         }
         if (!password.equals(confirmPassword)) {
             return "Mật khẩu nhập lại chưa khớp.";

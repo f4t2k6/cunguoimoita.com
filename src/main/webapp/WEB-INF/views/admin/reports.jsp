@@ -21,6 +21,7 @@
   </form>
 
   <c:if test="${empty reports}"><p class="admin-empty">Không có báo cáo nào.</p></c:if>
+  <c:if test="${fn:length(reports) >= 100}"><p class="admin-note">Đang hiện 100 dòng mới nhất. Dùng ô tìm kiếm hoặc bộ lọc để tìm dòng cũ hơn.</p></c:if>
   <div class="admin-cards">
     <c:forEach var="r" items="${reports}">
       <article class="admin-card">
@@ -38,6 +39,13 @@
           · <time>${fn:replace(fn:substring(r.createdDate, 0, 16), 'T', ' ')}</time>
         </p>
         <c:if test="${not empty r.description}"><p class="admin-desc"><c:out value="${r.description}"/></p></c:if>
+        <c:if test="${not empty r.evidenceList}">
+          <div class="admin-evidence">
+            <c:forEach var="img" items="${r.evidenceList}">
+              <a href="${ctx}${img}" target="_blank"><img src="${ctx}${img}" alt="Ảnh bằng chứng"></a>
+            </c:forEach>
+          </div>
+        </c:if>
 
         <c:if test="${r.pending}">
           <div class="admin-actions">

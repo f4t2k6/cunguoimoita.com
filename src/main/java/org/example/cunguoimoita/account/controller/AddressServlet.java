@@ -62,7 +62,8 @@ public class AddressServlet extends HttpServlet {
         return length(req.getParameter("addressLine"), 1, 255)
                 && length(req.getParameter("province"), 1, 100)
                 && length(req.getParameter("label"), 0, 50)
-                && length(req.getParameter("ward"), 0, 100)
+                // Địa chỉ 2 cấp (từ 01/07/2025): bắt buộc phường/xã, không còn quận/huyện (cột district để trống)
+                && length(req.getParameter("ward"), 1, 100)
                 && length(req.getParameter("district"), 0, 100);
     }
 

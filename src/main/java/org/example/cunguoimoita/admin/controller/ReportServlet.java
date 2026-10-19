@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.admin.controller;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.admin.model.ReportReason;
 import org.example.cunguoimoita.admin.service.AdminService;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.ImageStore;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -15,13 +17,18 @@ import java.sql.SQLException;
 /**
  * Phía người dùng của F10: nút "Báo cáo" trên bài đăng / hồ sơ trỏ tới đây.
  * GET  /report?type=product|user&id=...   form báo cáo. Attribute gửi sang JSP: type, id, targetName, reasons, error, sent
- * POST /report   field: type, id, reason (scam | fake_item | prohibited_item | spam | other), description
+ * POST /report   (multipart) field: type, id, reason (scam | fake_item | prohibited_item | spam | other), description,
+ *                images (tối đa 3 ảnh bằng chứng, mỗi ảnh ≤ 5 MB)
  * Phải đăng nhập bằng tài khoản khách hàng (bảng reports.reporter_id trỏ customers).
  */
 @WebServlet("/report")
+@MultipartConfig(maxFileSize = ImageStore.MAX_FILE_SIZE, maxRequestSize = 4 * ImageStore.MAX_FILE_SIZE)
 public class ReportServlet extends HttpServlet {
 
+    private static final int MAX_IMAGES = 3;
+
     private final AdminService adminService = new AdminService();
+    private final ImageStore imageStore = new ImageStore("reports");
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -45,8 +52,9 @@ public class ReportServlet extends HttpServlet {
             return;
         }
         try {
+            String images = String.join(",", imageStore.saveAll(req.getParts(), "images", MAX_IMAGES));
             adminService.submitReport(userId, req.getParameter("type"), req.getParameter("id"),
-                    req.getParameter("reason"), req.getParameter("description"));
+                    req.getParameter("reason"), req.getParameter("description"), images);
             req.setAttribute("sent", true);
             showForm(req, resp, null);
         } catch (IllegalArgumentException | IllegalStateException e) {

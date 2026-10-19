@@ -24,6 +24,19 @@ public class Report {
     public boolean isPending() { return "pending".equals(status); }
     public boolean isProductTarget() { return "product".equals(targetType); }
 
+    /** Ảnh bằng chứng dạng danh sách (cột evidence_images lưu các đường dẫn cách nhau bởi dấu phẩy). */
+    public java.util.List<String> getEvidenceList() {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (evidenceImages != null) {
+            for (String part : evidenceImages.split(",")) {
+                if (!part.isBlank()) {
+                    list.add(part.trim());
+                }
+            }
+        }
+        return list;
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getReporterId() { return reporterId; }

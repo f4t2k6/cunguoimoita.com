@@ -55,6 +55,12 @@ public abstract class AdminBaseServlet extends HttpServlet {
             session.removeAttribute("adminFlashError");
         }
         req.setAttribute("adminTab", activeTab);
+        // Số việc đang chờ hiện trên menu (Duyệt bài 3, Báo cáo 1...) để admin biết chỗ cần vào
+        try {
+            req.setAttribute("adminTodo", adminService.todo());
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
         req.getRequestDispatcher("/WEB-INF/views/admin/" + view).forward(req, resp);
     }
 

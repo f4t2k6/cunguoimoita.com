@@ -31,19 +31,33 @@ public class ShipmentDAO {
         }
     }
 
-    /** Lưu lại các trường có thể đổi sau khi tạo: mã vận đơn, trạng thái, ngày giao, COD. */
+    /** Lưu lại các trường có thể đổi sau khi tạo: hãng + phí (người mua đổi trước khi gửi), mã vận đơn, trạng thái, ngày giao, COD. */
     public void update(Connection c, Shipment s) throws SQLException {
-        String sql = "UPDATE shipments SET tracking_code = ?, status = ?, delivered_date = ?, "
-                + "cod_status = ?, cod_collected_at = ?, cod_remitted_at = ? WHERE id = ?";
+        String sql = "UPDATE shipments SET carrier_id = ?, shipping_fee = ?, tracking_code = ?, status = ?, delivered_date = ?, "
+                + "cod_amount = ?, cod_status = ?, cod_collected_at = ?, cod_remitted_at = ? WHERE id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, s.getTrackingCode());
-            ps.setString(2, s.getStatus().dbValue());
-            ps.setDate(3, s.getDeliveredDate() == null ? null : Date.valueOf(s.getDeliveredDate()));
-            ps.setString(4, s.getCodStatus().dbValue());
-            ps.setTimestamp(5, s.getCodCollectedAt() == null ? null : Timestamp.valueOf(s.getCodCollectedAt()));
-            ps.setTimestamp(6, s.getCodRemittedAt() == null ? null : Timestamp.valueOf(s.getCodRemittedAt()));
-            ps.setString(7, s.getId());
+            ps.setString(1, s.getCarrierId());
+            ps.setDouble(2, s.getShippingFee());
+            ps.setString(3, s.getTrackingCode());
+            ps.setString(4, s.getStatus().dbValue());
+            ps.setDate(5, s.getDeliveredDate() == null ? null : Date.valueOf(s.getDeliveredDate()));
+            ps.setDouble(6, s.getCodAmount());
+            ps.setString(7, s.getCodStatus().dbValue());
+            ps.setTimestamp(8, s.getCodCollectedAt() == null ? null : Timestamp.valueOf(s.getCodCollectedAt()));
+            ps.setTimestamp(9, s.getCodRemittedAt() == null ? null : Timestamp.valueOf(s.getCodRemittedAt()));
+            ps.setString(10, s.getId());
             ps.executeUpdate();
+        }
+    }
+
+    /** Giống findByOrderId nhưng khoá dòng vận đơn tới hết transaction. */
+    public Shipment findByOrderIdForUpdate(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT * FROM shipments WHERE order_id = ? FOR UPDATE";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
         }
     }
 
