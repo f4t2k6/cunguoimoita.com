@@ -6,10 +6,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.account.model.User;
 import org.example.cunguoimoita.account.service.EmailVerificationService;
 import org.example.cunguoimoita.account.service.VerificationException;
+import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.MailSender;
 
 import java.io.IOException;

@@ -1,12 +1,12 @@
 package org.example.cunguoimoita.order.service;
 
-import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.order.dao.CartDAO;
 import org.example.cunguoimoita.order.dao.CartDAO.CartLine;
 import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.CartItem;
 import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 
 import java.sql.Connection;
 import java.sql.SQLException;

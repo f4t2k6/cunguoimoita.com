@@ -14,11 +14,11 @@ import org.example.cunguoimoita.order.dao.OrderDAO;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
-import org.example.cunguoimoita.product.dao.ProductDAO;
-import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -1,10 +1,10 @@
 package org.example.cunguoimoita.common.db;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Connection pool dùng chung (JNDI jdbc/cunguoimoita khai báo trong META-INF/context.xml).

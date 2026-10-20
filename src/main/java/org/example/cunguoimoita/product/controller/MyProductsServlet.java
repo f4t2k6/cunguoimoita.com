@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.product.model.Product;
-import org.example.cunguoimoita.product.service.ProductService;
 import org.example.cunguoimoita.product.model.ProductStatus;
+import org.example.cunguoimoita.product.service.ProductService;
 
 import java.io.IOException;
 import java.sql.SQLException;

@@ -2,7 +2,6 @@ package org.example.cunguoimoita.order.service;
 
 import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.account.model.Address;
-import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.dao.DisputeDAO;
 import org.example.cunguoimoita.dispute.model.Payout;
@@ -22,13 +21,14 @@ import org.example.cunguoimoita.order.model.OrderCard;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.model.Voucher;
 import org.example.cunguoimoita.payment.service.PaymentService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.review.service.ReviewService;
 import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.service.ShippingService;
-import org.example.cunguoimoita.product.dao.ProductDAO;
-import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
