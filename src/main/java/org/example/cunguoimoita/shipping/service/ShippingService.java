@@ -74,10 +74,6 @@ public class ShippingService {
         carrierCache = null;
     }
 
-    public double calculateFee(String carrierId, String fromCity, String toCity) throws SQLException {
-        return requireCarrier(carrierId).calculateFee(fromCity, toCity);
-    }
-
     /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
     public record CarrierQuote(ShippingCarrier carrier, double fee) {
     }

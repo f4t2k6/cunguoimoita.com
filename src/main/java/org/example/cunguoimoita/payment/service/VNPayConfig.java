@@ -95,11 +95,6 @@ public class VNPayConfig {
         return (hashSecret != null && !hashSecret.isBlank()) ? hashSecret : "RAKHMOSUPOIKZAGACFOPURKVAARZNLOP";
     }
 
-    public static synchronized void setCredentials(String newTmnCode, String newHashSecret) {
-        if (newTmnCode != null && !newTmnCode.isBlank()) tmnCode = newTmnCode.trim();
-        if (newHashSecret != null && !newHashSecret.isBlank()) hashSecret = newHashSecret.trim();
-    }
-
     /** Kiểm tra xem đã cấu hình mã merchant thật của VNPay chưa (khác mã demo rỗng). */
     public static boolean isConfigured() {
         String code = getTmnCode();

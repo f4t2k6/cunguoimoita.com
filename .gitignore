@@ -48,3 +48,6 @@ src/main/resources/vnpay.properties
 ppt/
 
 nb-configuration.xml
+
+### SmartTomcat (cấu hình Tomcat riêng từng máy) ###
+.smarttomcat/

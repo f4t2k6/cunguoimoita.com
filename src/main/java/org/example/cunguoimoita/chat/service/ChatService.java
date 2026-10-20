@@ -147,7 +147,7 @@ public class ChatService {
     }
 
     /**
-     * Gửi ảnh: servlet lưu file qua ImageStore("chat") trước, ở đây ghi tin type = image, content = đường dẫn ảnh.
+     * Gửi ảnh: servlet lưu ảnh qua MediaStore trước, ở đây ghi tin type = image, content = đường dẫn ảnh.
      * Kiểm tra quyền trước khi lưu file thì gọi requireCanSend(...).
      */
     public Message sendImage(String conversationId, String senderId, String imageUrl) throws SQLException {

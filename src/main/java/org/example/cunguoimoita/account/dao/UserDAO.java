@@ -85,18 +85,6 @@ public class UserDAO {
         }
     }
 
-    public boolean updateProfile(String id, String fullName, String phone) throws SQLException {
-        String sql = "UPDATE users SET fullname = ?, phone = ? "
-                + "WHERE id = ? AND user_role = 'customer' AND status = 'active'";
-        try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, fullName.trim());
-            ps.setString(2, phone.trim());
-            ps.setString(3, id);
-            return ps.executeUpdate() == 1;
-        }
-    }
-
     public boolean updateCustomerProfile(String id, String fullName, String phone,
                                          String payoutAccountRef) throws SQLException {
         String updateUser = "UPDATE users SET fullname = ?, phone = ? "
@@ -151,17 +139,6 @@ public class UserDAO {
         try (Connection c = ConnectionPool.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, avatarPath);
-            ps.setString(2, id);
-            return ps.executeUpdate() == 1;
-        }
-    }
-
-    public boolean updatePayoutAccountRef(String id, String payoutAccountRef) throws SQLException {
-        String sql = "UPDATE customers SET payout_account_ref = ? WHERE user_id = ?";
-        try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, payoutAccountRef == null || payoutAccountRef.isBlank()
-                    ? null : payoutAccountRef.trim());
             ps.setString(2, id);
             return ps.executeUpdate() == 1;
         }

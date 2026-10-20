@@ -151,22 +151,10 @@ public class OrderService {
         return cards;
     }
 
-    public List<Order> getBuyerOrders(String buyerId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return orderDAO.findByBuyer(c, buyerId);
-        }
-    }
-
     // Thẻ đơn (kiểu Shopee) cho trang Đơn mua / Đơn bán.
     public List<OrderCard> getOrderCards(String userId, boolean asSeller) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return orderDAO.findCards(c, userId, asSeller);
-        }
-    }
-
-    public List<Order> getSellerOrders(String sellerId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return orderDAO.findBySeller(c, sellerId);
         }
     }
 

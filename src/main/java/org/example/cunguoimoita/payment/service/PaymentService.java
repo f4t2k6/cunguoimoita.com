@@ -38,17 +38,6 @@ public class PaymentService {
     private final ShippingService shippingService = new ShippingService();   // F6: tự sinh mã vận đơn khi đã trả tiền
 
     /**
-     * Customer.canUseCod(): người mua còn dùng được COD không.
-     * Điều kiện: số lần từ chối nhận hàng (vận đơn bị hoàn) dưới 2 lần.
-     */
-    public boolean canUseCod(String customerId) throws SQLException {
-        if (customerId == null) return false;
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return countRefusals(c, customerId) < MAX_COD_REFUSALS;
-        }
-    }
-
-    /**
      * Lý do đơn này KHÔNG được trả COD, hoặc null nếu được:
      *  1. Người mua đã từ chối nhận hàng COD từ 2 lần trở lên.
      *  2. Có sản phẩm trong đơn mà người bán tắt "nhận COD" (products.accept_cod = false).
@@ -217,19 +206,6 @@ public class PaymentService {
     public Payment getById(String id) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return paymentDAO.findById(c, id);
-        }
-    }
-
-    public Payment getByOrderId(String orderId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return paymentDAO.findByOrderId(c, orderId);
-        }
-    }
-
-    /** Lịch sử thanh toán của đơn (trang chi tiết đơn). */
-    public List<Payment> getHistory(String orderId) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return paymentDAO.findAllByOrderId(c, orderId);
         }
     }
 

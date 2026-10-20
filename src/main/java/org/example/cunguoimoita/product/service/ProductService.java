@@ -243,30 +243,6 @@ public class ProductService {
     // Nhận Connection để chạy chung transaction với nghiệp vụ gọi tới.
     // ==================================================================
 
-    /** Product.reserve(): có người đặt, món không còn bán cho người khác. */
-    public void reserve(Connection c, String productId) throws SQLException {
-        Product p = productDAO.findByIdForUpdate(c, productId);
-        if (p == null || !p.isAvailable()) {
-            throw new IllegalStateException("Món này không còn để đặt");
-        }
-        productDAO.updateStatus(c, productId, ProductStatus.RESERVED);
-    }
-
-    /** Huỷ đơn: trả món về đang bán. */
-    public void release(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.AVAILABLE);
-    }
-
-    /** Product.markSold() */
-    public void markSold(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.SOLD);
-    }
-
-    /** Đổi đồ xong. */
-    public void markExchanged(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.EXCHANGED);
-    }
-
     // ==================================================================
     // Kiểm tra dữ liệu
     // ==================================================================

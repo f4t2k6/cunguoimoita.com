@@ -13,7 +13,6 @@ import org.example.cunguoimoita.chat.service.ChatService;
 import org.example.cunguoimoita.chat.service.ChatService.ChatUpdate;
 import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.util.CurrentUser;
-import org.example.cunguoimoita.common.util.ImageStore;
 import org.example.cunguoimoita.common.util.JsonUtil;
 import org.example.cunguoimoita.common.util.MediaStore;
 

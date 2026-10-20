@@ -36,11 +36,6 @@ public class Refund implements Serializable {
         this.refundDate = refundDate;
     }
 
-    public void processRefund() {
-        this.status = RefundStatus.DONE;
-        this.refundDate = LocalDateTime.now();
-    }
-
     // Getters and Setters
     public String getId() {
         return id;

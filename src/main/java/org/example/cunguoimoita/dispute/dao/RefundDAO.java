@@ -33,26 +33,6 @@ public class RefundDAO {
         }
     }
 
-    public void updateStatus(Connection c, String refundId, RefundStatus status) throws SQLException {
-        String sql = "UPDATE refunds SET status = ?, refund_date = ? WHERE id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, status.dbValue());
-            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-            ps.setString(3, refundId);
-            ps.executeUpdate();
-        }
-    }
-
-    public Refund findById(Connection c, String id) throws SQLException {
-        String sql = "SELECT * FROM refunds WHERE id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? map(rs) : null;
-            }
-        }
-    }
-
     public Refund findByOrderId(Connection c, String orderId) throws SQLException {
         String sql = "SELECT * FROM refunds WHERE order_id = ? ORDER BY refund_date DESC LIMIT 1";
         try (PreparedStatement ps = c.prepareStatement(sql)) {

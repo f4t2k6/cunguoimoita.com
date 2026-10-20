@@ -145,13 +145,6 @@ public class EmailVerificationService {
         return userDAO.findByEmail(email);
     }
 
-    /** Email có lượt đăng ký đang chờ không (để trang xác nhận biết còn hiệu lực). */
-    public boolean isPending(String email) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return dao.findForUpdate(c, email) != null;
-        }
-    }
-
     public boolean isMailConfigured() {
         return mail.isConfigured();
     }

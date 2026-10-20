@@ -25,21 +25,6 @@ public class VoucherDAO {
         }
     }
 
-    // Danh sách voucher của 1 khách (để hiện ở trang thanh toán).
-    public List<Voucher> findByCustomer(Connection c, String customerId) throws SQLException {
-        String sql = "SELECT * FROM vouchers WHERE customer_id = ? ORDER BY issued_date DESC";
-        List<Voucher> list = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
-            }
-        }
-        return list;
-    }
-
     // Voucher của khách còn dùng được (chưa dùng, chưa hết hạn), để trang đơn gợi ý mã.
     public List<Voucher> findUsableByCustomer(Connection c, String customerId) throws SQLException {
         String sql = "SELECT * FROM vouchers WHERE customer_id = ? AND status = 'issued'"

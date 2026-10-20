@@ -40,10 +40,6 @@ public class NotificationService {
         return notificationDAO.findByUser(userId, limit);
     }
 
-    public int unreadCount(String userId) throws SQLException {
-        return notificationDAO.countBadges(userId)[0];
-    }
-
     /** {thông báo chưa đọc, tin nhắn chưa đọc} cho 2 con số trên header. */
     public int[] badgeCounts(String userId) throws SQLException {
         return notificationDAO.countBadges(userId);

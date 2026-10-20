@@ -57,16 +57,6 @@ public class OrderDAO {
         return findOne(c, "SELECT * FROM orders WHERE id = ? FOR UPDATE", orderId);
     }
 
-    // Đơn mua của tôi (mới nhất trước). Danh sách không cần món nên không nạp items.
-    public List<Order> findByBuyer(Connection c, String buyerId) throws SQLException {
-        return findMany(c, "SELECT * FROM orders WHERE buyer_id = ? ORDER BY order_date DESC", buyerId);
-    }
-
-    // Đơn bán của tôi.
-    public List<Order> findBySeller(Connection c, String sellerId) throws SQLException {
-        return findMany(c, "SELECT * FROM orders WHERE seller_id = ? ORDER BY order_date DESC", sellerId);
-    }
-
     // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất (F6).
     public List<String> findDeliveredIdsForAutoComplete(Connection c, int days) throws SQLException {
         String sql = "SELECT o.id FROM orders o JOIN shipments s ON s.order_id = o.id"

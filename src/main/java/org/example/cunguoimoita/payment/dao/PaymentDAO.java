@@ -93,21 +93,6 @@ public class PaymentDAO {
         }
     }
 
-    /** Lịch sử thanh toán của 1 đơn, mới nhất trước (hiện ở trang chi tiết đơn). */
-    public List<Payment> findAllByOrderId(Connection c, String orderId) throws SQLException {
-        String sql = "SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC";
-        List<Payment> list = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
-            }
-        }
-        return list;
-    }
-
     /** Huỷ các lần thanh toán còn đang chờ của đơn (người mua bắt đầu lần mới hoặc đổi sang COD). */
     public void failPendingByOrderId(Connection c, String orderId) throws SQLException {
         String sql = "UPDATE payments SET status = 'failed' WHERE order_id = ? AND status = 'pending'";

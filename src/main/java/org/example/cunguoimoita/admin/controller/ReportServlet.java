@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.admin.model.ReportReason;
 import org.example.cunguoimoita.admin.service.AdminService;
 import org.example.cunguoimoita.common.util.CurrentUser;
-import org.example.cunguoimoita.common.util.ImageStore;
 import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
