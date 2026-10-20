@@ -153,7 +153,7 @@ public class PayoutService {
         if (account == null) {
             return false;
         }
-        String a = account.toLowerCase();
-        return a.contains("momo") || a.contains("zalo") || a.contains("ví") || a.contains("vi dien tu");
+        String lower = account.toLowerCase();
+        return lower.contains("momo") || lower.contains("zalo") || lower.contains("ví") || lower.contains("vi dien tu");
     }
 }
