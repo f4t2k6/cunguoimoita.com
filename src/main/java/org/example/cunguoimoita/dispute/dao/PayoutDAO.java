@@ -135,4 +135,21 @@ public class PayoutDAO {
 
         return p;
     }
+
+    /** Hạng thành viên và tài khoản nhận tiền của người bán, để tính phí sàn. */
+    public record SellerTier(String tierName, double discountRate, String payoutAccountRef) {
+    }
+
+    public SellerTier findSellerTier(Connection c, String sellerId) throws SQLException {
+        String sql = "SELECT mt.name, mt.discount_rate, cu.payout_account_ref FROM customers cu "
+                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, sellerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next()
+                        ? new SellerTier(rs.getString("name"), rs.getDouble("discount_rate"), rs.getString("payout_account_ref"))
+                        : null;
+            }
+        }
+    }
 }

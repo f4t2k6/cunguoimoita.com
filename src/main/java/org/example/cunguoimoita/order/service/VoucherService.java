@@ -7,8 +7,6 @@ import org.example.cunguoimoita.order.dao.VoucherDAO;
 import org.example.cunguoimoita.order.model.Voucher;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,7 +48,7 @@ public class VoucherService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             c.setAutoCommit(false);
             try {
-                List<String> owners = toAll ? activeCustomers(c) : List.of(requireCustomer(c, ownerEmail.trim()));
+                List<String> owners = toAll ? voucherDAO.findActiveCustomerIds(c) : List.of(requireCustomer(c, ownerEmail.trim()));
                 for (String owner : owners) {
                     String voucherCode = toAll ? prefix + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase() : prefix;
                     if (voucherDAO.codeExists(c, voucherCode)) {
@@ -87,27 +85,18 @@ public class VoucherService {
         return created.size();
     }
 
-    private List<String> activeCustomers(Connection c) throws SQLException {
-        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE u.status = 'active'";
-        List<String> ids = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                ids.add(rs.getString(1));
-            }
+    /** Đánh dấu expired các voucher quá hạn chưa dùng. @return số voucher vừa hết hạn */
+    public int expireOverdue() throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return voucherDAO.expireOverdue(c);
         }
-        return ids;
     }
 
     private String requireCustomer(Connection c, String email) throws SQLException {
-        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE LOWER(u.email) = LOWER(?)";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    throw new IllegalArgumentException("Không có khách hàng nào dùng email " + email);
-                }
-                return rs.getString(1);
-            }
+        String customerId = voucherDAO.findCustomerIdByEmail(c, email);
+        if (customerId == null) {
+            throw new IllegalArgumentException("Không có khách hàng nào dùng email " + email);
         }
+        return customerId;
     }
 }

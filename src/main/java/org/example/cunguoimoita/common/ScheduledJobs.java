@@ -3,12 +3,10 @@ package org.example.cunguoimoita.common;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
-import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.service.PayoutService;
-import org.example.cunguoimoita.order.dao.VoucherDAO;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.order.service.VoucherService;
 
-import java.sql.Connection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,10 +49,7 @@ public class ScheduledJobs implements ServletContextListener {
     public static synchronized Result runNow() throws Exception {
         int orders = new OrderService().autoCompleteDelivered();
         int payouts = new PayoutService().processScheduled();
-        int vouchers;
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            vouchers = new VoucherDAO().expireOverdue(c);
-        }
+        int vouchers = new VoucherService().expireOverdue();
         return new Result(orders, payouts, vouchers);
     }
 

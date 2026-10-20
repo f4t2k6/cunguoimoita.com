@@ -153,6 +153,18 @@ public class OrderDAO {
         }
     }
 
+    /** Đơn có món mà người bán tắt nhận COD. */
+    public boolean hasItemWithoutCod(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id"
+                   + " WHERE oi.order_id = ? AND NOT p.accept_cod";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public static String newId() {
         return UUID.randomUUID().toString();
     }

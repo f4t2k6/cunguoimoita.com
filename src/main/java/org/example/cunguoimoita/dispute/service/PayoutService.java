@@ -10,8 +10,6 @@ import org.example.cunguoimoita.notification.service.NotificationService;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,26 +26,16 @@ public class PayoutService {
     public static final double BASE_COMMISSION = 0.05;
 
     /**
-     * Mỗi đơn 1 khoản; phí = tiền hàng × COMMISSION_RATE × (1 − discount_rate của hạng). Người bán chưa khai tài khoản
+     * Mỗi đơn 1 khoản; phí = tiền hàng × BASE_COMMISSION × (1 − discount_rate của hạng). Người bán chưa khai tài khoản
      * nhận tiền thì để scheduled, tác vụ định kỳ chuyển sau. Gọi notifyCreated(...) sau khi commit.
      */
     public Payout createForOrder(Connection c, String orderId, String sellerId, double grossAmount) throws SQLException {
         if (payoutDAO.findByOrderId(c, orderId) != null || grossAmount <= 0) {
             return null;
         }
-        double discountRate = 0.0;
-        String account = null;
-        String sql = "SELECT mt.discount_rate, cu.payout_account_ref FROM customers cu "
-                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, sellerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    discountRate = rs.getDouble("discount_rate");
-                    account = rs.getString("payout_account_ref");
-                }
-            }
-        }
+        PayoutDAO.SellerTier tier = payoutDAO.findSellerTier(c, sellerId);
+        double discountRate = tier == null ? 0.0 : tier.discountRate();
+        String account = tier == null ? null : tier.payoutAccountRef();
 
         double commissionFee = Math.round(grossAmount * BASE_COMMISSION * (1.0 - discountRate));
         boolean hasAccount = account != null && !account.isBlank();
@@ -123,19 +111,10 @@ public class PayoutService {
     }
 
     public SellerInfo getSellerInfo(String sellerId) throws SQLException {
-        String sql = "SELECT mt.name, mt.discount_rate, cu.payout_account_ref FROM customers cu "
-                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
-        try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, sellerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                return new SellerInfo(rs.getString("name"),
-                        BASE_COMMISSION * (1.0 - rs.getDouble("discount_rate")),
-                        rs.getString("payout_account_ref"));
-            }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            PayoutDAO.SellerTier tier = payoutDAO.findSellerTier(c, sellerId);
+            return tier == null ? null
+                    : new SellerInfo(tier.tierName(), BASE_COMMISSION * (1.0 - tier.discountRate()), tier.payoutAccountRef());
         }
     }
 

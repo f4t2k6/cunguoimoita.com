@@ -9,11 +9,10 @@ import org.example.cunguoimoita.payment.dao.PaymentDAO;
 import org.example.cunguoimoita.payment.model.Payment;
 import org.example.cunguoimoita.payment.model.PaymentGateway;
 import org.example.cunguoimoita.payment.model.PaymentStatus;
+import org.example.cunguoimoita.shipping.dao.ShipmentDAO;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,23 +29,17 @@ public class PaymentService {
 
     private final PaymentDAO paymentDAO = new PaymentDAO();
     private final OrderDAO orderDAO = new OrderDAO();
+    private final ShipmentDAO shipmentDAO = new ShipmentDAO();
     private final NotificationService notificationService = new NotificationService();
     private final ShippingService shippingService = new ShippingService();
 
     /** @return lý do đơn không được trả COD (từ chối nhận COD quá nhiều lần, hoặc có món không nhận COD), null nếu được */
     public String codProblem(Connection c, String orderId, String buyerId) throws SQLException {
-        if (countRefusals(c, buyerId) >= MAX_COD_REFUSALS) {
+        if (shipmentDAO.countCodRefusals(c, buyerId) >= MAX_COD_REFUSALS) {
             return "Bạn đã từ chối nhận hàng COD " + MAX_COD_REFUSALS + " lần nên không dùng được COD, vui lòng thanh toán online.";
         }
-        String sql = "SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id"
-                   + " WHERE oi.order_id = ? AND NOT p.accept_cod";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return "Người bán không nhận thanh toán khi nhận hàng (COD) cho sản phẩm này.";
-                }
-            }
+        if (orderDAO.hasItemWithoutCod(c, orderId)) {
+            return "Người bán không nhận thanh toán khi nhận hàng (COD) cho sản phẩm này.";
         }
         return null;
     }
@@ -197,18 +190,6 @@ public class PaymentService {
     public List<Payment> getRecentPayments(String payerId, int limit) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return paymentDAO.findByPayerId(c, payerId, limit);
-        }
-    }
-
-    // Số đơn COD người mua từ chối nhận (vận đơn bị hoàn).
-    private int countRefusals(Connection c, String customerId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM shipments s JOIN orders o ON s.order_id = o.id "
-                   + "WHERE o.buyer_id = ? AND s.status = 'returned' AND s.cod_amount > 0";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
         }
     }
 }

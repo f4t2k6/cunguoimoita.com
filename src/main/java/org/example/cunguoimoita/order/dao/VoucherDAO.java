@@ -117,4 +117,26 @@ public class VoucherDAO {
         v.setExpiryDate(rs.getObject("expiry_date", LocalDate.class));
         return v;
     }
+
+    public List<String> findActiveCustomerIds(Connection c) throws SQLException {
+        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE u.status = 'active'";
+        List<String> ids = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getString(1));
+            }
+        }
+        return ids;
+    }
+
+    /** @return id khách hàng có email này, null nếu không có */
+    public String findCustomerIdByEmail(Connection c, String email) throws SQLException {
+        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE LOWER(u.email) = LOWER(?)";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
 }
