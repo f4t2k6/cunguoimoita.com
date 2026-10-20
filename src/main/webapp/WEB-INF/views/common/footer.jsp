@@ -14,7 +14,7 @@
     <div class="dock-side">
       <div class="dock-heads"></div>
       <button type="button" class="dock-launcher" aria-label="Đoạn chat" aria-haspopup="true" aria-expanded="false" title="Đoạn chat">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 2.5C6.5 2.5 2.3 6.5 2.3 11.6c0 2.7 1.1 5 3 6.6v3.4l3.2-1.8c1.1.3 2.2.5 3.5.5 5.5 0 9.7-4 9.7-9.1S17.5 2.5 12 2.5zm1 12.2l-2.5-2.6-4.8 2.6 5.3-5.6 2.5 2.6 4.7-2.6-5.2 5.6z"/></svg>
+        <img src="${ctx}/assets/images/messenger-icon.png" alt="" aria-hidden="true">
         <span class="count-badge" hidden></span>
       </button>
     </div>

@@ -1,13 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%-- Form đánh giá. Dữ liệu từ ReviewServlet: orderId, error --%>
-<c:set var="pageTitle" value="Đánh giá giao dịch"/>
+<%-- Form đánh giá. Dữ liệu từ ReviewServlet: orderId, error, review (đánh giá đã có → form sửa, điền sẵn) --%>
+<c:set var="pageTitle" value="${empty review ? 'Đánh giá giao dịch' : 'Chỉnh sửa đánh giá'}"/>
 <c:set var="pageCss" value="order.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 <div class="order-page page-card">
   <div class="page-card-head">
     <p class="page-eyebrow">ĐÁNH GIÁ</p>
-    <h1 class="page-title">Đánh giá giao dịch</h1>
+    <h1 class="page-title">${pageTitle}</h1>
   </div>
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
 
@@ -18,16 +18,16 @@
     <%-- 5 nút radio cùng name="rating" → chỉ chọn được 1; value là số sao gửi lên Servlet --%>
     <div class="stars">
       <c:forEach var="i" begin="1" end="5">
-        <label><input type="radio" name="rating" value="${i}" required> ${i} ★</label>
+        <label><input type="radio" name="rating" value="${i}" required ${review.rating == i ? 'checked' : ''}> ${i} ★</label>
       </c:forEach>
     </div>
 
     <p><label for="content"><strong>Nhận xét</strong> (không bắt buộc)</label></p>
     <textarea id="content" name="content" rows="4" maxlength="1000"
-              placeholder="Hàng đúng mô tả, giao nhanh..."></textarea>
+              placeholder="Hàng đúng mô tả, giao nhanh..."><c:out value="${review.content}"/></textarea>
 
     <p>
-      <button>Gửi đánh giá</button>
+      <button>${empty review ? 'Gửi đánh giá' : 'Lưu thay đổi'}</button>
       <a href="${ctx}/order/detail?id=${fn:escapeXml(orderId)}">Huỷ</a>
     </p>
   </form>

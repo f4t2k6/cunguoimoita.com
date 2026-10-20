@@ -19,11 +19,10 @@
 
     <%-- Lối tắt các phân hệ giao dịch, đơn hàng, thu nhập và khiếu nại --%>
     <nav class="account-shortcuts" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;">
-        <a href="${pageContext.request.contextPath}/order/list?as=buyer" class="account-button account-button-light">📦 Đơn mua của tôi</a>
+        <a href="${pageContext.request.contextPath}/order/list?as=buyer" class="account-button account-button-light">📦 Đơn mua hàng</a>
         <a href="${pageContext.request.contextPath}/order/list?as=seller" class="account-button account-button-light">🏷️ Đơn bán hàng</a>
-        <a href="${pageContext.request.contextPath}/seller/payouts" class="account-button account-button-light">💰 Thu nhập bán hàng &amp; Rút tiền</a>
+        <a href="${pageContext.request.contextPath}/seller/payouts" class="account-button account-button-light">💰 Thu nhập &amp; Rút tiền</a>
         <a href="${pageContext.request.contextPath}/dispute" class="account-button account-button-light">🛡️ Khiếu nại &amp; Hoàn tiền</a>
-        <a href="#hang-thanh-vien" class="account-button account-button-light">🌟 Hạng thành viên</a>
     </nav>
 
     <c:if test="${not empty profileError}">

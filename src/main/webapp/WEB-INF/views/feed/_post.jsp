@@ -19,12 +19,16 @@
         <a class="post-category" href="${ctx}/feed/search?category=${fn:escapeXml(post.categoryId)}"><c:out value="${post.categoryName}"/></a>
       </span>
     </div>
-    <span class="listing-pill listing-${post.listingType.code}">${post.listingType.label}</span>
+    <%-- Tag Tình trạng đứng cạnh tag Loại giao dịch --%>
+    <span class="post-tags">
+      <span class="tag tag-${post.condition.code}">${post.condition.label}</span>
+      <span class="listing-pill listing-${post.listingType.code}">${post.listingType.label}</span>
+    </span>
   </header>
 
   <a class="post-body" href="${postUrl}">
     <p class="post-caption">
-      <span class="tag tag-${post.condition.code}">${post.condition.label}</span><strong class="post-title"><c:out value="${post.name}"/></strong>
+      <strong class="post-title"><c:out value="${post.name}"/></strong>
     </p>
     <c:if test="${not empty post.description}">
       <p class="post-desc"><c:out value="${post.description}"/></p>

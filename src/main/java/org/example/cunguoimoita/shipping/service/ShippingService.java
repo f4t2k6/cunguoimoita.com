@@ -293,7 +293,13 @@ public class ShippingService {
     }
 
     public void confirmCodCollected(String orderId) throws SQLException {
-        changeShipment(orderId, Shipment::confirmCodCollected, false);
+        changeShipment(orderId, s -> {
+            // shipper thu tiền lúc đang giao tới người mua (trước khi báo đã giao), không thu khi còn ở kho
+            if (s.getStatus() != ShipmentStatus.IN_TRANSIT && s.getStatus() != ShipmentStatus.DELIVERED) {
+                throw new IllegalStateException("Chỉ xác nhận thu tiền COD khi đơn đang được giao");
+            }
+            s.confirmCodCollected();
+        }, false);
     }
 
     public void confirmCodRemitted(String orderId) throws SQLException {
@@ -321,7 +327,7 @@ public class ShippingService {
         if (done != null) {
             notificationService.send(done.order().buyerId(), NotificationType.SHIPMENT,
                     "Đơn " + done.order().code() + ": " + done.status().label(),
-                    "/shipping/track?orderId=" + done.order().id());
+                    "/order/detail?id=" + done.order().id());      // người mua xem ở trang chi tiết đơn
         }
     }
 

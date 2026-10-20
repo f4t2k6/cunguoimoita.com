@@ -8,14 +8,23 @@
 <c:set var="hideBack" value="true"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>
 
-<nav class="category-bar" aria-label="Danh mục">
-  <c:forEach var="cat" items="${categories}">
-    <a class="category-item" href="${ctx}/feed/search?category=${fn:escapeXml(cat.slug)}">
-      <img class="cat-icon" src="${ctx}${cat.icon}" alt="">
-      <span><c:out value="${cat.name}"/></span>
-    </a>
-  </c:forEach>
-</nav>
+<%-- Danh mục cuộn ngang; mũi tên trái/phải chỉ hiện khi còn mục ở phía đó (product.js) --%>
+<div class="category-wrap">
+  <button type="button" class="cat-arrow cat-prev" aria-label="Danh mục trước" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <nav class="category-bar" aria-label="Danh mục">
+    <c:forEach var="cat" items="${categories}">
+      <a class="category-item" href="${ctx}/feed/search?category=${fn:escapeXml(cat.slug)}">
+        <img class="cat-icon" src="${ctx}${cat.icon}" alt="">
+        <span><c:out value="${cat.name}"/></span>
+      </a>
+    </c:forEach>
+  </nav>
+  <button type="button" class="cat-arrow cat-next" aria-label="Danh mục tiếp theo" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+</div>
 
 <%-- Ô "Bạn muốn thanh lý gì?" giống ô đăng bài của mạng xã hội --%>
 <c:if test="${sessionScope.userRole != 'admin'}">
@@ -44,11 +53,10 @@
   </section>
 </c:if>
 
-<c:if test="${result.totalPages > 1}">
-  <nav class="pager" aria-label="Phân trang">
-    <c:if test="${result.hasPrevious}"><a class="btn" href="${ctx}/home?page=${result.page - 1}">← Bài mới hơn</a></c:if>
-    <span class="pager-info">Trang ${result.page} / ${result.totalPages}</span>
-    <c:if test="${result.hasNext}"><a class="btn btn-dark" href="${ctx}/home?page=${result.page + 1}">Xem thêm bài →</a></c:if>
+<%-- Nút Xem thêm: product.js nạp trang kế tiếp và nối bài xuống dưới (tắt JS thì vẫn là link sang trang sau) --%>
+<c:if test="${result.hasNext}">
+  <nav class="pager" aria-label="Xem thêm bài">
+    <a class="btn btn-dark js-load-more" href="${ctx}/home?page=${result.page + 1}">Xem thêm</a>
   </nav>
 </c:if>
 

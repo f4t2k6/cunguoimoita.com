@@ -47,6 +47,10 @@
         <li class="${step >= 3 ? 'done' : ''} ${step == 3 ? 'current' : ''}"><span>3</span>Đang vận chuyển</li>
         <li class="${step >= 4 ? 'done' : ''} ${step == 4 ? 'current' : ''}"><span>4</span>Đã giao thành công</li>
       </ol>
+      <%-- Người mua: thay cho ô Vận chuyển (đã ẩn), chỉ hiện hãng + mã vận đơn --%>
+      <c:if test="${isBuyer and not empty shipment and not empty shipment.trackingCode}">
+        <p class="order-tracking"><c:out value="${carrierName}"/> · mã vận đơn <strong><c:out value="${shipment.trackingCode}"/></strong></p>
+      </c:if>
       <c:if test="${shipment.status == 'RETURNED'}"><p class="order-state-banner">Đơn vị vận chuyển đã hoàn hàng về người bán.</p></c:if>
       <c:if test="${o.status == 'COMPLETED'}"><p class="hint">Đơn đã hoàn tất.</p></c:if>
     </c:when>
@@ -99,33 +103,34 @@
 
   <%-- ========== ĐẶT HÀNG & THANH TOÁN: người mua, khi đơn còn sửa được ========== --%>
   <c:if test="${isBuyer and editable}">
-    <section class="order-card checkout-steps">
+    <section class="order-card checkout-steps" id="dat-hang">
       <h2>Đặt hàng &amp; thanh toán</h2>
 
-      <%-- 1. Địa chỉ giao: chọn từ sổ địa chỉ (F1). Đổi địa chỉ thì phí ship tính lại. --%>
+      <%-- 1. Địa chỉ giao: chọn từ sổ địa chỉ (F1). Chọn xong là tự lưu (không cần nút), phí ship tính lại. --%>
       <h3>1. Địa chỉ giao</h3>
-      <form method="post" action="${ctx}/order/detail">
+      <%-- #dat-hang: tải lại xong trình duyệt cuộn về đúng khung này, không nhảy lên đầu trang --%>
+      <form method="post" action="${ctx}/order/detail#dat-hang">
         <input type="hidden" name="id" value="${o.id}">
         <input type="hidden" name="action" value="address">
-        <select name="addressId">
+        <select name="addressId" onchange="this.form.submit()" aria-label="Địa chỉ giao (chọn là tự lưu)">
           <c:forEach var="a" items="${addresses}">
             <option value="${a.id}" ${a.id == o.shippingAddressId ? 'selected' : ''}>
               <c:out value="${a.label}: ${a.addressLine}${empty a.ward ? '' : ', '.concat(a.ward)}${empty a.district ? '' : ', '.concat(a.district)}, ${a.province}"/>
             </option>
           </c:forEach>
         </select>
-        <button class="secondary">Lưu địa chỉ</button>
+        <noscript><button class="secondary">Lưu địa chỉ</button></noscript>
       </form>
 
-      <%-- 2. Đơn vị vận chuyển (F6): phí đã tính theo tỉnh người bán → tỉnh giao --%>
+      <%-- 2. Đơn vị vận chuyển (F6): phí đã tính theo tỉnh người bán → tỉnh giao. Bấm chọn là tự lưu (không cần nút). --%>
       <h3>2. Đơn vị vận chuyển</h3>
-      <form method="post" action="${ctx}/order/detail">
+      <form method="post" action="${ctx}/order/detail#dat-hang">
         <input type="hidden" name="id" value="${o.id}">
         <input type="hidden" name="action" value="carrier">
         <div class="carrier-list">
           <c:forEach var="q" items="${quotes}" varStatus="st">
             <label class="choice">
-              <input type="radio" name="carrierId" value="${fn:escapeXml(q.carrier().id)}" required
+              <input type="radio" name="carrierId" value="${fn:escapeXml(q.carrier().id)}" required onchange="this.form.submit()"
                      ${q.carrier().id == shipment.carrierId ? 'checked' : ''}>
               <strong><c:out value="${q.carrier().name}"/></strong>
               · <fmt:formatNumber value="${q.fee()}" pattern="#,##0"/> đ
@@ -133,7 +138,7 @@
             </label>
           </c:forEach>
         </div>
-        <button class="secondary">${empty shipment ? 'Chọn đơn vị này' : 'Đổi đơn vị vận chuyển'}</button>
+        <noscript><button class="secondary">${empty shipment ? 'Chọn đơn vị này' : 'Đổi đơn vị vận chuyển'}</button></noscript>
       </form>
 
       <%-- 3. Voucher (F4): gợi ý voucher còn dùng được của người mua --%>
@@ -194,8 +199,10 @@
   </c:if>
 
 
-  <%-- ========== VẬN CHUYỂN (sau khi đã đặt: mã vận đơn tự sinh) ========== --%>
-  <c:if test="${placed and not empty shipment}">
+  <%-- ========== VẬN CHUYỂN (sau khi đã đặt: mã vận đơn tự sinh) ==========
+       Chỉ người bán thấy, sau khi đã xác nhận giao hàng (trước đó thông tin nằm trong ô Xác nhận giao hàng bên dưới).
+       Người mua không thấy ô này: trạng thái đã có ở thanh 4 bước phía trên. --%>
+  <c:if test="${isSeller and placed and not empty shipment and shipment.status != 'CREATED'}">
     <section class="order-card">
       <h2>Vận chuyển</h2>
       <p><strong><c:out value="${carrierName}"/></strong> · ${shipment.status.label()}
@@ -211,6 +218,11 @@
   <c:if test="${isSeller and placed and not empty shipment and shipment.status == 'CREATED'}">
     <section class="order-card" id="ban-giao">
       <h2>Xác nhận giao hàng</h2>
+      <p><strong><c:out value="${carrierName}"/></strong>
+        <c:if test="${not empty shipment.trackingCode}"> · mã vận đơn <strong><c:out value="${shipment.trackingCode}"/></strong></c:if></p>
+      <c:if test="${codConfirmed}">
+        <p>Thu hộ (COD): <strong><fmt:formatNumber value="${shipment.codAmount}" pattern="#,##0"/> đ</strong></p>
+      </c:if>
       <p class="hint">Mã vận đơn đã được tạo tự động. Đóng gói xong, chọn cách giao hàng cho
         <strong><c:out value="${carrierName}"/></strong>:</p>
       <form method="post" action="${ctx}/shipping/track" class="handover-form">
@@ -273,9 +285,27 @@
   </c:if>
   <%-- F8: đơn hoàn tất → chỉ người mua đánh giá giao dịch --%>
   <c:if test="${isBuyer and o.status == 'COMPLETED'}">
-    <section class="order-card actions">
-      <a class="btn-link" href="${ctx}/review/create?orderId=${o.id}">Đánh giá giao dịch</a>
-    </section>
+    <c:choose>
+      <c:when test="${not empty myReview}">
+        <section class="order-card my-review">
+          <h2>Đánh giá của bạn</h2>
+          <p class="review-stars" aria-label="${myReview.rating} trên 5 sao">
+            <c:forEach var="i" begin="1" end="5"><span class="${i <= myReview.rating ? 'on' : ''}">★</span></c:forEach>
+            <small>${myReview.rating}/5</small>
+          </p>
+          <c:choose>
+            <c:when test="${not empty myReview.content}"><p class="review-text pre-line"><c:out value="${myReview.content}"/></p></c:when>
+            <c:otherwise><p class="hint">Bạn không để lại nhận xét.</p></c:otherwise>
+          </c:choose>
+          <a class="btn-link secondary" href="${ctx}/review/create?orderId=${o.id}">Chỉnh sửa đánh giá</a>
+        </section>
+      </c:when>
+      <c:otherwise>
+        <section class="order-card actions">
+          <a class="btn-link" href="${ctx}/review/create?orderId=${o.id}">Đánh giá giao dịch</a>
+        </section>
+      </c:otherwise>
+    </c:choose>
   </c:if>
 
   <%-- ========== HUỶ ĐƠN: khi hàng chưa giao cho đơn vị vận chuyển. Người mua đang tạo đơn thì không có ô này. ========== --%>
