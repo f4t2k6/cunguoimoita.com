@@ -23,6 +23,9 @@ public class Order {
     private Status status = Status.NEW;
     private LocalDateTime orderDate;
     private LocalDateTime completedDate;
+
+    private List<OrderItem> items = new ArrayList<>();
+
     public enum Status {
         NEW, AWAITING_PAYMENT, PAID, SHIPPING, DELIVERED, COMPLETED, CANCELLED, REFUNDED;
 
@@ -50,9 +53,9 @@ public class Order {
             };
         }
     }
+
     public enum PaymentMethod {ONLINE, COD}
 
-    private List<OrderItem> items = new ArrayList<>();
     // subTotal = Σ (số lượng × giá chốt); totalAmount = subTotal + shippingFee − discountAmount
     public double calculateTotal() {
         if (!items.isEmpty()) {
@@ -65,6 +68,7 @@ public class Order {
         totalAmount = Math.max(0, subTotal + shippingFee - discountAmount);  // không để tổng bị âm
         return totalAmount;
     }
+
     // Chỉ đổi được khi đơn chưa thanh toán / chưa giao
     public void chooseAddress(String addressId) {
         requireEditable();
@@ -73,6 +77,7 @@ public class Order {
         }
         this.shippingAddressId = addressId;
     }
+
     // Phí ship do ShippingCarrier.calculateFee() tính, nên truyền thêm fee vào.
     // Tạo Shipment (vận đơn) và ghi phí ship vào đơn, rồi tính lại tổng.
     public Shipment chooseCarrier (String carrierId, double fee) {
@@ -86,6 +91,7 @@ public class Order {
         calculateTotal();
         return shipment;
     }
+
     // online → chuyển sang "chờ thanh toán"; COD → giữ "new", chờ người bán gửi hàng
     public void choosePaymentMethod (PaymentMethod method) {
         requireEditable();
@@ -119,6 +125,7 @@ public class Order {
         this.discountAmount= Math.min(voucher.getDiscountValue(), subTotal); // giảm không quá tiền hàng
         calculateTotal();
     }
+
     /** Thanh toán online thành công (Payment.markPaid). */
     public void markPaid() {
         moveTo(Status.PAID);
@@ -128,6 +135,7 @@ public class Order {
     public void confirmShipped() {
         moveTo(Status.SHIPPING);
     }
+
     // Người mua bấm "Đã nhận hàng" → đơn hoàn tất
     public void confirmReceived() {
         if (status == Status.SHIPPING) {
@@ -146,21 +154,6 @@ public class Order {
             throw new IllegalArgumentException("Vui lòng nhập lý do huỷ đơn");
         }
         moveTo(Status.CANCELLED);
-    }
-
-    // Đổi trạng thái, nhưng phải qua luật canMoveTo() → không ai đổi bậy được (đóng gói)
-    private void moveTo(Status next) {
-        if (!status.canMoveTo(next)) {
-            throw new IllegalStateException("Không thể chuyển đơn từ " + status + " sang " + next);
-        }
-        this.status = next;
-    }
-
-    // Chỉ được sửa địa chỉ / vận chuyển / thanh toán / voucher khi đơn chưa thanh toán
-    private void requireEditable() {
-        if (status != Status.NEW && status != Status.AWAITING_PAYMENT) {
-            throw new IllegalStateException("Đơn đã thanh toán hoặc đang xử lý, không sửa được nữa");
-        }
     }
 
     public String getId() { return id; }
@@ -196,4 +189,18 @@ public class Order {
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
 
+    // Đổi trạng thái, nhưng phải qua luật canMoveTo() → không ai đổi bậy được (đóng gói)
+    private void moveTo(Status next) {
+        if (!status.canMoveTo(next)) {
+            throw new IllegalStateException("Không thể chuyển đơn từ " + status + " sang " + next);
+        }
+        this.status = next;
+    }
+
+    // Chỉ được sửa địa chỉ / vận chuyển / thanh toán / voucher khi đơn chưa thanh toán
+    private void requireEditable() {
+        if (status != Status.NEW && status != Status.AWAITING_PAYMENT) {
+            throw new IllegalStateException("Đơn đã thanh toán hoặc đang xử lý, không sửa được nữa");
+        }
+    }
 }

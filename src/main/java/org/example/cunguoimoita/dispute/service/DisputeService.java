@@ -41,6 +41,15 @@ public class DisputeService {
     private final PayoutService payoutService = new PayoutService();
     private final NotificationService notificationService = new NotificationService();
 
+    /** Kết quả phán quyết, để gửi thông báo sau khi commit. */
+    private record Resolved(Dispute dispute, Refund refund, Payout payout) {
+    }
+
+    @FunctionalInterface
+    private interface Work<T> {
+        T run(Connection c) throws SQLException;
+    }
+
     /** Chỉ mở được khi đơn đã giao và chưa có khiếu nại nào đang mở. */
     public Dispute openDispute(String orderId, String buyerId, DisputeReason reason,
                                String description, String evidenceImages) throws SQLException {
@@ -244,10 +253,6 @@ public class DisputeService {
         }
     }
 
-    /** Kết quả phán quyết, để gửi thông báo sau khi commit. */
-    private record Resolved(Dispute dispute, Refund refund, Payout payout) {
-    }
-
     private Dispute requireDisputeForUpdate(Connection c, String disputeId) throws SQLException {
         Dispute d = disputeId == null ? null : disputeDAO.findByIdForUpdate(c, disputeId);
         if (d == null) {
@@ -279,11 +284,6 @@ public class DisputeService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    @FunctionalInterface
-    private interface Work<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

@@ -7,6 +7,13 @@ import java.util.List;
 /** Thẻ đơn ở trang Đơn mua / Đơn bán, chỉ để hiển thị. */
 public class OrderCard {
 
+    private final Order order;
+    private final boolean seller;          // true: đang xem ở Đơn bán
+    private final List<Line> lines = new ArrayList<>();
+    private String shipmentStatus;         // created / picked_up / in_transit / delivered / returned, null nếu chưa có vận đơn
+    private LocalDate deliveredDate;
+    private boolean cod;                   // đã xác nhận trả khi nhận hàng
+
     /** Một món trong thẻ: tên, ảnh bìa, số lượng, giá đã chốt. */
     public static class Line {
         private final String productId;
@@ -29,14 +36,6 @@ public class OrderCard {
         public int getQuantity() { return quantity; }
         public double getUnitPrice() { return unitPrice; }
     }
-
-    private final Order order;
-    private final boolean seller;          // true: đang xem ở Đơn bán
-    private final String partnerName;      // người bán (ở Đơn mua) hoặc người mua (ở Đơn bán)
-    private final List<Line> lines = new ArrayList<>();
-    private String shipmentStatus;         // created / picked_up / in_transit / delivered / returned, null nếu chưa có vận đơn
-    private LocalDate deliveredDate;
-    private boolean cod;                   // đã xác nhận trả khi nhận hàng
 
     public OrderCard(Order order, boolean seller, String partnerName) {
         this.order = order;
@@ -99,4 +98,6 @@ public class OrderCard {
         }
         return seller ? "Bạn cần xác nhận giao hàng cho đơn vị vận chuyển" : "Chờ người bán xác nhận giao hàng";
     }
+
+    private final String partnerName;      // người bán (ở Đơn mua) hoặc người mua (ở Đơn bán)
 }

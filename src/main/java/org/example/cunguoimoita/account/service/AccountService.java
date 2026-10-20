@@ -20,12 +20,12 @@ import java.util.Locale;
 public class AccountService {
     public static final int AVATAR_MAX_SIZE = 512;
 
-    public enum PasswordChange { CHANGED, WEAK, MISMATCH, INCORRECT }
-
     private final UserDAO userDAO = new UserDAO();
     private final AddressDAO addressDAO = new AddressDAO();
     private final PublicSellerProfileDAO publicProfileDAO = new PublicSellerProfileDAO();
     private final MediaStore mediaStore = new MediaStore();
+
+    public enum PasswordChange { CHANGED, WEAK, MISMATCH, INCORRECT }
 
     /** @return người dùng nếu email và mật khẩu khớp, null nếu sai */
     public User authenticate(String email, String password) throws SQLException {

@@ -25,6 +25,14 @@ import java.util.stream.Collectors;
 /** Đăng nhập bằng Google/Facebook theo OAuth 2.0 authorization code. */
 public class SocialLoginService {
 
+    private static final String FB_VERSION = "v19.0";
+    private static final int MAX_NAME_LENGTH = 100;
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    private final UnaryOperator<String> config;
+    private final UserDAO userDAO = new UserDAO();
+    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+
     public enum Provider {
         GOOGLE("Google", "oauth.google.clientId", "oauth.google.clientSecret"),
         FACEBOOK("Facebook", "oauth.facebook.appId", "oauth.facebook.appSecret");
@@ -51,14 +59,6 @@ public class SocialLoginService {
     /** Thông tin lấy được từ Google / Facebook. */
     public record Profile(String email, String name) {
     }
-
-    private static final String FB_VERSION = "v19.0";
-    private static final int MAX_NAME_LENGTH = 100;
-    private static final SecureRandom RANDOM = new SecureRandom();
-
-    private final UnaryOperator<String> config;
-    private final UserDAO userDAO = new UserDAO();
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     /** @param config đọc tham số cấu hình theo tên, trả "" nếu chưa cấu hình */
     public SocialLoginService(UnaryOperator<String> config) {

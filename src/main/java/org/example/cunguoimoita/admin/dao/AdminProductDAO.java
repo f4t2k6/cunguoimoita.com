@@ -20,6 +20,9 @@ public class AdminProductDAO {
             + " JOIN users u ON u.id = p.seller_id"
             + " JOIN categories cg ON cg.id = p.category_id";
 
+    /** Số dòng tối đa của trang danh sách (nhiều hơn thì admin dùng ô tìm kiếm). */
+    public static final int LIST_LIMIT = 100;
+
     /**
      * @param filter pending | approved | hidden | rejected | all
      * @param keyword tên bài hoặc tên người bán, null để bỏ qua
@@ -27,9 +30,6 @@ public class AdminProductDAO {
     public List<AdminProductRow> find(Connection c, String filter, String keyword) throws SQLException {
         return find(c, filter, keyword, LIST_LIMIT);
     }
-
-    /** Số dòng tối đa của trang danh sách (nhiều hơn thì admin dùng ô tìm kiếm). */
-    public static final int LIST_LIMIT = 100;
 
     /** @param limit số dòng tối đa (trang tổng quan chỉ lấy vài bài mới nhất) */
     public List<AdminProductRow> find(Connection c, String filter, String keyword, int limit) throws SQLException {

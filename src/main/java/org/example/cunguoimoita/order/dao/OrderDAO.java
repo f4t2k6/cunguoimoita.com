@@ -173,6 +173,58 @@ public class OrderDAO {
         return "ORD-" + orderId.substring(0, 8).toUpperCase();
     }
 
+    /** 3 câu SELECT cho cả danh sách: đơn, các món, vận đơn. */
+    public List<OrderCard> findCards(Connection c, String userId, boolean asSeller) throws SQLException {
+        String mine = asSeller ? "seller_id" : "buyer_id";
+        String partner = asSeller ? "buyer_id" : "seller_id";
+        Map<String, OrderCard> cards = new LinkedHashMap<>();
+        String sql = "SELECT o.*, u.fullname AS partner_name FROM orders o LEFT JOIN users u ON u.id = o." + partner
+                + " WHERE o." + mine + " = ? ORDER BY o.order_date DESC";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order o = map(rs);
+                    cards.put(o.getId(), new OrderCard(o, asSeller, rs.getString("partner_name")));
+                }
+            }
+        }
+        if (cards.isEmpty()) {
+            return new ArrayList<>();
+        }
+        sql = "SELECT oi.order_id, oi.product_id, oi.quantity, oi.unit_price, p.name, p.images"
+                + " FROM order_items oi JOIN orders o ON o.id = oi.order_id LEFT JOIN products p ON p.id = oi.product_id"
+                + " WHERE o." + mine + " = ? ORDER BY oi.id";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderCard card = cards.get(rs.getString("order_id"));
+                    if (card == null) continue;
+                    String images = rs.getString("images");
+                    String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
+                    String name = rs.getString("name");
+                    card.addLine(new OrderCard.Line(rs.getString("product_id"), name == null ? rs.getString("product_id") : name,
+                            cover, rs.getInt("quantity"), rs.getDouble("unit_price")));
+                }
+            }
+        }
+        sql = "SELECT s.order_id, s.status, s.delivered_date, s.cod_status"
+                + " FROM shipments s JOIN orders o ON o.id = s.order_id WHERE o." + mine + " = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderCard card = cards.get(rs.getString("order_id"));
+                    if (card == null) continue;
+                    card.setShipment(rs.getString("status"), rs.getObject("delivered_date", LocalDate.class),
+                            !"none".equals(rs.getString("cod_status")));
+                }
+            }
+        }
+        return new ArrayList<>(cards.values());
+    }
+
     private void insertItem(Connection c, OrderItem item) throws SQLException {
         String sql = "INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -230,58 +282,6 @@ public class OrderDAO {
             }
         }
         return list;
-    }
-
-    /** 3 câu SELECT cho cả danh sách: đơn, các món, vận đơn. */
-    public List<OrderCard> findCards(Connection c, String userId, boolean asSeller) throws SQLException {
-        String mine = asSeller ? "seller_id" : "buyer_id";
-        String partner = asSeller ? "buyer_id" : "seller_id";
-        Map<String, OrderCard> cards = new LinkedHashMap<>();
-        String sql = "SELECT o.*, u.fullname AS partner_name FROM orders o LEFT JOIN users u ON u.id = o." + partner
-                + " WHERE o." + mine + " = ? ORDER BY o.order_date DESC";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Order o = map(rs);
-                    cards.put(o.getId(), new OrderCard(o, asSeller, rs.getString("partner_name")));
-                }
-            }
-        }
-        if (cards.isEmpty()) {
-            return new ArrayList<>();
-        }
-        sql = "SELECT oi.order_id, oi.product_id, oi.quantity, oi.unit_price, p.name, p.images"
-                + " FROM order_items oi JOIN orders o ON o.id = oi.order_id LEFT JOIN products p ON p.id = oi.product_id"
-                + " WHERE o." + mine + " = ? ORDER BY oi.id";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    OrderCard card = cards.get(rs.getString("order_id"));
-                    if (card == null) continue;
-                    String images = rs.getString("images");
-                    String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
-                    String name = rs.getString("name");
-                    card.addLine(new OrderCard.Line(rs.getString("product_id"), name == null ? rs.getString("product_id") : name,
-                            cover, rs.getInt("quantity"), rs.getDouble("unit_price")));
-                }
-            }
-        }
-        sql = "SELECT s.order_id, s.status, s.delivered_date, s.cod_status"
-                + " FROM shipments s JOIN orders o ON o.id = s.order_id WHERE o." + mine + " = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    OrderCard card = cards.get(rs.getString("order_id"));
-                    if (card == null) continue;
-                    card.setShipment(rs.getString("status"), rs.getObject("delivered_date", LocalDate.class),
-                            !"none".equals(rs.getString("cod_status")));
-                }
-            }
-        }
-        return new ArrayList<>(cards.values());
     }
 
     private Order map(ResultSet rs) throws SQLException {

@@ -18,6 +18,10 @@ public class PayoutDAO {
                                         double scheduledAmount, double completedAmount) {
     }
 
+    /** Hạng thành viên và tài khoản nhận tiền của người bán, để tính phí sàn. */
+    public record SellerTier(String tierName, double discountRate, String payoutAccountRef) {
+    }
+
     public void insert(Connection c, Payout p) throws SQLException {
         String sql = "INSERT INTO payouts (id, order_id, seller_id, gross_amount, commission_fee, net_amount, method, status, payout_date) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -119,6 +123,19 @@ public class PayoutDAO {
         return list;
     }
 
+    public SellerTier findSellerTier(Connection c, String sellerId) throws SQLException {
+        String sql = "SELECT mt.name, mt.discount_rate, cu.payout_account_ref FROM customers cu "
+                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, sellerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next()
+                        ? new SellerTier(rs.getString("name"), rs.getDouble("discount_rate"), rs.getString("payout_account_ref"))
+                        : null;
+            }
+        }
+    }
+
     private Payout map(ResultSet rs) throws SQLException {
         Payout p = new Payout();
         p.setId(rs.getString("id"));
@@ -134,22 +151,5 @@ public class PayoutDAO {
         if (pDate != null) p.setPayoutDate(pDate.toLocalDateTime());
 
         return p;
-    }
-
-    /** Hạng thành viên và tài khoản nhận tiền của người bán, để tính phí sàn. */
-    public record SellerTier(String tierName, double discountRate, String payoutAccountRef) {
-    }
-
-    public SellerTier findSellerTier(Connection c, String sellerId) throws SQLException {
-        String sql = "SELECT mt.name, mt.discount_rate, cu.payout_account_ref FROM customers cu "
-                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, sellerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next()
-                        ? new SellerTier(rs.getString("name"), rs.getDouble("discount_rate"), rs.getString("payout_account_ref"))
-                        : null;
-            }
-        }
     }
 }

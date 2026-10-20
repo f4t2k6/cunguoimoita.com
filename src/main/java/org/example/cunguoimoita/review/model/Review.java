@@ -12,7 +12,6 @@ public class Review {
     private String id;
     private String orderId;
     private String authorId;
-    private String targetUserId;    // người được đánh giá (bên còn lại của đơn)
     private int rating;             // 1 – 5 sao
     private String content;         // nhận xét, có thể để trống
     private LocalDateTime createdDate;
@@ -55,4 +54,6 @@ public class Review {
     public void setContent(String content) { this.content = content; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+
+    private String targetUserId;    // người được đánh giá (bên còn lại của đơn)
 }

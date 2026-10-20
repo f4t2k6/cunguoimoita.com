@@ -31,6 +31,9 @@ public class ShippingService {
 
     /** Danh sách hãng vận chuyển rất ít đổi nên giữ trong bộ nhớ 5 phút, khỏi hỏi DB mỗi lần tính phí. */
     private static final long CARRIER_CACHE_MS = 5 * 60 * 1000;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private static volatile List<ShippingCarrier> carrierCache;
     private static volatile long carrierCacheAt;
 
@@ -39,10 +42,22 @@ public class ShippingService {
     private final OrderDAO orderDAO = new OrderDAO();
     private final NotificationService notificationService = new NotificationService();
     private final AddressDAO addressDAO = new AddressDAO();
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /** Cách người bán bàn giao hàng cho đơn vị vận chuyển. */
     public enum Handover { DROPOFF, PICKUP }
+
+    /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
+    public record CarrierQuote(ShippingCarrier carrier, double fee) {
+    }
+
+    /** Đơn vừa đổi trạng thái theo vận đơn, để báo người mua sau khi commit. */
+    private record StatusChange(OrderRef order, ShipmentStatus status) {
+    }
+
+    @FunctionalInterface
+    private interface TxWork<T> {
+        T run(Connection c) throws SQLException;
+    }
 
     /** Các hãng đang hoạt động, rẻ trước. */
     public List<ShippingCarrier> listCarriers() throws SQLException {
@@ -68,10 +83,6 @@ public class ShippingService {
     /** Admin vừa sửa danh sách hãng: bỏ bản lưu tạm để trang thanh toán thấy ngay. */
     public static void clearCarrierCache() {
         carrierCache = null;
-    }
-
-    /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
-    public record CarrierQuote(ShippingCarrier carrier, double fee) {
     }
 
     /** Các hãng đang hoạt động kèm phí ship tính theo tỉnh người bán → tỉnh giao của đơn. */
@@ -179,18 +190,6 @@ public class ShippingService {
         return s.getTrackingCode();
     }
 
-    /** Mã vận đơn: tiền tố theo hãng + 9 số ngẫu nhiên, VD GHN482913570. */
-    private static String newTrackingCode(String carrierId) {
-        String prefix = carrierId == null ? "VD" : switch (carrierId) {
-            case "ghn" -> "GHN";
-            case "ghtk" -> "GHTK";
-            case "ahamove" -> "AHA";
-            case "viettel" -> "VTP";
-            default -> carrierId.replaceAll("[^A-Za-z]", "").toUpperCase(Locale.ROOT);
-        };
-        return prefix + String.format("%09d", RANDOM.nextInt(1_000_000_000));
-    }
-
     /** Người bán mang hàng ra bưu cục hoặc hẹn lấy tại địa chỉ: vận đơn picked_up, đơn chuyển đang giao. */
     public String confirmHandover(String orderId, String sellerId, Handover method, String pickupAddressId)
             throws SQLException {
@@ -223,16 +222,6 @@ public class ShippingService {
             s.updateStatus(ShipmentStatus.PICKED_UP);
         }, true);
         return where;
-    }
-
-    private static String addressText(Address a) {
-        StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
-        for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
-            if (!Texts.isBlank(part)) {
-                sb.append(sb.length() > 0 ? ", " : "").append(part);
-            }
-        }
-        return sb.toString();
     }
 
     /** Chỉ gửi được khi đơn đã trả online (paid) hoặc đã xác nhận COD. */
@@ -273,6 +262,28 @@ public class ShippingService {
         changeShipment(orderId, Shipment::confirmCodRemitted, false);
     }
 
+    /** Mã vận đơn: tiền tố theo hãng + 9 số ngẫu nhiên, VD GHN482913570. */
+    private static String newTrackingCode(String carrierId) {
+        String prefix = carrierId == null ? "VD" : switch (carrierId) {
+            case "ghn" -> "GHN";
+            case "ghtk" -> "GHTK";
+            case "ahamove" -> "AHA";
+            case "viettel" -> "VTP";
+            default -> carrierId.replaceAll("[^A-Za-z]", "").toUpperCase(Locale.ROOT);
+        };
+        return prefix + String.format("%09d", RANDOM.nextInt(1_000_000_000));
+    }
+
+    private static String addressText(Address a) {
+        StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
+        for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
+            if (!Texts.isBlank(part)) {
+                sb.append(sb.length() > 0 ? ", " : "").append(part);
+            }
+        }
+        return sb.toString();
+    }
+
     /**
      * Đọc vận đơn, đổi theo luật trong Shipment, lưu lại; syncOrder = true thì cập nhật luôn trạng thái Order
      * và báo người mua. Tất cả trên 1 kết nối, thông báo gửi sau khi commit.
@@ -296,10 +307,6 @@ public class ShippingService {
                     "Đơn " + done.order().code() + ": " + done.status().label(),
                     "/order/detail?id=" + done.order().id());
         }
-    }
-
-    /** Đơn vừa đổi trạng thái theo vận đơn, để báo người mua sau khi commit. */
-    private record StatusChange(OrderRef order, ShipmentStatus status) {
     }
 
     /**
@@ -339,11 +346,6 @@ public class ShippingService {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng " + orderId);
         }
         return order;
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

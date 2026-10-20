@@ -10,19 +10,21 @@ public final class LoginAttemptLimiter {
     public static final int MAX_FAILURES = 5;
     public static final int LOCK_MINUTES = 5;
     private static final long LOCK_MS = LOCK_MINUTES * 60_000L;
+
     /** Lần sai cuối cách đây quá lâu thì đếm lại từ đầu. */
     private static final long RESET_MS = 15 * 60_000L;
+
     /** Giới hạn số email theo dõi để bảng không phình mãi. */
     private static final int MAX_ENTRIES = 10_000;
-
-    /** Số lần sai và thời điểm; lockedUntil = 0 nghĩa là chưa bị khoá. */
-    private record Attempt(int failures, long lastFailure, long lockedUntil) {
-    }
 
     private static final LoginAttemptLimiter INSTANCE = new LoginAttemptLimiter();
 
     // key: email (chữ thường), value: số lần sai của email đó
     private final ConcurrentHashMap<String, Attempt> attempts = new ConcurrentHashMap<>();
+
+    /** Số lần sai và thời điểm; lockedUntil = 0 nghĩa là chưa bị khoá. */
+    private record Attempt(int failures, long lastFailure, long lockedUntil) {
+    }
 
     private LoginAttemptLimiter() {
     }

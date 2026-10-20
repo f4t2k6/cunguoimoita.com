@@ -90,18 +90,6 @@ public class Dispute implements Serializable {
         return split(sellerEvidenceImages);
     }
 
-    private static java.util.List<String> split(String images) {
-        java.util.List<String> list = new java.util.ArrayList<>();
-        if (images != null) {
-            for (String part : images.split(",")) {
-                if (!part.isBlank()) {
-                    list.add(part.trim());
-                }
-            }
-        }
-        return list;
-    }
-
     public void review() {
         requireOpen();
         this.status = DisputeStatus.REVIEWING;
@@ -249,5 +237,17 @@ public class Dispute implements Serializable {
 
     public void setResolutionNote(String resolutionNote) {
         this.resolutionNote = resolutionNote;
+    }
+
+    private static java.util.List<String> split(String images) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (images != null) {
+            for (String part : images.split(",")) {
+                if (!part.isBlank()) {
+                    list.add(part.trim());
+                }
+            }
+        }
+        return list;
     }
 }

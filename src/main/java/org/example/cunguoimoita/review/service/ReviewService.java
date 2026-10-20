@@ -19,14 +19,14 @@ import java.util.List;
 // Đánh giá sau giao dịch + ecoPoints + hạng thành viên.
 public class ReviewService {
 
-    // Tiến độ hạng để hiện thanh %: điểm hiện có, hạng hiện tại, hạng kế tiếp (null nếu đã cao nhất).
-    public record TierProgress(int points, MemberTier current, MemberTier next, int percent) {
-    }
-
     private final ReviewDAO reviewDAO = new ReviewDAO();
     private final OrderDAO orderDAO = new OrderDAO();
     private final MemberTierDAO tierDAO = new MemberTierDAO();
     private final NotificationService notificationService = new NotificationService();
+
+    // Tiến độ hạng để hiện thanh %: điểm hiện có, hạng hiện tại, hạng kế tiếp (null nếu đã cao nhất).
+    public record TierProgress(int points, MemberTier current, MemberTier next, int percent) {
+    }
 
     // Customer.rateUser(targetId, rating): người mua chấm điểm người bán của 1 đơn đã hoàn tất.
     // Người được đánh giá tự suy ra từ đơn, không lấy từ form → không ai đánh giá bừa người ngoài đơn.

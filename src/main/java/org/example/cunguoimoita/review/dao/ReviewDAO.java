@@ -15,6 +15,9 @@ import java.util.UUID;
 // (/avgRating, /totalSales, /ecoPoints) bằng câu SELECT — không lưu cột riêng.
 public class ReviewDAO {
 
+    // 10.000đ giao dịch hoàn tất = 1 ecoPoint (cả tiền mua lẫn tiền bán)
+    public static final int VND_PER_POINT = 10000;
+
     // Một dòng đánh giá để hiển thị (kèm tên người viết).
     public record ReviewLine(String authorName, int rating, String content, LocalDateTime createdDate) {
     }
@@ -22,9 +25,6 @@ public class ReviewDAO {
     // Thống kê công khai của 1 người: đọc từ view seller_public_stats (file sql/08_review.sql).
     public record RatingSummary(double avgRating, int totalSales, String tierName) {
     }
-
-    // 10.000đ giao dịch hoàn tất = 1 ecoPoint (cả tiền mua lẫn tiền bán)
-    public static final int VND_PER_POINT = 10000;
 
     public void insert(Connection c, Review r) throws SQLException {
         r.setId(UUID.randomUUID().toString());

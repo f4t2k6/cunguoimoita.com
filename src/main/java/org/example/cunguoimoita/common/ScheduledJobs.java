@@ -20,6 +20,14 @@ public class ScheduledJobs implements ServletContextListener {
 
     private ScheduledExecutorService scheduler;
 
+    /** Kết quả 1 lần chạy để báo cho admin. */
+    public record Result(int completedOrders, int paidOutPayouts, int expiredVouchers) {
+        public String summary() {
+            return "Đã tự hoàn tất " + completedOrders + " đơn, chuyển " + paidOutPayouts
+                    + " khoản tiền cho người bán, đánh dấu hết hạn " + expiredVouchers + " voucher.";
+        }
+    }
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -34,14 +42,6 @@ public class ScheduledJobs implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
         if (scheduler != null) {
             scheduler.shutdownNow();
-        }
-    }
-
-    /** Kết quả 1 lần chạy để báo cho admin. */
-    public record Result(int completedOrders, int paidOutPayouts, int expiredVouchers) {
-        public String summary() {
-            return "Đã tự hoàn tất " + completedOrders + " đơn, chuyển " + paidOutPayouts
-                    + " khoản tiền cho người bán, đánh dấu hết hạn " + expiredVouchers + " voucher.";
         }
     }
 

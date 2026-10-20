@@ -8,6 +8,8 @@ public class Cart {
     private String ownerId;
     private LocalDate createdDate;
 
+    private List<CartItem> items = new ArrayList<>();
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getOwnerId() { return ownerId; }
@@ -16,8 +18,6 @@ public class Cart {
     public void setCreatedDate(LocalDate createdDate) { this.createdDate = createdDate; }
     public List<CartItem> getItems() { return items; }
     public void setItems(List<CartItem> items) { this.items = items; }
-
-    private List<CartItem> items = new ArrayList<>();
 
     public CartItem addItem(String productId) {
         if (contains(productId)) {
@@ -53,5 +53,4 @@ public class Cart {
     public boolean isEmpty() {
         return items.isEmpty();
     }
-
 }

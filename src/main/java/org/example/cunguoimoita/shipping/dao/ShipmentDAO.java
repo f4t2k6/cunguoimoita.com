@@ -71,6 +71,18 @@ public class ShipmentDAO {
         }
     }
 
+    /** Số đơn COD người mua đã từ chối nhận (vận đơn bị hoàn). */
+    public int countCodRefusals(Connection c, String buyerId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM shipments s JOIN orders o ON s.order_id = o.id "
+                   + "WHERE o.buyer_id = ? AND s.status = 'returned' AND s.cod_amount > 0";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, buyerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
     private Shipment map(ResultSet rs) throws SQLException {
         Shipment s = new Shipment();
         s.setId(rs.getString("id"));
@@ -89,17 +101,5 @@ public class ShipmentDAO {
         Timestamp remitted = rs.getTimestamp("cod_remitted_at");
         s.setCodRemittedAt(remitted == null ? null : remitted.toLocalDateTime());
         return s;
-    }
-
-    /** Số đơn COD người mua đã từ chối nhận (vận đơn bị hoàn). */
-    public int countCodRefusals(Connection c, String buyerId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM shipments s JOIN orders o ON s.order_id = o.id "
-                   + "WHERE o.buyer_id = ? AND s.status = 'returned' AND s.cod_amount > 0";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, buyerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        }
     }
 }

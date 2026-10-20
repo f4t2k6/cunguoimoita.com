@@ -52,6 +52,11 @@ public class ChatService {
     public record ChatUpdate(List<Message> messages, List<PriceOffer> offers, Map<String, OrderLink> orders) {
     }
 
+    @FunctionalInterface
+    private interface TxWork<T> {
+        T run(Connection c) throws SQLException;
+    }
+
     /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán (lấy từ bài đăng) cho một bài. */
     public Conversation start(String productId, String askerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -296,11 +301,6 @@ public class ChatService {
 
     private static String money(double amount) {
         return NumberFormat.getNumberInstance(new Locale("vi", "VN")).format(amount) + " đ";
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

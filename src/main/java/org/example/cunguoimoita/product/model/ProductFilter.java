@@ -5,9 +5,6 @@ import java.math.BigDecimal;
 /** Trường nào null là không lọc theo trường đó. */
 public class ProductFilter {
 
-    /** Cách sắp xếp kết quả. */
-    public enum Sort { NEWEST, PRICE_ASC, PRICE_DESC }
-
     public static final int PAGE_SIZE = 12;
 
     private String keyword;
@@ -18,6 +15,9 @@ public class ProductFilter {
     private ListingType listingType;
     private Sort sort = Sort.NEWEST;
     private int page = 1;
+
+    /** Cách sắp xếp kết quả. */
+    public enum Sort { NEWEST, PRICE_ASC, PRICE_DESC }
 
     public int getOffset() {
         return (page - 1) * PAGE_SIZE;

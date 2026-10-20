@@ -65,16 +65,6 @@ public class PriceOffer {
         return false;
     }
 
-    private void requireRespondable(String userId) {
-        expireIfDue();
-        if (status != OfferStatus.PENDING) {
-            throw new IllegalStateException("Offer này đã " + status.dbValue() + ", không trả lời được nữa");
-        }
-        if (proposerId.equals(userId)) {
-            throw new IllegalStateException("Bạn không thể tự trả lời offer của mình");
-        }
-    }
-
     public boolean isPending() {
         return status == OfferStatus.PENDING;
     }
@@ -93,4 +83,14 @@ public class PriceOffer {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+
+    private void requireRespondable(String userId) {
+        expireIfDue();
+        if (status != OfferStatus.PENDING) {
+            throw new IllegalStateException("Offer này đã " + status.dbValue() + ", không trả lời được nữa");
+        }
+        if (proposerId.equals(userId)) {
+            throw new IllegalStateException("Bạn không thể tự trả lời offer của mình");
+        }
+    }
 }

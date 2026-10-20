@@ -19,11 +19,15 @@ import java.util.UUID;
 /** Trả tiền người bán (Payout), phí hoa hồng theo hạng thành viên, xuất CSV đối soát. */
 public class PayoutService {
 
+    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán. */
+    public static final double BASE_COMMISSION = 0.05;
+
     private final PayoutDAO payoutDAO = new PayoutDAO();
     private final NotificationService notificationService = new NotificationService();
 
-    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán. */
-    public static final double BASE_COMMISSION = 0.05;
+    /** Hạng, tỷ lệ phí thực tế và tài khoản nhận tiền của người bán (trang Thu nhập). */
+    public record SellerInfo(String tierName, double commissionRate, String payoutAccount) {
+    }
 
     /**
      * Mỗi đơn 1 khoản; phí = tiền hàng × BASE_COMMISSION × (1 − discount_rate của hạng). Người bán chưa khai tài khoản
@@ -82,15 +86,6 @@ public class PayoutService {
         return due.size();
     }
 
-    // Tài khoản nhận tiền ghi kiểu "MoMo 09..." hay "Ví ..." thì coi là ví điện tử, còn lại là ngân hàng.
-    private static boolean isEwallet(String account) {
-        if (account == null) {
-            return false;
-        }
-        String a = account.toLowerCase();
-        return a.contains("momo") || a.contains("zalo") || a.contains("ví") || a.contains("vi dien tu");
-    }
-
     public void processPayout(String payoutId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Payout p = payoutDAO.findById(c, payoutId);
@@ -104,10 +99,6 @@ public class PayoutService {
                 }
             }
         }
-    }
-
-    /** Hạng, tỷ lệ phí thực tế và tài khoản nhận tiền của người bán (trang Thu nhập). */
-    public record SellerInfo(String tierName, double commissionRate, String payoutAccount) {
     }
 
     public SellerInfo getSellerInfo(String sellerId) throws SQLException {
@@ -155,5 +146,14 @@ public class PayoutService {
                     dateStr
             );
         }
+    }
+
+    // Tài khoản nhận tiền ghi kiểu "MoMo 09..." hay "Ví ..." thì coi là ví điện tử, còn lại là ngân hàng.
+    private static boolean isEwallet(String account) {
+        if (account == null) {
+            return false;
+        }
+        String a = account.toLowerCase();
+        return a.contains("momo") || a.contains("zalo") || a.contains("ví") || a.contains("vi dien tu");
     }
 }

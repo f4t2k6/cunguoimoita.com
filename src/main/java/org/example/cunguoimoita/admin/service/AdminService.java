@@ -53,6 +53,19 @@ public class AdminService {
     private record Notice(String userId, NotificationType type, String content, String link) {
     }
 
+    /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
+    public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
+                           List<Report> latestReports) {
+        public List<OrderStatusCount> getOrderStatuses() { return orderStatuses; }
+        public List<AdminProductRow> getLatestPending() { return latestPending; }
+        public List<Report> getLatestReports() { return latestReports; }
+    }
+
+    @FunctionalInterface
+    private interface TxWork<T> {
+        T run(Connection c) throws SQLException;
+    }
+
     public DashboardStats stats() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return dashboardDAO.load(c);
@@ -64,14 +77,6 @@ public class AdminService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return dashboardDAO.todo(c);
         }
-    }
-
-    /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
-    public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
-                           List<Report> latestReports) {
-        public List<OrderStatusCount> getOrderStatuses() { return orderStatuses; }
-        public List<AdminProductRow> getLatestPending() { return latestPending; }
-        public List<Report> getLatestReports() { return latestReports; }
     }
 
     public Overview overview(int limit) throws SQLException {
@@ -173,18 +178,6 @@ public class AdminService {
             return null;
         });
         send(notices);
-    }
-
-    private void banInTx(Connection c, String userId, String adminId) throws SQLException {
-        AdminUserRow u = requireUser(c, userId);
-        if (u.isAdmin() || userId.equals(adminId)) {
-            throw new IllegalStateException("Không thể khoá tài khoản admin");
-        }
-        if (u.isBanned()) {
-            throw new IllegalStateException("Tài khoản này đã bị khoá");
-        }
-        userDAO.updateStatus(c, userId, AccountStatus.BANNED);
-        adminProductDAO.hideAvailableOfSeller(c, userId);
     }
 
     public List<Report> reports(String status) throws SQLException {
@@ -338,22 +331,6 @@ public class AdminService {
         });
     }
 
-    private void checkParent(Connection c, String id, String parentId) throws SQLException {
-        if (parentId == null) {
-            return;
-        }
-        if (parentId.equals(id)) {
-            throw new IllegalArgumentException("Danh mục không thể là cha của chính nó");
-        }
-        Boolean top = categoryDAO.isTopLevel(c, parentId);
-        if (top == null) {
-            throw new IllegalArgumentException("Không tìm thấy danh mục cha");
-        }
-        if (!top) {
-            throw new IllegalArgumentException("Danh mục cha phải là danh mục gốc (chỉ hỗ trợ 2 cấp)");
-        }
-    }
-
     public List<ShippingCarrier> carriers() throws SQLException {
         return carrierDAO.findAll();
     }
@@ -417,6 +394,34 @@ public class AdminService {
             }
             return null;
         });
+    }
+
+    private void banInTx(Connection c, String userId, String adminId) throws SQLException {
+        AdminUserRow u = requireUser(c, userId);
+        if (u.isAdmin() || userId.equals(adminId)) {
+            throw new IllegalStateException("Không thể khoá tài khoản admin");
+        }
+        if (u.isBanned()) {
+            throw new IllegalStateException("Tài khoản này đã bị khoá");
+        }
+        userDAO.updateStatus(c, userId, AccountStatus.BANNED);
+        adminProductDAO.hideAvailableOfSeller(c, userId);
+    }
+
+    private void checkParent(Connection c, String id, String parentId) throws SQLException {
+        if (parentId == null) {
+            return;
+        }
+        if (parentId.equals(id)) {
+            throw new IllegalArgumentException("Danh mục không thể là cha của chính nó");
+        }
+        Boolean top = categoryDAO.isTopLevel(c, parentId);
+        if (top == null) {
+            throw new IllegalArgumentException("Không tìm thấy danh mục cha");
+        }
+        if (!top) {
+            throw new IllegalArgumentException("Danh mục cha phải là danh mục gốc (chỉ hỗ trợ 2 cấp)");
+        }
     }
 
     private AdminProductRow requireProduct(Connection c, String productId) throws SQLException {
@@ -486,11 +491,6 @@ public class AdminService {
         } catch (NumberFormatException | NullPointerException e) {
             throw new IllegalArgumentException(message);
         }
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

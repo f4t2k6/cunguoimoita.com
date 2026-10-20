@@ -14,6 +14,9 @@ import java.util.Set;
 /** Bảng tin, tìm kiếm và Bucket List. */
 public class FeedService {
 
+    private final ProductDAO productDAO = new ProductDAO();
+    private final WishlistDAO wishlistDAO = new WishlistDAO();
+
     /** Dùng class thường vì EL của Tomcat 11 không gọi được getter tính thêm (getTotalPages) trên record. */
     public static final class Page {
         private final List<Product> items;
@@ -35,9 +38,6 @@ public class FeedService {
         public boolean isHasNext() { return page < getTotalPages(); }
         public boolean isHasPrevious() { return page > 1; }
     }
-
-    private final ProductDAO productDAO = new ProductDAO();
-    private final WishlistDAO wishlistDAO = new WishlistDAO();
 
     /** Guest.browseProduct() / searchProduct(); viewerId khác null thì đánh dấu các bài người xem đã lưu. */
     public Page search(ProductFilter filter, String viewerId) throws SQLException {

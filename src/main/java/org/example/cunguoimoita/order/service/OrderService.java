@@ -43,6 +43,9 @@ import java.util.Map;
 // Nghiệp vụ nào ghi nhiều bảng thì chạy trong 1 transaction (inTransaction): lỗi 1 chỗ → huỷ hết.
 public class OrderService {
 
+    /** Số ngày sau khi giao mà người mua không bấm "Đã nhận hàng" / không khiếu nại thì đơn tự hoàn tất. */
+    public static final int AUTO_COMPLETE_DAYS = 7;
+
     private final OrderDAO orderDAO = new OrderDAO();
     private final CartDAO cartDAO = new CartDAO();
     private final VoucherDAO voucherDAO = new VoucherDAO();
@@ -56,8 +59,17 @@ public class OrderService {
     private final RefundService refundService = new RefundService();
     private final DisputeDAO disputeDAO = new DisputeDAO();
 
-    /** Số ngày sau khi giao mà người mua không bấm "Đã nhận hàng" / không khiếu nại thì đơn tự hoàn tất. */
-    public static final int AUTO_COMPLETE_DAYS = 7;
+    // Kết quả trả ra khỏi transaction để gửi thông báo sau khi commit.
+    private record Cancelled(Order order, Refund refund) {
+    }
+
+    private record Completed(Order order, Payout payout) {
+    }
+
+    @FunctionalInterface
+    private interface Work<T> {
+        T run(Connection c) throws SQLException;
+    }
 
     // Customer.checkout() / Cart.checkout(): tách cả giỏ thành mỗi người bán 1 đơn.
     public List<Order> checkout(String buyerId) throws SQLException {
@@ -207,6 +219,7 @@ public class OrderService {
     public String getCodProblem(String orderId, String buyerId) throws SQLException {
         return paymentService.codProblem(orderId, buyerId);
     }
+
     // Sổ địa chỉ của người mua, để trang chi tiết đơn hiện danh sách cho chọn.
     public List<Address> getBuyerAddresses(String buyerId) throws SQLException {
         return addressDAO.findByUserId(buyerId);
@@ -340,13 +353,6 @@ public class OrderService {
         return done;
     }
 
-    // Kết quả trả ra khỏi transaction để gửi thông báo sau khi commit.
-    private record Cancelled(Order order, Refund refund) {
-    }
-
-    private record Completed(Order order, Payout payout) {
-    }
-
     private Order newOrder(String buyerId, String sellerId, String addressId, String offerId) {
         Order order = new Order();
         order.setId(OrderDAO.newId());
@@ -427,11 +433,6 @@ public class OrderService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    @FunctionalInterface
-    private interface Work<T> {
-        T run(Connection c) throws SQLException;
     }
 
     // Chạy work trong 1 transaction: thành công → commit (lưu hết); lỗi → rollback (huỷ hết).
