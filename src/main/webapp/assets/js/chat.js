@@ -164,15 +164,31 @@ window.ChatThread = function (root) {
     return a;
   }
 
-  // Tin "Đã chấp nhận giá ... Đơn ORD-xxx đã được tạo." → kèm nút xem đơn ngay dưới bong bóng
   function textMessage(m) {
-    const bubble = el('div', 'msgr-bubble', m.content);
-    const code = (m.content.match(/Đơn (ORD-[0-9A-F]+) đã được tạo/) || [])[1];
-    const offer = code && messages.map(x => x.offer).find(x => x && x.orderCode === code);
-    if (!offer) return bubble;
-    const stack = el('div', 'msgr-stack');
-    stack.append(bubble, orderLink(offer));
-    return stack;
+    return el('div', 'msgr-bubble', m.content);
+  }
+
+  // Tin hệ thống "Đã chấp nhận giá X. Đơn ORD-xxx đã được tạo." → vẽ thành thẻ ở giữa khung chat
+  const ORDER_NOTICE = /^Đã chấp nhận giá (.+?)\. Đơn (ORD-[0-9A-F]+) đã được tạo/;
+  function orderNotice(m) {
+    if (m.offer || m.type === 'image') return null;
+    const match = (m.content || '').match(ORDER_NOTICE);
+    return match ? { price: match[1], code: match[2] } : null;
+  }
+
+  function orderCard(m, notice) {
+    const card = el('section', 'msgr-order-card');
+    card.title = new Date(m.sentAt).toLocaleString('vi-VN');
+    card.append(el('span', 'msgr-order-check', '✓'), el('h3', null, 'Đã tạo đơn hàng'));
+    const line = el('p', null, 'Đã chấp nhận giá ');
+    line.append(el('strong', null, notice.price));
+    card.append(line, el('p', 'msgr-order-code', 'Mã đơn ' + notice.code));
+    const offer = messages.map(x => x.offer).find(x => x && x.orderCode === notice.code);
+    if (offer) {
+      card.append(el('p', 'msgr-order-hint', 'Mở đơn để thanh toán, xem phí vận chuyển và theo dõi trạng thái.'),
+          orderLink(offer));
+    }
+    return card;
   }
 
   function timeLabel(ms) {
@@ -205,6 +221,8 @@ window.ChatThread = function (root) {
       if (!prev || m.sentAt - prev.sentAt > GAP_MS) {
         frag.append(el('div', 'msgr-time', timeLabel(m.sentAt)));
       }
+      const notice = orderNotice(m);
+      if (notice) { frag.append(orderCard(m, notice)); return; }
       const sameAsPrev = prev && prev.mine === m.mine && m.sentAt - prev.sentAt <= GAP_MS;
       const sameAsNext = next && next.mine === m.mine && next.sentAt - m.sentAt <= GAP_MS;
       const row = el('div', 'msgr-row ' + (m.mine ? 'mine' : 'theirs')

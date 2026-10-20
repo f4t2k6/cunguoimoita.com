@@ -50,6 +50,27 @@ public class ReviewService {
         notify(targetId, "Bạn vừa nhận được đánh giá " + rating + " sao", "/review/tier");
     }
 
+    // Đánh giá người này đã viết cho đơn này (null nếu chưa có).
+    public Review getMyReview(String orderId, String userId) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return reviewDAO.findByOrderAndAuthor(c, orderId, userId);
+        }
+    }
+
+    // Sửa đánh giá đã gửi: chỉ tác giả sửa được, cùng luật 1–5 sao và độ dài nhận xét như lúc tạo.
+    public void updateReview(String orderId, String authorId, int rating, String content) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            Review review = reviewDAO.findByOrderAndAuthor(c, orderId, authorId);
+            if (review == null) {
+                throw new IllegalStateException("Bạn chưa đánh giá đơn này");
+            }
+            review.setRating(rating);
+            review.setContent(content);
+            review.create();                     // kiểm tra lại dữ liệu (không đổi ngày tạo trong DB)
+            reviewDAO.update(c, review);
+        }
+    }
+
     // Đơn này người này còn đánh giá được không (dùng để hiện/ẩn nút "Đánh giá").
     public boolean canReview(String orderId, String userId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {

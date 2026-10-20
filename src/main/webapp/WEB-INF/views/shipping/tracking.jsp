@@ -57,22 +57,23 @@
           <button name="status" value="in_transit">Giả lập: đang giao</button>
         </form>
       </c:if>
-      <c:if test="${s.status == 'IN_TRANSIT'}">
-        <form method="post">
-          <input type="hidden" name="orderId" value="${fn:escapeXml(s.orderId)}">
-          <input type="hidden" name="action" value="status">
-          <button name="status" value="delivered">Giả lập: đã giao</button>
-          <%-- Hoàn hàng chỉ đi theo yêu cầu Trả hàng/Hoàn tiền của người mua; người bán không thấy nút này --%>
-          <c:if test="${isAdmin}"><button name="status" value="returned" class="secondary">Giả lập: hoàn hàng</button></c:if>
-        </form>
-      </c:if>
-
-      <c:if test="${s.codStatus == 'PENDING'}">
+      <%-- Đơn COD: shipper thu tiền của người mua trước, rồi mới báo đã giao (server cũng bắt buộc thứ tự này) --%>
+      <c:if test="${s.status == 'IN_TRANSIT' and s.codStatus == 'PENDING'}">
         <form method="post">
           <input type="hidden" name="orderId" value="${fn:escapeXml(s.orderId)}">
           <button name="action" value="cod_collected">Shipper đã thu tiền COD</button>
         </form>
       </c:if>
+      <c:if test="${s.status == 'IN_TRANSIT'}">
+        <form method="post">
+          <input type="hidden" name="orderId" value="${fn:escapeXml(s.orderId)}">
+          <input type="hidden" name="action" value="status">
+          <c:if test="${s.codStatus != 'PENDING'}"><button name="status" value="delivered">Giả lập: đã giao</button></c:if>
+          <%-- Hoàn hàng chỉ đi theo yêu cầu Trả hàng/Hoàn tiền của người mua; người bán không thấy nút này --%>
+          <c:if test="${isAdmin}"><button name="status" value="returned" class="secondary">Giả lập: hoàn hàng</button></c:if>
+        </form>
+      </c:if>
+
       <c:if test="${s.codStatus == 'COLLECTED'}">
         <form method="post">
           <input type="hidden" name="orderId" value="${fn:escapeXml(s.orderId)}">

@@ -48,6 +48,11 @@
 .progress-bar { height: 100%; background: #000; }
 .review-item { border-top: 1px solid #ddd; padding: 9px 0; }
 .stars-text { margin: 0 7px; }
+/* Đánh giá của người mua ở chi tiết đơn: sao + nhận xét + nút sửa */
+.my-review .review-stars { margin: 0 0 7px; font-size: 22px; letter-spacing: 2px; color: #d0d0d0; }
+.my-review .review-stars span.on { color: #f5b301; }
+.my-review .review-stars small { font-size: 12.5px; color: #666; letter-spacing: 0; margin-left: 5.5px; vertical-align: 3px; }
+.my-review .review-text { margin: 0 0 12.5px; font-size: 14px; line-height: 1.5; }
 /* Trang đơn: các bước đặt hàng, chọn hãng vận chuyển; trang khiếu nại & thanh toán dùng chung */
 .order-page h3 { font-size: 14px; margin: 14.5px 0 5.5px; }
 .order-page .choice { display: block; margin: 5.5px 0; cursor: pointer; }
@@ -162,6 +167,7 @@
 .order-steps li.done { border-color: #000; color: #000; }
 .order-steps li.done span { background: #000; color: #fff; border-color: #000; }
 .order-steps li.current { box-shadow: 3.5px 3.5px 0 #111; font-weight: 600; }
+.order-tracking { margin: -5.5px 0 14.5px; font-size: 13.5px; color: #333; }
 .order-state-banner { margin: 0 0 14.5px; padding: 11px 14.5px; border: 1.5px dashed #000; border-radius: 12.5px; background: #fafafa; font-weight: 600; }
 
 /* Bảng món: tên + ảnh, mã sản phẩm, số lượng, đơn giá, thành tiền */
@@ -186,3 +192,40 @@
 .cancel-form input { flex: 1 1 216px; }
 .order-card h2:only-child { margin: 0; }
 @media (max-width: 684px) { .order-steps { grid-template-columns: repeat(2, 1fr); } }
+
+/* Trang Đơn mua / Đơn bán: mỗi đơn là một thẻ kiểu Shopee */
+.order-cards { display: flex; flex-direction: column; gap: 12.5px; margin-top: 14.5px; }
+.oc { border: 1.5px solid #000; border-radius: 16px; background: #fff; padding: 14.5px 16px; }
+.oc-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 11px; }
+.oc-partner-label { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: .05em; }
+.oc-partner { font-size: 15px; font-weight: 600; }
+.oc-items { display: block; color: inherit; text-decoration: none; }
+.oc-line { display: flex; gap: 12.5px; padding: 5.5px 0; }
+.oc-line + .oc-line { border-top: 1px solid #eee; }
+.oc-thumb { flex: 0 0 72px; width: 72px; height: 72px; object-fit: cover; border-radius: 9px; border: 1px solid #ddd; background: #f3f3f3; }
+.oc-thumb-empty { display: flex; align-items: center; justify-content: center; font-size: 25px; }
+.oc-line-body { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; column-gap: 9px; }
+.oc-line-body p { margin: 0; }
+.oc-name { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-qty { color: #777; font-size: 12.5px; }
+.oc-price { grid-column: 2; align-self: end; font-size: 14px; }
+.oc-items:hover .oc-name { text-decoration: underline; }
+.oc-total { text-align: right; margin: 9px 0 11px; font-size: 13.5px; }
+.oc-total strong { font-size: 15px; }
+.oc-notice { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 11px 14.5px;
+    border-radius: 11px; text-decoration: none; font-size: 13.5px; }
+.oc-notice svg { width: 16px; height: 16px; flex-shrink: 0; }
+.oc-notice-ok { background: #e8f7f1; color: #1f8a70; }
+.oc-notice-off { background: #f1f1f1; color: #777; }
+.oc-notice:hover { filter: brightness(.97); }
+.oc-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 12.5px; }
+.oc-actions form { margin: 0; }
+.order-page .oc-btn { display: inline-block; font: inherit; font-size: 13.5px; padding: 7px 18px; border: 1.5px solid #000;
+    border-radius: 18px; background: #fff; color: #000; cursor: pointer; text-decoration: none; }
+.order-page .oc-btn:hover { background: #f2f2f2; }
+.order-page .oc-btn-main { background: #000; color: #fff; }
+.order-page .oc-btn-main:hover { background: #333; }
+@media (max-width: 684px) {
+    .oc { padding: 12.5px; border-radius: 14px; }
+    .oc-thumb { flex-basis: 58px; width: 58px; height: 58px; }
+}

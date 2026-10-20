@@ -11,6 +11,7 @@ import org.example.cunguoimoita.dispute.service.PayoutService;
 import org.example.cunguoimoita.dispute.service.RefundService;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.review.service.ReviewService;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
@@ -40,6 +41,7 @@ public class OrderServlet extends HttpServlet {
     private final RefundService refundService = new RefundService();
     private final PayoutService payoutService = new PayoutService();
     private final ShippingService shippingService = new ShippingService();
+    private final ReviewService reviewService = new ReviewService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -71,7 +73,10 @@ public class OrderServlet extends HttpServlet {
         }
         String orderId = req.getParameter("id");
         String action = req.getParameter("action");
-        String redirect = req.getContextPath() + "/order/detail?id=" + encode(orderId);
+        // Nút trên trang Đơn mua (Huỷ deal, Đã nhận được hàng) gửi back=list để quay lại danh sách
+        boolean fromList = "list".equals(req.getParameter("back"));
+        String redirect = fromList ? req.getContextPath() + "/order/list?as=buyer"
+                : req.getContextPath() + "/order/detail?id=" + encode(orderId);
         try {
             switch (action == null ? "" : action) {
                 case "address":
@@ -101,7 +106,7 @@ public class OrderServlet extends HttpServlet {
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            redirect += "&message=" + encode("Đã cập nhật đơn hàng");
+            redirect += "&message=" + encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirect += "&error=" + encode(e.getMessage());
         } catch (SQLException e) {
@@ -115,7 +120,7 @@ public class OrderServlet extends HttpServlet {
             throws SQLException, ServletException, IOException {
         boolean asSeller = "seller".equals(req.getParameter("as"));
         req.setAttribute("as", asSeller ? "seller" : "buyer");
-        req.setAttribute("orders", asSeller ? orderService.getSellerOrders(userId) : orderService.getBuyerOrders(userId));
+        req.setAttribute("cards", orderService.getOrderCards(userId, asSeller));
         req.getRequestDispatcher("/WEB-INF/views/order/order-list.jsp").forward(req, resp);
     }
 
@@ -145,6 +150,9 @@ public class OrderServlet extends HttpServlet {
         req.setAttribute("editable", editable);
         req.setAttribute("dispute", disputeService.getByOrderId(order.getId()));
         req.setAttribute("refund", refundService.getByOrderId(order.getId()));
+        if (isBuyer && order.getStatus() == Order.Status.COMPLETED) {    // đã đánh giá thì hiện lại sao + nhận xét
+            req.setAttribute("myReview", reviewService.getMyReview(order.getId(), userId));
+        }
         if (!isBuyer) {
             req.setAttribute("payout", payoutService.getByOrderId(order.getId()));
             // Người bán chọn địa chỉ để nhân viên vận chuyển đến lấy hàng

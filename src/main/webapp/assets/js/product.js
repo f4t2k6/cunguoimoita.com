@@ -1,6 +1,52 @@
 // Bảng tin, chi tiết bài, form đăng bài (F2, F3). Nạp ở các trang của hai chức năng này.
 // Trang vẫn dùng được khi tắt JavaScript: mọi nút đều là form gửi bình thường.
 (function () {
+  // ---- Thanh danh mục cuộn ngang: hiện mũi tên trái/phải khi còn mục ở phía đó ----
+  const catBar = document.querySelector('.category-bar');
+  const catPrev = document.querySelector('.cat-prev');
+  const catNext = document.querySelector('.cat-next');
+  if (catBar && catPrev && catNext) {
+    const updateArrows = () => {
+      catPrev.hidden = catBar.scrollLeft <= 2;
+      catNext.hidden = catBar.scrollLeft + catBar.clientWidth >= catBar.scrollWidth - 2;
+    };
+    const step = dir => catBar.scrollBy({ left: dir * catBar.clientWidth * 0.8, behavior: 'smooth' });
+    catPrev.addEventListener('click', () => step(-1));
+    catNext.addEventListener('click', () => step(1));
+    catBar.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', updateArrows);
+    window.addEventListener('load', updateArrows);   // ảnh icon tải xong mới biết đủ chiều rộng
+    updateArrows();
+  }
+
+  // ---- Nút Xem thêm ở bảng tin: tải trang kế tiếp, nối các bài vào trước nút ----
+  document.addEventListener('click', async (e) => {
+    const more = e.target.closest('a.js-load-more');
+    if (!more) return;
+    e.preventDefault();
+    if (more.classList.contains('is-loading')) return;
+    const label = more.textContent;
+    more.classList.add('is-loading');
+    more.textContent = 'Đang tải...';
+    try {
+      const res = await fetch(more.href, { headers: { Accept: 'text/html' } });
+      if (!res.ok) throw new Error(res.status);
+      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      const pager = more.closest('.pager');
+      doc.querySelectorAll('.feed-post').forEach((post) => pager.before(document.importNode(post, true)));
+      const next = doc.querySelector('a.js-load-more');
+      if (next) {
+        more.href = next.getAttribute('href');
+        more.textContent = label;
+        more.classList.remove('is-loading');
+      } else {
+        pager.remove();   // hết bài
+      }
+    } catch (err) {
+      location.href = more.href;   // lỗi thì chuyển trang như cũ
+    }
+  });
+
   // ---- Nút Lưu / Đã lưu: gửi bằng fetch để không tải lại trang (khỏi mất chỗ đang cuộn) ----
   document.addEventListener('submit', async (e) => {
     const form = e.target.closest('form.js-save');

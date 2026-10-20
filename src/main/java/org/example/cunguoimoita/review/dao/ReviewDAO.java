@@ -44,6 +44,40 @@ public class ReviewDAO {
         }
     }
 
+    // Đánh giá của 1 người cho 1 đơn (để hiện lại và sửa). Chưa có → null.
+    public Review findByOrderAndAuthor(Connection c, String orderId, String authorId) throws SQLException {
+        String sql = "SELECT * FROM reviews WHERE order_id = ? AND author_id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            ps.setString(2, authorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                Review r = new Review();
+                r.setId(rs.getString("id"));
+                r.setOrderId(rs.getString("order_id"));
+                r.setAuthorId(rs.getString("author_id"));
+                r.setTargetUserId(rs.getString("target_user_id"));
+                r.setRating(rs.getInt("rating"));
+                r.setContent(rs.getString("content"));
+                r.setCreatedDate(rs.getObject("created_date", LocalDateTime.class));
+                return r;
+            }
+        }
+    }
+
+    // Sửa số sao + nhận xét của 1 đánh giá đã có.
+    public void update(Connection c, Review r) throws SQLException {
+        String sql = "UPDATE reviews SET rating = ?, content = ? WHERE id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, r.getRating());
+            ps.setString(2, r.getContent());
+            ps.setString(3, r.getId());
+            ps.executeUpdate();
+        }
+    }
+
     // Người này đã đánh giá đơn này chưa? (DB cũng chặn bằng UNIQUE(order_id, author_id))
     public boolean exists(Connection c, String orderId, String authorId) throws SQLException {
         String sql = "SELECT 1 FROM reviews WHERE order_id = ? AND author_id = ?";

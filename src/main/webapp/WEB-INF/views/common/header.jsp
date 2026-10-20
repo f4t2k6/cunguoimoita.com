@@ -12,7 +12,7 @@
 --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Số phiên bản gắn vào link CSS/JS: sửa CSS/JS xong thì đổi số này để trình duyệt tải bản mới, không dùng bản cũ đã lưu --%>
-<c:set var="assetVer" value="20261020d"/>
+<c:set var="assetVer" value="20261020n"/>
 <%-- Khách (chưa đăng nhập): link Đăng nhập / Đăng ký mang ?next=trang đang xem để đăng nhập xong quay lại đúng trang.
      loginNext do LoginRequiredFilter đặt. Các nút thao tác (Lưu, Thêm vào giỏ, Nhắn tin...) của khách dẫn tới loginUrl. --%>
 <c:set var="isGuest" value="${empty sessionScope.userId}"/>
@@ -57,7 +57,7 @@
     <c:otherwise>
     <button type="button" class="notify-btn" id="notifyBtn" aria-haspopup="true" aria-expanded="false" aria-controls="notifyPanel">
       <span>Thông báo</span>
-      <img src="${ctx}/assets/images/bell-icon.svg" alt="" class="bell-icon">
+      <img src="${ctx}/assets/images/bell-icon.png" alt="" class="bell-icon">
       <span class="count-badge notify-badge" id="notifyBadge" hidden></span>
     </button>
 
@@ -117,16 +117,16 @@
   <c:set var="curPath" value="${requestScope['jakarta.servlet.forward.servlet_path']}"/>
   <%-- Bài đăng: về bảng tin (trang chủ) --%>
   <a class="menu-item ${curPath == '/home' ? 'active' : ''}" href="${ctx}/home">
-    <img src="${ctx}/assets/images/feed-icon.svg" alt="" class="menu-icon"><span>Bài đăng</span>
+    <img src="${ctx}/assets/images/postsn-icon.png" alt="" class="menu-icon"><span>Bài đăng</span>
   </a>
   <a class="menu-item ${curPath == '/order/cart' ? 'active' : ''}" href="${ctx}/order/cart">
     <img src="${ctx}/assets/images/cart-icon.png" alt="" class="menu-icon"><span>Giỏ hàng</span>
   </a>
   <a class="menu-item ${curPath == '/order/list' and param.as != 'seller' ? 'active' : ''}" href="${ctx}/order/list?as=buyer">
-    <img src="${ctx}/assets/images/buy-orders-icon.svg" alt="" class="menu-icon"><span>Đơn mua</span>
+    <img src="${ctx}/assets/images/buying-icon.png" alt="" class="menu-icon"><span>Đơn mua</span>
   </a>
   <a class="menu-item ${curPath == '/order/list' and param.as == 'seller' ? 'active' : ''}" href="${ctx}/order/list?as=seller">
-    <img src="${ctx}/assets/images/sell-orders-icon.svg" alt="" class="menu-icon"><span>Đơn bán</span>
+    <img src="${ctx}/assets/images/shipping-icon.png" alt="" class="menu-icon"><span>Đơn bán</span>
   </a>
   <a class="menu-item ${fn:startsWith(curPath, '/chat/') ? 'active' : ''}" href="${ctx}/chat/inbox">
     <img src="${ctx}/assets/images/message-icon.png" alt="" class="menu-icon"><span>Tin nhắn</span>
@@ -136,12 +136,12 @@
     <img src="${ctx}/assets/images/saved-icon.png" alt="" class="menu-icon"><span>Đã lưu</span>
   </a>
   <a class="menu-item ${curPath == '/product/new' ? 'active' : ''}" href="${ctx}/product/new">
-    <img src="${ctx}/assets/images/post-icon.svg" alt="" class="menu-icon">
+    <img src="${ctx}/assets/images/post-icon.png" alt="" class="menu-icon">
     <span>Đăng bài</span>
   </a>
   <c:if test="${sessionScope.userRole == 'customer'}">
     <a class="menu-item ${curPath == '/product/mine' ? 'active' : ''}" href="${ctx}/product/mine">
-      <img src="${ctx}/assets/images/my-posts-icon.svg" alt="" class="menu-icon">
+      <img src="${ctx}/assets/images/my-posts-icon.png" alt="" class="menu-icon">
       <span>Bài của tôi</span>
     </a>
   </c:if>
@@ -152,7 +152,7 @@
       <%-- Cài đặt: bấm để mở danh sách tài khoản, đơn hàng và nút Đăng xuất (common.js) --%>
       <div class="menu-settings">
         <button type="button" class="menu-item" id="settingsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="settingsPanel">
-          <img src="${ctx}/assets/images/settings-icon.svg" alt="" class="menu-icon">
+          <img src="${ctx}/assets/images/settings-icon.png" alt="" class="menu-icon">
           <span>Cài đặt</span>
         </button>
         <div class="settings-panel" id="settingsPanel" hidden>
@@ -163,8 +163,6 @@
             </c:when>
             <c:otherwise>
               <a href="${ctx}/account/profile">Hồ sơ cá nhân</a>
-              <a href="${ctx}/account/profile#so-dia-chi">Sổ địa chỉ</a>
-              <a href="${ctx}/account/profile#doi-mat-khau">Đổi mật khẩu</a>
               <a href="${ctx}/payment/history">Lịch sử thanh toán</a>
               <a href="${ctx}/seller/payouts">Thu nhập bán hàng</a>
               <a href="${ctx}/dispute">Khiếu nại &amp; hoàn tiền</a>
@@ -178,7 +176,7 @@
     </c:when>
     <c:otherwise>
       <a class="menu-item" href="${loginUrl}">
-        <img src="${ctx}/assets/images/login-icon.svg" alt="" class="menu-icon">
+        <img src="${ctx}/assets/images/login-icon.png" alt="" class="menu-icon">
         <span>Đăng nhập</span>
       </a>
     </c:otherwise>

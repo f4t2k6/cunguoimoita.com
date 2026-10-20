@@ -17,7 +17,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * GET /home?page= → trang chủ: các bài đã duyệt, mới nhất trước, mỗi bài hiện như một post.
@@ -32,11 +31,10 @@ public class HomeServlet extends HttpServlet {
 
     /**
      * Icon của từng danh mục gốc: file ảnh trong assets/images, tên là category-<id danh mục>.png.
-     * Danh mục chưa có ảnh riêng thì dùng category-mac-dinh.png. Muốn đổi icon chỉ cần thay file ảnh.
+     * Danh mục chưa có ảnh riêng thì dùng category-mac-dinh.png. Muốn đổi icon chỉ cần thay file ảnh;
+     * danh mục mới chỉ cần thêm file category-<id>.png (hoặc category-<tên không dấu>.png, vd "Quần áo" -> category-quan-ao.png),
+     * không phải sửa code.
      */
-    private static final Set<String> CATEGORY_ICONS = Set.of(
-            "dien-thoai", "noxh", "bat-dong-san", "xe-co", "viec-lam", "dien-tu",
-            "thu-cung", "dien-lanh", "noi-that", "ban-phim");
     private static final String ICON_DIR = "/assets/images/";
     private static final String DEFAULT_ICON = ICON_DIR + "category-mac-dinh.png";
 
@@ -64,9 +62,29 @@ public class HomeServlet extends HttpServlet {
         for (Category cg : all) {
             if (cg.isTopLevel()) {
                 list.add(Map.of("slug", cg.getId(), "name", cg.getName(),
-                        "icon", CATEGORY_ICONS.contains(cg.getId()) ? ICON_DIR + "category-" + cg.getId() + ".png" : DEFAULT_ICON));
+                        "icon", iconOf(cg.getId(), cg.getName())));
             }
         }
         return list;
+    }
+
+    private String iconOf(String categoryId, String name) {
+        for (String key : new String[] { categoryId, slug(name) }) {
+            String path = ICON_DIR + "category-" + key + ".png";
+            try {
+                if (!key.isEmpty() && getServletContext().getResource(path) != null) return path;
+            } catch (java.net.MalformedURLException ignored) {
+                // tên lạ không tạo được đường dẫn: thử cách tiếp theo
+            }
+        }
+        return DEFAULT_ICON;
+    }
+
+    /** "Cây cảnh" -> "cay-canh": bỏ dấu tiếng Việt, chữ thường, nối bằng dấu gạch. */
+    private static String slug(String name) {
+        if (name == null) return "";
+        String s = java.text.Normalizer.normalize(name.replace('đ', 'd').replace('Đ', 'D'), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase();
+        return s.replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
     }
 }

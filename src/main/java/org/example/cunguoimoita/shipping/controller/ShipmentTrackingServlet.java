@@ -47,6 +47,13 @@ public class ShipmentTrackingServlet extends HttpServlet {
         String orderId = req.getParameter("orderId");
         try {
             OrderRef order = shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), false);
+            // Người mua xem vận chuyển ở trang chi tiết đơn (thanh 4 bước + mã vận đơn);
+            // thông báo cũ còn trỏ về đây cũng được chuyển sang đó.
+            if (userId.equals(order.buyerId()) && !CurrentUser.isAdmin(req)) {
+                resp.sendRedirect(req.getContextPath() + "/order/detail?id="
+                        + java.net.URLEncoder.encode(orderId, java.nio.charset.StandardCharsets.UTF_8));
+                return;
+            }
             Shipment shipment = shippingService.findByOrder(orderId);
             if (shipment == null) {
                 req.setAttribute("error", "Không tìm thấy vận đơn cho đơn hàng này");

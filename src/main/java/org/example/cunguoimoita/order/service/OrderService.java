@@ -19,6 +19,7 @@ import org.example.cunguoimoita.order.dao.OrderDAO;
 import org.example.cunguoimoita.order.dao.VoucherDAO;
 import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.Order;
+import org.example.cunguoimoita.order.model.OrderCard;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.model.Voucher;
 import org.example.cunguoimoita.payment.service.PaymentService;
@@ -153,6 +154,13 @@ public class OrderService {
     public List<Order> getBuyerOrders(String buyerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return orderDAO.findByBuyer(c, buyerId);
+        }
+    }
+
+    // Thẻ đơn (kiểu Shopee) cho trang Đơn mua / Đơn bán.
+    public List<OrderCard> getOrderCards(String userId, boolean asSeller) throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return orderDAO.findCards(c, userId, asSeller);
         }
     }
 

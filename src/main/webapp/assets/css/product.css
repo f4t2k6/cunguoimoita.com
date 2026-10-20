@@ -56,6 +56,9 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
     font-size: 11px; font-weight: 600; background: #fff;
 }
 .listing-swap { background: #000; color: #fff; }
+.post-tags { display: flex; align-items: center; gap: 5.5px; flex-shrink: 0; }
+.post-tags .tag { margin: 0; vertical-align: 0; padding: 2.5px 11px; font-size: 11px; border: 1px solid transparent; }
+.feed-post .post-caption { margin-left: 0; }
 .listing-both { background: repeating-linear-gradient(135deg, #fff 0 5.5px, #eee 5.5px 11px); }
 .post-body { display: block; }
 .post-body:hover .post-title { text-decoration: underline; }
@@ -70,17 +73,17 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 .post-mine { font-size: 11.5px; color: var(--muted); }
 
 /* Ảnh trong post: 1 ảnh full ngang, 2 ảnh chia đôi, 3 ảnh trở lên thì 1 ảnh lớn + 2 ảnh nhỏ.
-   Dính sát đáy thẻ giống mockup. */
+   Dính sát đáy thẻ giống mockup. Khung luôn 16:9; ảnh khác tỉ lệ thì hiện trọn, lót nền đen (giống Facebook). */
 .post-gallery {
     display: grid; gap: 2.5px;
-    margin: 12.5px -18px -16px; height: 306px;
-    background: #e9e9e9; overflow: hidden;
+    margin: 12.5px -18px -16px; aspect-ratio: 16 / 9;
+    background: #000; overflow: hidden;
 }
 .post-gallery.count-2 { grid-template-columns: 1fr 1fr; }
 .post-gallery.count-3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
 .post-gallery.count-3 .post-photo:first-child { grid-row: span 2; }
-.post-gallery .post-photo { position: relative; height: auto; min-height: 0; display: block; background: #ddd; }
-.post-gallery img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+.post-gallery .post-photo { position: relative; height: auto; min-height: 0; display: block; background: #000; overflow: hidden; }
+.post-gallery img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform .3s; }
 .post-gallery:hover img { transform: scale(1.02); }
 .post-photo-more {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -316,7 +319,7 @@ div[data-show-for]:not(.form-row) { display: flex; flex-direction: column; gap: 
 @media (max-width: 684px) {
     .composer { border-radius: 25px; padding: 9px 11px; }
     .composer-btn { display: none; }
-    .post-gallery { height: 216px; margin-left: -18px; }
+    .post-gallery { margin-left: -18px; }
     .filter-card { border-radius: 20px; padding: 12.5px; }
     .form-row { grid-template-columns: 1fr; }
     .my-item { flex-wrap: wrap; border-radius: 18px; }

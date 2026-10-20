@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.review.model.Review;
 import org.example.cunguoimoita.review.service.ReviewService;
 
 import java.io.IOException;
@@ -38,6 +39,14 @@ public class ReviewServlet extends HttpServlet {
                 return;
             }
             String orderId = req.getParameter("orderId");
+            Review mine = reviewService.getMyReview(orderId, userId);
+            if (mine != null) {                                   // đã đánh giá → mở form sửa, điền sẵn
+                req.setAttribute("orderId", orderId);
+                req.setAttribute("review", mine);
+                req.setAttribute("error", req.getParameter("error"));
+                req.getRequestDispatcher("/WEB-INF/views/review/review_form.jsp").forward(req, resp);
+                return;
+            }
             if (!reviewService.canReview(orderId, userId)) {      // không đủ điều kiện → quay về đơn
                 resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId)
                         + "&error=" + encode("Đơn này chưa thể đánh giá hoặc bạn đã đánh giá rồi"));
@@ -63,6 +72,11 @@ public class ReviewServlet extends HttpServlet {
         String ctx = req.getContextPath();
         try {
             int rating = Integer.parseInt(req.getParameter("rating"));   // chữ "5" → số 5
+            if (reviewService.getMyReview(orderId, userId) != null) {
+                reviewService.updateReview(orderId, userId, rating, req.getParameter("content"));
+                resp.sendRedirect(ctx + "/order/detail?id=" + encode(orderId) + "&message=" + encode("Đã cập nhật đánh giá"));
+                return;
+            }
             reviewService.rateUser(orderId, userId, rating, req.getParameter("content"));
             resp.sendRedirect(ctx + "/order/detail?id=" + encode(orderId) + "&message=" + encode("Đã gửi đánh giá"));
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
