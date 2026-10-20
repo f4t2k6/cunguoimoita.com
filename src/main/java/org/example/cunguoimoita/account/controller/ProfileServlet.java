@@ -5,9 +5,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.cunguoimoita.account.dao.AddressDAO;
-import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.Customer;
+import org.example.cunguoimoita.account.service.AccountService;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.review.service.ReviewService;
 import org.example.cunguoimoita.common.util.Texts;
@@ -19,8 +18,7 @@ import java.util.regex.Pattern;
 @WebServlet("/account/profile")
 public class ProfileServlet extends HttpServlet {
     private static final Pattern PHONE = Pattern.compile("^[0-9+()\\-\\s]{8,20}$");
-    private final UserDAO userDAO = new UserDAO();
-    private final AddressDAO addressDAO = new AddressDAO();
+    private final AccountService accountService = new AccountService();
     private final ReviewService reviewService = new ReviewService();
 
     @Override
@@ -43,7 +41,7 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
         try {
-            boolean updated = userDAO.updateCustomerProfile(CurrentUser.id(req), fullName,
+            boolean updated = accountService.updateProfile(CurrentUser.id(req), fullName,
                     phone, payoutAccountRef);
             if (!updated) {
                 req.setAttribute("profileError", "Không thể cập nhật hồ sơ. Vui lòng tải lại trang.");
@@ -61,13 +59,13 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         String userId = CurrentUser.id(req);
         try {
-            Customer customer = userDAO.findCustomerById(userId);
+            Customer customer = accountService.findCustomer(userId);
             if (customer == null) {
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
             req.setAttribute("customer", customer);
-            req.setAttribute("addresses", addressDAO.findByUserId(userId));
+            req.setAttribute("addresses", accountService.getAddresses(userId));
             // Hạng thành viên (cùng dữ liệu với /review/tier): progress, summary, reviews
             req.setAttribute("progress", reviewService.getTierProgress(userId));
             req.setAttribute("summary", reviewService.getSummary(userId));

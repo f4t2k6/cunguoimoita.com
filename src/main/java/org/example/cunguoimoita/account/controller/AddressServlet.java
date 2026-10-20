@@ -5,7 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.cunguoimoita.account.dao.AddressDAO;
+import org.example.cunguoimoita.account.service.AccountService;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.Texts;
 
@@ -14,7 +14,7 @@ import java.sql.SQLException;
 
 @WebServlet("/account/addresses")
 public class AddressServlet extends HttpServlet {
-    private final AddressDAO addressDAO = new AddressDAO();
+    private final AccountService accountService = new AccountService();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -31,7 +31,7 @@ public class AddressServlet extends HttpServlet {
                         redirect(resp, req, "invalidAddress");
                         return;
                     }
-                    addressDAO.add(userId, req.getParameter("label"), req.getParameter("addressLine"),
+                    accountService.addAddress(userId, req.getParameter("label"), req.getParameter("addressLine"),
                             req.getParameter("ward"), req.getParameter("district"),
                             req.getParameter("province"));
                     success = true;
@@ -41,12 +41,12 @@ public class AddressServlet extends HttpServlet {
                         redirect(resp, req, "invalidAddress");
                         return;
                     }
-                    success = addressDAO.update(id, userId, req.getParameter("label"),
+                    success = accountService.updateAddress(id, userId, req.getParameter("label"),
                             req.getParameter("addressLine"), req.getParameter("ward"),
                             req.getParameter("district"), req.getParameter("province"));
                 }
-                case "default" -> success = !id.isBlank() && addressDAO.setDefault(id, userId);
-                case "delete" -> success = !id.isBlank() && addressDAO.delete(id, userId);
+                case "default" -> success = !id.isBlank() && accountService.setDefaultAddress(id, userId);
+                case "delete" -> success = !id.isBlank() && accountService.deleteAddress(id, userId);
                 default -> {
                     redirect(resp, req, "invalidAction");
                     return;

@@ -7,7 +7,7 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.example.cunguoimoita.account.dao.UserDAO;
+import org.example.cunguoimoita.account.service.AccountService;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.model.UserRole;
 
@@ -16,7 +16,7 @@ import java.sql.SQLException;
 
 @WebFilter("/account/*")
 public class AccountAuthFilter implements Filter {
-    private final UserDAO userDAO = new UserDAO();
+    private final AccountService accountService = new AccountService();
 
     @Override
     public void doFilter(jakarta.servlet.ServletRequest request,
@@ -42,7 +42,7 @@ public class AccountAuthFilter implements Filter {
             return;
         }
         try {
-            if (!userDAO.isActive(userId)) {
+            if (!accountService.isActive(userId)) {
                 invalidate(session);
                 resp.sendRedirect(req.getContextPath() + "/login?banned=1");
                 return;
