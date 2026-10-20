@@ -6,12 +6,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.order.dao.CartDAO.CartLine;
 import org.example.cunguoimoita.order.service.CartService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +59,7 @@ public class CartServlet extends HttpServlet {
             switch (action == null ? "add" : action) {
                 case "add":
                     cartService.addToCart(userId, productId);
-                    redirect += "?message=" + encode("Đã thêm vào giỏ");
+                    redirect += "?message=" + FormUtil.encode("Đã thêm vào giỏ");
                     break;
                 case "remove":
                     cartService.removeFromCart(userId, productId);
@@ -77,14 +76,10 @@ public class CartServlet extends HttpServlet {
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            redirect += "?error=" + encode(e.getMessage());
+            redirect += "?error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
         resp.sendRedirect(redirect);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

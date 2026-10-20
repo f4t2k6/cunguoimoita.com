@@ -8,6 +8,7 @@ import org.example.cunguoimoita.product.dao.ProductDAO;
 import org.example.cunguoimoita.product.model.Product;
 import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.common.util.MediaStore;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -52,7 +53,7 @@ public class ProductService {
 
     /** Khách chỉ xem bài đã duyệt; người bán và admin xem được cả bài chờ duyệt / đang ẩn. @return null nếu không được xem */
     public Product detail(String productId, String viewerId, boolean viewerIsAdmin) throws SQLException {
-        if (isBlank(productId)) {
+        if (Texts.isBlank(productId)) {
             return null;
         }
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -219,9 +220,9 @@ public class ProductService {
 
 
     private void validate(Product p) {
-        p.setName(trimToNull(p.getName()));
-        p.setDescription(trimToNull(p.getDescription()));
-        p.setDesiredExchangeNote(trimToNull(p.getDesiredExchangeNote()));
+        p.setName(Texts.trimToNull(p.getName()));
+        p.setDescription(Texts.trimToNull(p.getDescription()));
+        p.setDesiredExchangeNote(Texts.trimToNull(p.getDesiredExchangeNote()));
         if (p.getName() == null || p.getName().length() < 3) {
             throw new IllegalArgumentException("Tên món đồ cần ít nhất 3 ký tự");
         }
@@ -231,7 +232,7 @@ public class ProductService {
         if (p.getDescription() != null && p.getDescription().length() > 5000) {
             throw new IllegalArgumentException("Mô tả tối đa 5000 ký tự");
         }
-        if (isBlank(p.getCategoryId())) {
+        if (Texts.isBlank(p.getCategoryId())) {
             throw new IllegalArgumentException("Hãy chọn danh mục");
         }
         if (p.getCondition() == null) {
@@ -304,13 +305,5 @@ public class ProductService {
             }
         }
         return list;
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
-    }
-
-    private static String trimToNull(String s) {
-        return isBlank(s) ? null : s.trim();
     }
 }

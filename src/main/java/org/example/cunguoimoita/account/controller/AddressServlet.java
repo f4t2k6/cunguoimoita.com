@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -20,8 +21,8 @@ public class AddressServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         String userId = CurrentUser.id(req);
-        String action = trim(req.getParameter("action"));
-        String id = trim(req.getParameter("id"));
+        String action = Texts.trimToEmpty(req.getParameter("action"));
+        String id = Texts.trimToEmpty(req.getParameter("id"));
         try {
             boolean success;
             switch (action) {
@@ -68,12 +69,8 @@ public class AddressServlet extends HttpServlet {
     }
 
     private boolean length(String value, int min, int max) {
-        String clean = trim(value);
+        String clean = Texts.trimToEmpty(value);
         return clean.length() >= min && clean.length() <= max;
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private void redirect(HttpServletResponse resp, HttpServletRequest req, String result)

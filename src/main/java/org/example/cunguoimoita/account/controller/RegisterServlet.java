@@ -9,6 +9,7 @@ import org.example.cunguoimoita.account.service.EmailVerificationService;
 import org.example.cunguoimoita.account.service.VerificationException;
 import org.example.cunguoimoita.common.util.MailSender;
 import org.example.cunguoimoita.common.util.PasswordUtil;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,9 +37,9 @@ public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        String fullName = trim(req.getParameter("fullName"));
-        String email = trim(req.getParameter("email")).toLowerCase(Locale.ROOT);
-        String phone = trim(req.getParameter("phone"));
+        String fullName = Texts.trimToEmpty(req.getParameter("fullName"));
+        String email = Texts.trimToEmpty(req.getParameter("email")).toLowerCase(Locale.ROOT);
+        String phone = Texts.trimToEmpty(req.getParameter("phone"));
         String password = req.getParameter("password");
         String confirmPassword = req.getParameter("confirmPassword");
 
@@ -86,13 +87,9 @@ public class RegisterServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setAttribute("errorMessage", error);
         // Giữ lại thông tin đã nhập (trừ mật khẩu) để không phải gõ lại
-        req.setAttribute("fullName", trim(req.getParameter("fullName")));
-        req.setAttribute("email", trim(req.getParameter("email")));
-        req.setAttribute("phone", trim(req.getParameter("phone")));
+        req.setAttribute("fullName", Texts.trimToEmpty(req.getParameter("fullName")));
+        req.setAttribute("email", Texts.trimToEmpty(req.getParameter("email")));
+        req.setAttribute("phone", Texts.trimToEmpty(req.getParameter("phone")));
         req.getRequestDispatcher("/register.jsp").forward(req, resp);
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
     }
 }

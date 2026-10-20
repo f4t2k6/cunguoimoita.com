@@ -13,6 +13,7 @@ import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.model.ShippingCarrier;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -170,7 +171,7 @@ public class ShippingService {
         if (s == null) {
             return null;
         }
-        if (isBlank(s.getTrackingCode())) {
+        if (Texts.isBlank(s.getTrackingCode())) {
             s.setTrackingCode(newTrackingCode(s.getCarrierId()));
             shipmentDAO.update(c, s);
         }
@@ -215,7 +216,7 @@ public class ShippingService {
             }
         }
         changeShipment(orderId, s -> {
-            if (isBlank(s.getTrackingCode())) {
+            if (Texts.isBlank(s.getTrackingCode())) {
                 s.setTrackingCode(newTrackingCode(s.getCarrierId()));   // đơn cũ trước khi có tự sinh mã
             }
             s.updateStatus(ShipmentStatus.PICKED_UP);
@@ -226,7 +227,7 @@ public class ShippingService {
     private static String addressText(Address a) {
         StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
         for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
-            if (!isBlank(part)) {
+            if (!Texts.isBlank(part)) {
                 sb.append(sb.length() > 0 ? ", " : "").append(part);
             }
         }
@@ -235,7 +236,7 @@ public class ShippingService {
 
     /** Chỉ gửi được khi đơn đã trả online (paid) hoặc đã xác nhận COD. */
     public void markShipped(String orderId, String trackingCode) throws SQLException {
-        if (isBlank(trackingCode)) {
+        if (Texts.isBlank(trackingCode)) {
             throw new IllegalArgumentException("Vui lòng nhập mã vận đơn");
         }
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -338,10 +339,6 @@ public class ShippingService {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng " + orderId);
         }
         return order;
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 
     @FunctionalInterface

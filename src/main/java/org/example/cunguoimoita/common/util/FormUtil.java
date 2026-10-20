@@ -58,7 +58,8 @@ public final class FormUtil {
         return back;
     }
 
-    public static String encode(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    /** Mã hoá giá trị để đặt lên query string; null thành chuỗi rỗng. */
+    public static String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

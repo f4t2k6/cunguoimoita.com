@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.dispute.model.Dispute;
 import org.example.cunguoimoita.dispute.model.DisputeReason;
 import org.example.cunguoimoita.dispute.service.DisputeService;
@@ -16,8 +17,6 @@ import org.example.cunguoimoita.order.service.OrderService;
 import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -81,14 +80,14 @@ public class DisputeServlet extends HttpServlet {
         String disputeId = req.getParameter("disputeId");
         String orderId = req.getParameter("orderId");
         // Lỗi thì quay lại đúng trang đang mở (form mở khiếu nại hoặc chi tiết khiếu nại)
-        String back = "/dispute/create".equals(path) ? "/dispute?orderId=" + encode(orderId) : "/dispute?id=" + encode(disputeId);
+        String back = "/dispute/create".equals(path) ? "/dispute?orderId=" + FormUtil.encode(orderId) : "/dispute?id=" + FormUtil.encode(disputeId);
         try {
             String images = String.join(",", mediaStore.saveAll(req.getParts(), "images", MAX_IMAGES, userId));
             switch (path) {
                 case "/dispute/create": {
                     Dispute d = disputeService.openDispute(orderId, userId, DisputeReason.fromDb(req.getParameter("reason")),
                             req.getParameter("description"), images.isEmpty() ? null : images);
-                    back = "/dispute?id=" + encode(d.getId());
+                    back = "/dispute?id=" + FormUtil.encode(d.getId());
                     break;
                 }
                 case "/dispute/respond":
@@ -100,15 +99,11 @@ public class DisputeServlet extends HttpServlet {
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            resp.sendRedirect(req.getContextPath() + back + "&message=" + encode("Đã gửi"));
+            resp.sendRedirect(req.getContextPath() + back + "&message=" + FormUtil.encode("Đã gửi"));
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
-            resp.sendRedirect(req.getContextPath() + back + "&error=" + encode(e.getMessage()));
+            resp.sendRedirect(req.getContextPath() + back + "&error=" + FormUtil.encode(e.getMessage()));
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

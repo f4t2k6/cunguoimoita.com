@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.dispute.service.DisputeService;
 import org.example.cunguoimoita.dispute.service.PayoutService;
 import org.example.cunguoimoita.dispute.service.RefundService;
@@ -16,8 +17,6 @@ import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 // Danh sách đơn mua/bán, chi tiết đơn và các nút trên trang đơn (địa chỉ, hãng ship, voucher, thanh toán, huỷ, đã nhận).
@@ -64,7 +63,7 @@ public class OrderServlet extends HttpServlet {
         // Nút trên trang Đơn mua (Huỷ deal, Đã nhận được hàng) gửi back=list để quay lại danh sách
         boolean fromList = "list".equals(req.getParameter("back"));
         String redirect = fromList ? req.getContextPath() + "/order/list?as=buyer"
-                : req.getContextPath() + "/order/detail?id=" + encode(orderId);
+                : req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId);
         try {
             switch (action == null ? "" : action) {
                 case "address":
@@ -80,7 +79,7 @@ public class OrderServlet extends HttpServlet {
                     Order.PaymentMethod method = parseMethod(req.getParameter("method"));
                     orderService.choosePaymentMethod(orderId, userId, method);
                     if (method == Order.PaymentMethod.ONLINE) {
-                        resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + encode(orderId));
+                        resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + FormUtil.encode(orderId));
                         return;
                     }
                     break;
@@ -94,9 +93,9 @@ public class OrderServlet extends HttpServlet {
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            redirect += "&message=" + encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
+            redirect += "&message=" + FormUtil.encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
-            redirect += "&error=" + encode(e.getMessage());
+            redirect += "&error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
@@ -160,9 +159,5 @@ public class OrderServlet extends HttpServlet {
             throw new IllegalArgumentException("Vui lòng chọn phương thức thanh toán");
         }
         return Order.PaymentMethod.valueOf(value.toUpperCase());   // chữ lạ: valueOf ném IllegalArgumentException
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

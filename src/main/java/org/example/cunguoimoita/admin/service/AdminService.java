@@ -21,6 +21,7 @@ import org.example.cunguoimoita.notification.service.NotificationService;
 import org.example.cunguoimoita.shipping.dao.ShippingCarrierDAO;
 import org.example.cunguoimoita.shipping.model.ShippingCarrier;
 import org.example.cunguoimoita.shipping.service.ShippingService;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -127,7 +128,7 @@ public class AdminService {
                 }
                 productDAO.updateStatus(c, productId, "hidden");
                 notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM, "Bài \"" + p.name()
-                        + "\" đã bị ẩn" + (isBlank(reason) ? "" : ": " + reason.trim()), null));
+                        + "\" đã bị ẩn" + (Texts.isBlank(reason) ? "" : ": " + reason.trim()), null));
             } else {
                 if (!p.isHidden() || p.isPending() || p.isRejected()) {
                     throw new IllegalStateException("Chỉ hiện lại được bài đã duyệt đang bị ẩn");
@@ -221,8 +222,8 @@ public class AdminService {
             r.setTargetType(targetType);
             r.setTargetId(targetId);
             r.setReason(why);
-            r.setDescription(isBlank(desc) ? null : desc);
-            r.setEvidenceImages(isBlank(evidenceImages) ? null : evidenceImages);
+            r.setDescription(Texts.isBlank(desc) ? null : desc);
+            r.setEvidenceImages(Texts.isBlank(evidenceImages) ? null : evidenceImages);
             r.setCreatedDate(LocalDateTime.now());
             reportDAO.insert(c, r);
             return null;
@@ -308,8 +309,8 @@ public class AdminService {
         Category cg = new Category();
         cg.setId(UUID.randomUUID().toString());
         cg.setName(requireText(name, "Cần nhập tên danh mục"));
-        cg.setDescription(isBlank(description) ? null : description.trim());
-        cg.setParentCategoryId(isBlank(parentId) ? null : parentId);
+        cg.setDescription(Texts.isBlank(description) ? null : description.trim());
+        cg.setParentCategoryId(Texts.isBlank(parentId) ? null : parentId);
         inTransaction(c -> {
             checkParent(c, cg.getId(), cg.getParentCategoryId());
             categoryDAO.insert(c, cg);
@@ -321,8 +322,8 @@ public class AdminService {
         Category cg = new Category();
         cg.setId(id);
         cg.setName(requireText(name, "Cần nhập tên danh mục"));
-        cg.setDescription(isBlank(description) ? null : description.trim());
-        cg.setParentCategoryId(isBlank(parentId) ? null : parentId);
+        cg.setDescription(Texts.isBlank(description) ? null : description.trim());
+        cg.setParentCategoryId(Texts.isBlank(parentId) ? null : parentId);
         inTransaction(c -> {
             if (categoryDAO.isTopLevel(c, id) == null) {
                 throw new IllegalArgumentException("Không tìm thấy danh mục");
@@ -360,11 +361,11 @@ public class AdminService {
     public void saveCarrier(String id, String name, String hotline, String logoUrl, String baseFee,
                             String estimatedDays, boolean active) throws SQLException {
         ShippingCarrier s = new ShippingCarrier();
-        boolean isNew = isBlank(id);
+        boolean isNew = Texts.isBlank(id);
         s.setId(isNew ? UUID.randomUUID().toString() : id);
         s.setName(requireText(name, "Cần nhập tên đơn vị vận chuyển"));
-        s.setHotline(isBlank(hotline) ? null : hotline.trim());
-        s.setLogoUrl(isBlank(logoUrl) ? null : logoUrl.trim());
+        s.setHotline(Texts.isBlank(hotline) ? null : hotline.trim());
+        s.setLogoUrl(Texts.isBlank(logoUrl) ? null : logoUrl.trim());
         s.setBaseFee(parseNumber(baseFee, 0, 10_000_000, "Phí cơ bản không hợp lệ"));
         s.setEstimatedDays((int) parseNumber(estimatedDays, 1, 60, "Số ngày giao phải từ 1 đến 60"));
         s.setActive(active);
@@ -396,7 +397,7 @@ public class AdminService {
         t.setId(id);
         t.setMinEcoPoints((int) parseNumber(minEcoPoints, 0, 1_000_000, "Ngưỡng điểm không hợp lệ"));
         t.setDiscountRate(parseNumber(discountPercent, 0, 50, "Ưu đãi phải từ 0 đến 50%") / 100.0);
-        t.setBenefitNote(isBlank(benefitNote) ? null : benefitNote.trim());
+        t.setBenefitNote(Texts.isBlank(benefitNote) ? null : benefitNote.trim());
         inTransaction(c -> {
             if (!tierDAO.update(c, t)) {
                 throw new IllegalArgumentException("Không tìm thấy hạng thành viên");
@@ -467,12 +468,8 @@ public class AdminService {
         }
     }
 
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
-
     private static String requireText(String value, String message) {
-        if (isBlank(value)) {
+        if (Texts.isBlank(value)) {
             throw new IllegalArgumentException(message);
         }
         return value.trim();

@@ -10,6 +10,7 @@ import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.Customer;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.review.service.ReviewService;
+import org.example.cunguoimoita.common.util.Texts;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -32,9 +33,9 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        String fullName = trim(req.getParameter("fullName"));
-        String phone = trim(req.getParameter("phone"));
-        String payoutAccountRef = trim(req.getParameter("payoutAccountRef"));
+        String fullName = Texts.trimToEmpty(req.getParameter("fullName"));
+        String phone = Texts.trimToEmpty(req.getParameter("phone"));
+        String payoutAccountRef = Texts.trimToEmpty(req.getParameter("payoutAccountRef"));
         if (fullName.isBlank() || fullName.length() > 120 || !PHONE.matcher(phone).matches()
                 || payoutAccountRef.length() > 255) {
             req.setAttribute("profileError", "Vui lòng kiểm tra lại họ tên, số điện thoại và tài khoản nhận tiền.");
@@ -75,9 +76,5 @@ public class ProfileServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException("Không thể tải hồ sơ.", e);
         }
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
     }
 }

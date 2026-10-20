@@ -7,13 +7,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /** Theo dõi vận đơn; người bán (hoặc admin) xác nhận bàn giao và bấm các nút giả lập trạng thái. */
@@ -40,7 +39,7 @@ public class ShipmentTrackingServlet extends HttpServlet {
             // thông báo cũ còn trỏ về đây cũng được chuyển sang đó.
             if (userId.equals(order.buyerId()) && !CurrentUser.isAdmin(req)) {
                 resp.sendRedirect(req.getContextPath() + "/order/detail?id="
-                        + java.net.URLEncoder.encode(orderId, java.nio.charset.StandardCharsets.UTF_8));
+                        + FormUtil.encode(orderId));
                 return;
             }
             Shipment shipment = shippingService.findByOrder(orderId);
@@ -74,9 +73,9 @@ public class ShipmentTrackingServlet extends HttpServlet {
         }
         String orderId = req.getParameter("orderId");
         String action = req.getParameter("action");
-        String redirect = req.getContextPath() + "/shipping/track?orderId=" + encode(orderId);
+        String redirect = req.getContextPath() + "/shipping/track?orderId=" + FormUtil.encode(orderId);
         if ("handover".equals(action)) {
-            redirect = req.getContextPath() + "/order/detail?id=" + encode(orderId);
+            redirect = req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId);
         }
         try {
             shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), true);
@@ -86,7 +85,7 @@ public class ShipmentTrackingServlet extends HttpServlet {
                     ShippingService.Handover method = "pickup".equals(h) ? ShippingService.Handover.PICKUP
                             : "dropoff".equals(h) ? ShippingService.Handover.DROPOFF : null;
                     String where = shippingService.confirmHandover(orderId, userId, method, req.getParameter("addressId"));
-                    resp.sendRedirect(redirect + "&message=" + encode("Đã xác nhận giao hàng: " + where));
+                    resp.sendRedirect(redirect + "&message=" + FormUtil.encode("Đã xác nhận giao hàng: " + where));
                     return;
                 }
                 case "ship":
@@ -111,14 +110,10 @@ public class ShipmentTrackingServlet extends HttpServlet {
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
-            redirect += "&error=" + encode(e.getMessage());
+            redirect += "&error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
         resp.sendRedirect(redirect);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

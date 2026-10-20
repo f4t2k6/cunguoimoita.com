@@ -6,14 +6,13 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.payment.model.Payment;
 import org.example.cunguoimoita.payment.model.PaymentStatus;
 import org.example.cunguoimoita.payment.service.PaymentService;
 import org.example.cunguoimoita.payment.service.VNPayConfig;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public class PaymentCallbackServlet extends HttpServlet {
             req.setAttribute("payment", p);
             if ("/payment/sandbox".equals(req.getServletPath())) {
                 if (p.getStatus() != PaymentStatus.PENDING) {
-                    resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + encode(p.getId()));
+                    resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + FormUtil.encode(p.getId()));
                     return;
                 }
                 req.getRequestDispatcher("/WEB-INF/views/payment/sandbox.jsp").forward(req, resp);
@@ -73,7 +72,7 @@ public class PaymentCallbackServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException(e);
         }
-        resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + encode(paymentId));
+        resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + FormUtil.encode(paymentId));
     }
 
     /** Return URL của VNPay: chữ ký đúng + mã 00 + số tiền khớp → markPaid; còn lại → markFailed. */
@@ -113,9 +112,5 @@ public class PaymentCallbackServlet extends HttpServlet {
         req.setAttribute("payment", fresh);
         req.setAttribute("payStatus", fresh.getStatus().dbValue());
         req.getRequestDispatcher("/WEB-INF/views/payment/payment-result.jsp").forward(req, resp);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }
