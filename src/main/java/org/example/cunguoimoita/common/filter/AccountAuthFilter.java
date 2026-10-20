@@ -28,7 +28,7 @@ public class AccountAuthFilter implements Filter {
             // Nhớ trang đang mở để đăng nhập xong quay lại (giống LoginRequiredFilter)
             if ("GET".equals(req.getMethod())) {
                 String query = req.getQueryString();
-                req.getSession(true).setAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN,
+                req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN,
                         req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo())
                                 + (query == null ? "" : "?" + query));
             }
@@ -36,7 +36,7 @@ public class AccountAuthFilter implements Filter {
             return;
         }
         HttpSession session = req.getSession(false);
-        if (!"customer".equals(session.getAttribute("userRole"))) {
+        if (!"customer".equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

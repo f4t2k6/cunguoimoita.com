@@ -42,7 +42,6 @@ public class LoginRequiredFilter implements Filter {
             "/assets/", "/oauth/", "/media/", "/uploads/", "/product-image/", "/avatar/"};
 
     /** Session lưu trang người dùng định mở trước khi bị chuyển sang đăng nhập. */
-    public static final String REDIRECT_AFTER_LOGIN = "redirectAfterLogin";
 
     /** Request attribute: trang khách đang xem (path + query), header.jsp gắn vào link Đăng nhập / Đăng ký. */
     public static final String LOGIN_NEXT = "loginNext";
@@ -71,7 +70,7 @@ public class LoginRequiredFilter implements Filter {
             // Link Đăng nhập / Đăng ký mang ?next=trang đang xem → đăng nhập xong quay về trang đó
             String next = req.getParameter("next");
             if (isGet && isSafeLocal(next)) {
-                req.getSession(true).setAttribute(REDIRECT_AFTER_LOGIN, next);
+                req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN, next);
             }
             chain.doFilter(request, response);
             return;
@@ -108,7 +107,7 @@ public class LoginRequiredFilter implements Filter {
             wanted = refererPath(req);
         }
         if (isSafeLocal(wanted)) {
-            req.getSession(true).setAttribute(REDIRECT_AFTER_LOGIN, wanted);
+            req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN, wanted);
         }
         resp.sendRedirect(loginUrl);
     }

@@ -45,7 +45,7 @@ public final class FormUtil {
     public static boolean isCustomer(HttpServletRequest req) {
         var session = req.getSession(false);
         return session != null && session.getAttribute(CurrentUser.SESSION_KEY) != null
-                && "customer".equals(session.getAttribute("userRole"));
+                && "customer".equals(session.getAttribute(CurrentUser.ROLE_KEY));
     }
 
     /** Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/" để không bị lợi dụng chuyển hướng sang trang lạ. */

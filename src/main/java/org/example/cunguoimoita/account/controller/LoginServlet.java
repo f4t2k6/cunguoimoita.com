@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.User;
 import org.example.cunguoimoita.account.service.LoginAttemptLimiter;
-import org.example.cunguoimoita.common.filter.LoginRequiredFilter;
+import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.model.AccountStatus;
 import org.example.cunguoimoita.common.model.UserRole;
 import org.example.cunguoimoita.common.util.PasswordUtil;
@@ -70,23 +70,9 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            HttpSession session = req.getSession(true);
-            Object wanted = session.getAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
-            session.removeAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
-            req.changeSessionId();
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("userRole", user.getRole().databaseValue());
-            session.setAttribute("fullName", user.getFullName());
-            session.setAttribute("avatarPath", user.getAvatarPath());
-            if (user.getRole() == UserRole.ADMIN) {
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
-            } else if (wanted instanceof String && ((String) wanted).startsWith("/")
-                    && !((String) wanted).startsWith("//")) {
-                // Quay lại trang đã định mở trước khi bị yêu cầu đăng nhập
-                resp.sendRedirect(req.getContextPath() + wanted);
-            } else {
-                resp.sendRedirect(req.getContextPath() + "/home");
-            }
+            String wanted = CurrentUser.logIn(req, user.getId(), user.getRole().databaseValue(),
+                    user.getFullName(), user.getAvatarPath());
+            CurrentUser.redirectAfterLogin(req, resp, user.getRole() == UserRole.ADMIN, wanted);
         } catch (SQLException e) {
             throw new ServletException("Không thể đăng nhập lúc này.", e);
         }

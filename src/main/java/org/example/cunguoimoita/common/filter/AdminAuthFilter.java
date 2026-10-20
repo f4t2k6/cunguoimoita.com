@@ -29,7 +29,7 @@ public class AdminAuthFilter implements Filter {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        if (!"admin".equals(session.getAttribute("userRole"))) {
+        if (!"admin".equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

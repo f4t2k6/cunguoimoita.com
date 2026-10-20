@@ -39,14 +39,14 @@ public class AvatarServlet extends HttpServlet {
                 return;
             }
 
-            String oldAvatar = (String) req.getSession().getAttribute("avatarPath");
+            String oldAvatar = (String) req.getSession().getAttribute(CurrentUser.AVATAR_KEY);
             if (!userDAO.updateAvatarPath(CurrentUser.id(req), avatarUrl)) {
                 mediaStore.delete(avatarUrl);
                 redirect(resp, req, "saveFailed");
                 return;
             }
             mediaStore.delete(oldAvatar);   // bỏ ảnh đại diện cũ trong bảng media (đường dẫn kiểu cũ thì bị bỏ qua)
-            req.getSession().setAttribute("avatarPath", avatarUrl);
+            req.getSession().setAttribute(CurrentUser.AVATAR_KEY, avatarUrl);
             resp.sendRedirect(req.getContextPath() + "/account/profile?avatar=updated");
         } catch (java.sql.SQLException e) {
             throw new ServletException("Không thể lưu ảnh đại diện.", e);

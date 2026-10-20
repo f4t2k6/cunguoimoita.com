@@ -50,7 +50,7 @@ public class ProfileServlet extends HttpServlet {
                 loadProfile(req, resp);
                 return;
             }
-            req.getSession().setAttribute("fullName", fullName);
+            req.getSession().setAttribute(CurrentUser.NAME_KEY, fullName);
             resp.sendRedirect(req.getContextPath() + "/account/profile?saved=1");
         } catch (SQLException e) {
             throw new ServletException("Không thể lưu hồ sơ.", e);
