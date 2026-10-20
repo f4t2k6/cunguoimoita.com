@@ -9,6 +9,7 @@ import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.product.model.Product;
 import org.example.cunguoimoita.product.service.ProductService;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -28,8 +29,9 @@ public class MyProductsServlet extends HttpServlet {
         TABS.put("all", p -> true);
         TABS.put("pending", Product::isPending);
         TABS.put("selling", Product::isListed);
-        TABS.put("paused", p -> p.isPaused() || "hidden".equals(p.getStateCode()));
-        TABS.put("done", p -> "sold".equals(p.getStateCode()) || "exchanged".equals(p.getStateCode()));
+        TABS.put("paused", p -> p.isPaused() || ProductStatus.HIDDEN.getCode().equals(p.getStateCode()));
+        TABS.put("done", p -> ProductStatus.SOLD.getCode().equals(p.getStateCode())
+                || ProductStatus.EXCHANGED.getCode().equals(p.getStateCode()));
         TABS.put("rejected", p -> "rejected".equals(p.getStateCode()));
     }
 

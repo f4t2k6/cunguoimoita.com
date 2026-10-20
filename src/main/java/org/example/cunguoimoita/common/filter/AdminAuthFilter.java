@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.model.UserRole;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -29,7 +30,7 @@ public class AdminAuthFilter implements Filter {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        if (!"admin".equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
+        if (!UserRole.ADMIN.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

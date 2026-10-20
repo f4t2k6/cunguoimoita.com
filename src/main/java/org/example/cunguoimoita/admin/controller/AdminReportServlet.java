@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.admin.model.Report;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,7 +17,7 @@ public class AdminReportServlet extends AdminBaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String status = req.getParameter("status");
         if (status == null || !status.matches("pending|resolved|rejected|all")) {
-            status = "pending";
+            status = Report.PENDING;
         }
         try {
             req.setAttribute("reports", adminService.reports(status));

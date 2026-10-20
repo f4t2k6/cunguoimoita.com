@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.model.UserRole;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -36,7 +37,7 @@ public class AccountAuthFilter implements Filter {
             return;
         }
         HttpSession session = req.getSession(false);
-        if (!"customer".equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
+        if (!UserRole.CUSTOMER.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

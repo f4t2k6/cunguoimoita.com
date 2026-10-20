@@ -24,6 +24,7 @@ import org.example.cunguoimoita.shipping.service.ShippingService;
 import org.example.cunguoimoita.common.util.Texts;
 import org.example.cunguoimoita.product.dao.ProductDAO;
 import org.example.cunguoimoita.product.model.ProductStatus;
+import org.example.cunguoimoita.common.model.AccountStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -77,7 +78,7 @@ public class AdminService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return new Overview(dashboardDAO.orderStatusCounts(c),
                     adminProductDAO.find(c, "pending", null, limit),
-                    reportDAO.find(c, "pending", limit));
+                    reportDAO.find(c, Report.PENDING, limit));
         }
     }
 
@@ -166,7 +167,7 @@ public class AdminService {
             if (!u.isBanned()) {
                 throw new IllegalStateException("Tài khoản này đang hoạt động");
             }
-            userDAO.updateStatus(c, userId, "active");
+            userDAO.updateStatus(c, userId, AccountStatus.ACTIVE);
             notices.add(new Notice(userId, NotificationType.SYSTEM,
                     "Tài khoản của bạn đã được mở khoá. Các bài bị ẩn khi khoá cần đăng lại hoặc liên hệ admin.", null));
             return null;
@@ -182,13 +183,13 @@ public class AdminService {
         if (u.isBanned()) {
             throw new IllegalStateException("Tài khoản này đã bị khoá");
         }
-        userDAO.updateStatus(c, userId, "banned");
+        userDAO.updateStatus(c, userId, AccountStatus.BANNED);
         adminProductDAO.hideAvailableOfSeller(c, userId);
     }
 
     public List<Report> reports(String status) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return reportDAO.find(c, status == null ? "pending" : status);
+            return reportDAO.find(c, status == null ? Report.PENDING : status);
         }
     }
 
@@ -280,7 +281,7 @@ public class AdminService {
                 default:
                     throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            reportDAO.close(c, reportId, "resolved", adminId);
+            reportDAO.close(c, reportId, Report.RESOLVED, adminId);
             notices.add(new Notice(r.getReporterId(), NotificationType.SYSTEM,
                     "Báo cáo về \"" + nameOf(r) + "\" đã được xử lý: " + result + ". Cảm ơn bạn!", null));
             return null;
@@ -293,7 +294,7 @@ public class AdminService {
         List<Notice> notices = new ArrayList<>();
         inTransaction(c -> {
             Report r = requirePendingReport(c, reportId);
-            reportDAO.close(c, reportId, "rejected", adminId);
+            reportDAO.close(c, reportId, Report.REJECTED, adminId);
             notices.add(new Notice(r.getReporterId(), NotificationType.SYSTEM,
                     "Báo cáo về \"" + nameOf(r) + "\" đã được xem xét: chưa thấy vi phạm.", null));
             return null;

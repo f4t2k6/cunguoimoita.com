@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.admin.dao;
 
 import org.example.cunguoimoita.admin.model.AdminUserRow;
+import org.example.cunguoimoita.common.model.AccountStatus;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -63,9 +64,9 @@ public class AdminUserDAO {
     }
 
     /** User.banUser() / mở khoá: status = banned | active. */
-    public void updateStatus(Connection c, String userId, String status) throws SQLException {
+    public void updateStatus(Connection c, String userId, AccountStatus status) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("UPDATE users SET status = ? WHERE id = ?")) {
-            ps.setString(1, status);
+            ps.setString(1, status.databaseValue());
             ps.setString(2, userId);
             ps.executeUpdate();
         }

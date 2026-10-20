@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.common.util;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.example.cunguoimoita.common.model.UserRole;
 
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -45,7 +46,7 @@ public final class FormUtil {
     public static boolean isCustomer(HttpServletRequest req) {
         var session = req.getSession(false);
         return session != null && session.getAttribute(CurrentUser.SESSION_KEY) != null
-                && "customer".equals(session.getAttribute(CurrentUser.ROLE_KEY));
+                && UserRole.CUSTOMER.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY));
     }
 
     /** Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/" để không bị lợi dụng chuyển hướng sang trang lạ. */

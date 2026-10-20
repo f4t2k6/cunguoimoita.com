@@ -3,6 +3,7 @@ package org.example.cunguoimoita.common.util;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.example.cunguoimoita.common.model.UserRole;
 
 import java.io.IOException;
 
@@ -31,7 +32,7 @@ public final class CurrentUser {
     /** true nếu người đang đăng nhập là admin (LoginServlet lưu userRole vào session). */
     public static boolean isAdmin(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        return session != null && "admin".equals(session.getAttribute(ROLE_KEY));
+        return session != null && UserRole.ADMIN.databaseValue().equals(session.getAttribute(ROLE_KEY));
     }
 
     /** Chuyển tới trang đăng nhập (dùng cho trang HTML khi chưa đăng nhập). */
