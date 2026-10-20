@@ -119,6 +119,11 @@ public class Order {
         this.discountAmount= Math.min(voucher.getDiscountValue(), subTotal); // giảm không quá tiền hàng
         calculateTotal();
     }
+    /** Thanh toán online thành công (Payment.markPaid). */
+    public void markPaid() {
+        moveTo(Status.PAID);
+    }
+
     // Người bán đã gửi hàng
     public void confirmShipped() {
         moveTo(Status.SHIPPING);

@@ -114,7 +114,7 @@ public class PaymentService {
                     return false;
                 }
                 paymentDAO.updateStatus(c, paymentId, PaymentStatus.PAID, gatewayTxnId);
-                order.setStatus(Order.Status.PAID);
+                order.markPaid();
                 orderDAO.update(c, order);
                 shippingService.assignTrackingCode(c, order.getId());   // người bán chỉ còn xác nhận bàn giao
                 c.commit();
