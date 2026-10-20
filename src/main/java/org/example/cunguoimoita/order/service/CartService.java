@@ -1,12 +1,12 @@
 package org.example.cunguoimoita.order.service;
 
-import org.example.cunguoimoita.common.dao.ProductRefDAO;
-import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
+import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.order.dao.CartDAO;
 import org.example.cunguoimoita.order.dao.CartDAO.CartLine;
 import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.CartItem;
+import org.example.cunguoimoita.product.dao.ProductDAO;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ import java.util.List;
 public class CartService {
 
     private final CartDAO cartDAO = new CartDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final ProductDAO productDAO = new ProductDAO();
 
     // Danh sách món trong giỏ để hiển thị (kèm tên, giá, người bán).
     public List<CartLine> getLines(String userId) throws SQLException {
@@ -28,7 +28,7 @@ public class CartService {
 
     public void addToCart(String userId, String productId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            ProductRef product = productDAO.find(c, productId);
+            ProductRef product = productDAO.findRef(c, productId);
             if (product == null) {
                 throw new IllegalArgumentException("Sản phẩm không tồn tại");
             }

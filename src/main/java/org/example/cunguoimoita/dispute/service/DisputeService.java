@@ -1,6 +1,5 @@
 package org.example.cunguoimoita.dispute.service;
 
-import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.dao.DisputeDAO;
 import org.example.cunguoimoita.dispute.model.Dispute;
@@ -18,6 +17,8 @@ import org.example.cunguoimoita.order.service.OrderService;
 import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -33,7 +34,7 @@ public class DisputeService {
 
     private final DisputeDAO disputeDAO = new DisputeDAO();
     private final OrderDAO orderDAO = new OrderDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final ProductDAO productDAO = new ProductDAO();
     private final OrderService orderService = new OrderService();
     private final ShippingService shippingService = new ShippingService();
     private final RefundService refundService = new RefundService();
@@ -133,7 +134,7 @@ public class DisputeService {
             order.setStatus(requireRefundable(order));
             orderDAO.update(c, order);
             for (OrderItem item : order.getItems()) {
-                productDAO.updateStatus(c, item.getProductId(), "hidden");
+                productDAO.updateStatus(c, item.getProductId(), ProductStatus.HIDDEN);
             }
             Shipment s = shippingService.findByOrder(c, order.getId());
             boolean codPaid = s != null && (s.getCodStatus() == CodStatus.COLLECTED || s.getCodStatus() == CodStatus.REMITTED);

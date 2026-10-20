@@ -98,14 +98,6 @@ public class AdminProductDAO {
         }
     }
 
-    public void updateStatus(Connection c, String productId, String status) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("UPDATE products SET status = ? WHERE id = ?")) {
-            ps.setString(1, status);
-            ps.setString(2, productId);
-            ps.executeUpdate();
-        }
-    }
-
     /** Ẩn mọi bài đang bán của một người (khi khoá tài khoản). @return số bài bị ẩn */
     public int hideAvailableOfSeller(Connection c, String sellerId) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(

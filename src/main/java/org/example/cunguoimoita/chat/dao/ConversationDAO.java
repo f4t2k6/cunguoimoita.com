@@ -3,6 +3,7 @@ package org.example.cunguoimoita.chat.dao;
 import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.ConversationStatus;
 import org.example.cunguoimoita.product.model.ProductCondition;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -122,7 +123,7 @@ public class ConversationDAO {
         }
         conv.setProductCondition(ProductCondition.fromCode(rs.getString("product_condition")));
         // "Mua ngay" trong khung chat: món còn bán (chưa có người đặt / chưa bán) và bài có bán lấy tiền
-        conv.setProductBuyable("available".equals(rs.getString("product_status"))
+        conv.setProductBuyable(ProductStatus.AVAILABLE.getCode().equals(rs.getString("product_status"))
                 && !"swap".equals(rs.getString("product_listing_type")));
         return conv;
     }

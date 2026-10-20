@@ -2,8 +2,9 @@ package org.example.cunguoimoita.shipping.service;
 
 import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.account.model.Address;
-import org.example.cunguoimoita.common.dao.OrderRefDAO;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
+import org.example.cunguoimoita.order.dao.OrderDAO;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderRef;
+import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
@@ -35,7 +36,7 @@ public class ShippingService {
 
     private final ShippingCarrierDAO carrierDAO = new ShippingCarrierDAO();
     private final ShipmentDAO shipmentDAO = new ShipmentDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
     private final NotificationService notificationService = new NotificationService();
     private final AddressDAO addressDAO = new AddressDAO();
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -210,8 +211,8 @@ public class ShippingService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             OrderRef order = requireOrder(c, orderId);
             Shipment s = shipmentDAO.findByOrderId(c, orderId);
-            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
-            if (!"paid".equals(order.status()) && !codConfirmed) {
+            boolean codConfirmed = order.status() == Order.Status.NEW && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (order.status() != Order.Status.PAID && !codConfirmed) {
                 throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa giao hàng được");
             }
         }
@@ -242,8 +243,8 @@ public class ShippingService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             OrderRef order = requireOrder(c, orderId);
             Shipment s = shipmentDAO.findByOrderId(c, orderId);
-            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
-            if (!"paid".equals(order.status()) && !codConfirmed) {
+            boolean codConfirmed = order.status() == Order.Status.NEW && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (order.status() != Order.Status.PAID && !codConfirmed) {
                 throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa gửi hàng được");
             }
         }
@@ -306,17 +307,19 @@ public class ShippingService {
      * @return đơn hàng để báo người mua, null nếu không tìm thấy
      */
     private OrderRef syncOrder(Connection c, Shipment s) throws SQLException {
-        OrderRef order = orderDAO.find(c, s.getOrderId());
+        OrderRef order = orderDAO.findRef(c, s.getOrderId());
         if (order == null) {
             return null;
         }
         switch (s.getStatus()) {
             case PICKED_UP:
             case IN_TRANSIT:
-                orderDAO.updateStatus(c, order.id(), "shipping", "new", "awaiting_payment", "paid");
+                orderDAO.updateStatusIfIn(c, order.id(), Order.Status.SHIPPING,
+                        Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID);
                 break;
             case DELIVERED:
-                orderDAO.updateStatus(c, order.id(), "delivered", "new", "awaiting_payment", "paid", "shipping");
+                orderDAO.updateStatusIfIn(c, order.id(), Order.Status.DELIVERED,
+                        Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID, Order.Status.SHIPPING);
                 break;
             default:
                 break;
@@ -334,7 +337,7 @@ public class ShippingService {
     }
 
     private OrderRef requireOrder(Connection c, String orderId) throws SQLException {
-        OrderRef order = orderId == null ? null : orderDAO.find(c, orderId);
+        OrderRef order = orderId == null ? null : orderDAO.findRef(c, orderId);
         if (order == null) {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng " + orderId);
         }

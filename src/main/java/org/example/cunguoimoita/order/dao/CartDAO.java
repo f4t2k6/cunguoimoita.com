@@ -1,5 +1,6 @@
 package org.example.cunguoimoita.order.dao;
 
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.order.model.Cart;
 import org.example.cunguoimoita.order.model.CartItem;
 
@@ -20,7 +21,7 @@ public class CartDAO {
                            String sellerId, String sellerName, String productStatus, String coverImage) {
         // Còn mua được (chưa có người đặt / chưa bán) → trang giỏ cho tick chọn
         public boolean available() {
-            return "available".equals(productStatus);
+            return ProductStatus.AVAILABLE.getCode().equals(productStatus);
         }
     }
 

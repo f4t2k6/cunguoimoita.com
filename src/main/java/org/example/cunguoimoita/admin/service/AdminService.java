@@ -22,6 +22,8 @@ import org.example.cunguoimoita.shipping.dao.ShippingCarrierDAO;
 import org.example.cunguoimoita.shipping.model.ShippingCarrier;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 import org.example.cunguoimoita.common.util.Texts;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -37,7 +39,8 @@ public class AdminService {
     private static final List<String> TIER_ORDER = List.of("Bronze", "Silver", "Gold", "Diamond");
 
     private final DashboardDAO dashboardDAO = new DashboardDAO();
-    private final AdminProductDAO productDAO = new AdminProductDAO();
+    private final AdminProductDAO adminProductDAO = new AdminProductDAO();
+    private final ProductDAO productDAO = new ProductDAO();
     private final AdminUserDAO userDAO = new AdminUserDAO();
     private final ReportDAO reportDAO = new ReportDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
@@ -73,14 +76,14 @@ public class AdminService {
     public Overview overview(int limit) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return new Overview(dashboardDAO.orderStatusCounts(c),
-                    productDAO.find(c, "pending", null, limit),
+                    adminProductDAO.find(c, "pending", null, limit),
                     reportDAO.find(c, "pending", limit));
         }
     }
 
     public List<AdminProductRow> products(String filter, String keyword) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return productDAO.find(c, filter == null ? "pending" : filter, keyword);
+            return adminProductDAO.find(c, filter == null ? "pending" : filter, keyword);
         }
     }
 
@@ -92,7 +95,7 @@ public class AdminService {
             if (!p.isPending()) {
                 throw new IllegalStateException("Bài này không ở trạng thái chờ duyệt");
             }
-            productDAO.approve(c, productId, adminId);
+            adminProductDAO.approve(c, productId, adminId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                     "Bài \"" + p.name() + "\" đã được duyệt và hiện trên bảng tin", "/product?id=" + productId));
             return null;
@@ -109,7 +112,7 @@ public class AdminService {
             if (!p.isPending()) {
                 throw new IllegalStateException("Bài này không ở trạng thái chờ duyệt");
             }
-            productDAO.reject(c, productId);
+            adminProductDAO.reject(c, productId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                     "Bài \"" + p.name() + "\" bị từ chối: " + why, "/product/mine?tab=rejected"));
             return null;
@@ -126,14 +129,14 @@ public class AdminService {
                 if (p.isHidden()) {
                     throw new IllegalStateException("Bài này đang ẩn rồi");
                 }
-                productDAO.updateStatus(c, productId, "hidden");
+                productDAO.updateStatus(c, productId, ProductStatus.HIDDEN);
                 notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM, "Bài \"" + p.name()
                         + "\" đã bị ẩn" + (Texts.isBlank(reason) ? "" : ": " + reason.trim()), null));
             } else {
                 if (!p.isHidden() || p.isPending() || p.isRejected()) {
                     throw new IllegalStateException("Chỉ hiện lại được bài đã duyệt đang bị ẩn");
                 }
-                productDAO.updateStatus(c, productId, "available");
+                productDAO.updateStatus(c, productId, ProductStatus.AVAILABLE);
                 notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                         "Bài \"" + p.name() + "\" đã được hiện lại", "/home"));
             }
@@ -180,7 +183,7 @@ public class AdminService {
             throw new IllegalStateException("Tài khoản này đã bị khoá");
         }
         userDAO.updateStatus(c, userId, "banned");
-        productDAO.hideAvailableOfSeller(c, userId);
+        adminProductDAO.hideAvailableOfSeller(c, userId);
     }
 
     public List<Report> reports(String status) throws SQLException {
@@ -234,7 +237,7 @@ public class AdminService {
     public String reportTargetName(String targetType, String targetId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             if ("product".equals(targetType)) {
-                AdminProductRow p = productDAO.findById(c, targetId);
+                AdminProductRow p = adminProductDAO.findById(c, targetId);
                 return p == null ? null : p.name();
             }
             AdminUserRow u = "user".equals(targetType) ? userDAO.findById(c, targetId) : null;
@@ -255,7 +258,7 @@ public class AdminService {
                     }
                     AdminProductRow p = requireProduct(c, r.getTargetId());
                     if (!p.isHidden()) {
-                        productDAO.updateStatus(c, p.id(), "hidden");
+                        productDAO.updateStatus(c, p.id(), ProductStatus.HIDDEN);
                         notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                                 "Bài \"" + p.name() + "\" đã bị ẩn do vi phạm: " + r.getReason().getLabel(), null));
                     }
@@ -419,7 +422,7 @@ public class AdminService {
     }
 
     private AdminProductRow requireProduct(Connection c, String productId) throws SQLException {
-        AdminProductRow p = productId == null ? null : productDAO.findById(c, productId);
+        AdminProductRow p = productId == null ? null : adminProductDAO.findById(c, productId);
         if (p == null) {
             throw new IllegalArgumentException("Không tìm thấy bài đăng");
         }
@@ -451,7 +454,7 @@ public class AdminService {
             return null;
         }
         if ("product".equals(targetType)) {
-            AdminProductRow p = productDAO.findById(c, targetId);
+            AdminProductRow p = adminProductDAO.findById(c, targetId);
             return p == null ? null : p.sellerId();
         }
         AdminUserRow u = userDAO.findById(c, targetId);

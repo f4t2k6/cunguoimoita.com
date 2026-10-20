@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,15 @@ import java.util.UUID;
 public class OrderDAO {
 
     // Lưu đơn mới kèm toàn bộ món (Order ◆── OrderItem: lưu đơn là lưu luôn món).
+    /** Vài cột của đơn cho vận chuyển, kèm thành phố gửi (địa chỉ mặc định người bán) và thành phố nhận. */
+    public record OrderRef(String id, String code, String buyerId, String sellerId, Order.Status status,
+                           String fromCity, String toCity) {
+    }
+
+    /** Id và mã đơn, để gắn nút "Xem đơn" trong chat. */
+    public record OrderLink(String id, String code) {
+    }
+
     public void insert(Connection c, Order o) throws SQLException {
         String sql = "INSERT INTO orders (id, code, buyer_id, seller_id, shipping_address_id, voucher_id, offer_id,"
                 + " payment_method, sub_total, shipping_fee, discount_amount, total_amount, status, order_date)"
@@ -89,6 +99,57 @@ public class OrderDAO {
             ps.setObject(9, o.getCompletedDate());
             ps.setString(10, o.getId());
             ps.executeUpdate();
+        }
+    }
+
+    public OrderRef findRef(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT o.id, o.code, o.buyer_id, o.seller_id, o.status, sa.city AS from_city, ta.city AS to_city"
+                + " FROM orders o"
+                + " JOIN addresses ta ON ta.id = o.shipping_address_id"
+                + " LEFT JOIN addresses sa ON sa.customer_id = o.seller_id AND sa.is_default"
+                + " WHERE o.id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return new OrderRef(rs.getString("id"), rs.getString("code"), rs.getString("buyer_id"),
+                        rs.getString("seller_id"), Order.Status.valueOf(rs.getString("status").toUpperCase()),
+                        rs.getString("from_city"), rs.getString("to_city"));
+            }
+        }
+    }
+
+    /** Đơn tạo từ các offer của một cuộc trò chuyện, theo id offer. */
+    public Map<String, OrderLink> findByConversationOffers(Connection c, String conversationId) throws SQLException {
+        String sql = "SELECT o.offer_id, o.id, o.code FROM orders o"
+                + " JOIN price_offers po ON po.id = o.offer_id"
+                + " WHERE po.conversation_id = ?";
+        Map<String, OrderLink> orders = new HashMap<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, conversationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    orders.put(rs.getString("offer_id"), new OrderLink(rs.getString("id"), rs.getString("code")));
+                }
+            }
+        }
+        return orders;
+    }
+
+    /** Đổi trạng thái đơn chỉ khi đơn đang ở một trong các trạng thái from. @return true nếu có đổi */
+    public boolean updateStatusIfIn(Connection c, String orderId, Order.Status newStatus, Order.Status... from)
+            throws SQLException {
+        String[] codes = new String[from.length];
+        for (int i = 0; i < from.length; i++) {
+            codes[i] = from[i].name().toLowerCase();
+        }
+        try (PreparedStatement ps = c.prepareStatement("UPDATE orders SET status = ? WHERE id = ? AND status = ANY (?)")) {
+            ps.setString(1, newStatus.name().toLowerCase());
+            ps.setString(2, orderId);
+            ps.setArray(3, c.createArrayOf("varchar", codes));
+            return ps.executeUpdate() > 0;
         }
     }
 

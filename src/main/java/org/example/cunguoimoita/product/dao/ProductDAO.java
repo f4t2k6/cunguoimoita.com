@@ -34,6 +34,45 @@ public class ProductDAO {
             + " LEFT JOIN categories pc ON pc.id = cg.parent_category_id";
 
 
+    /** Vài cột của bài đăng cho giỏ hàng, đơn hàng và chat. */
+    public record ProductRef(String id, String sellerId, String name, ProductStatus status) {
+        public boolean isAvailable() {
+            return status == ProductStatus.AVAILABLE;
+        }
+
+        /** Còn hiện trên sàn để người khác hỏi mua. */
+        public boolean isOpenForChat() {
+            return status == ProductStatus.AVAILABLE || status == ProductStatus.RESERVED;
+        }
+    }
+
+    /** Tên và ảnh bìa của món để hiện trong trang đơn hàng. */
+    public record ProductCard(String id, String name, String coverImage) {
+    }
+
+    public ProductRef findRef(Connection c, String productId) throws SQLException {
+        return queryRef(c, "SELECT id, seller_id, name, status FROM products WHERE id = ?", productId);
+    }
+
+    /** Khoá dòng sản phẩm tới hết transaction để 2 người không cùng chốt 1 món. */
+    public ProductRef findRefForUpdate(Connection c, String productId) throws SQLException {
+        return queryRef(c, "SELECT id, seller_id, name, status FROM products WHERE id = ? FOR UPDATE", productId);
+    }
+
+    public ProductCard findCard(Connection c, String productId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement("SELECT id, name, images FROM products WHERE id = ?")) {
+            ps.setString(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return new ProductCard(productId, productId, null);
+                }
+                String images = rs.getString("images");
+                String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
+                return new ProductCard(rs.getString("id"), rs.getString("name"), cover);
+            }
+        }
+    }
+
     public Product findById(Connection c, String id) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(SELECT + " WHERE p.id = ?")) {
             ps.setString(1, id);
@@ -320,5 +359,18 @@ public class ProductDAO {
         p.setParentCategoryId(rs.getString("parent_category_id"));
         p.setParentCategoryName(rs.getString("parent_category_name"));
         return p;
+    }
+
+    private ProductRef queryRef(Connection c, String sql, String productId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return new ProductRef(rs.getString("id"), rs.getString("seller_id"),
+                        rs.getString("name"), ProductStatus.fromCode(rs.getString("status")));
+            }
+        }
     }
 }

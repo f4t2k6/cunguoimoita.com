@@ -8,16 +8,17 @@ import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.MessageType;
 import org.example.cunguoimoita.chat.model.OfferStatus;
 import org.example.cunguoimoita.chat.model.PriceOffer;
-import org.example.cunguoimoita.common.dao.OrderRefDAO;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
-import org.example.cunguoimoita.common.dao.ProductRefDAO;
-import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
+import org.example.cunguoimoita.order.dao.OrderDAO;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderLink;
+import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.common.util.MediaStore;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,8 +39,8 @@ public class ChatService {
     private final ConversationDAO conversationDAO = new ConversationDAO();
     private final MessageDAO messageDAO = new MessageDAO();
     private final PriceOfferDAO offerDAO = new PriceOfferDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final ProductDAO productDAO = new ProductDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
     private final OrderService orderService = new OrderService();
     private final NotificationService notificationService = new NotificationService();
 
@@ -48,13 +49,13 @@ public class ChatService {
     }
 
     /** offers để chat.js cập nhật các khung giá cũ; orders để hiện nút "Xem đơn" theo id offer. */
-    public record ChatUpdate(List<Message> messages, List<PriceOffer> offers, Map<String, NewOrder> orders) {
+    public record ChatUpdate(List<Message> messages, List<PriceOffer> offers, Map<String, OrderLink> orders) {
     }
 
     /** + start(): tạo hoặc mở lại cuộc trò chuyện giữa người hỏi và người bán (lấy từ bài đăng) cho một bài. */
     public Conversation start(String productId, String askerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            ProductRef product = productDAO.find(c, productId);
+            ProductRef product = productDAO.findRef(c, productId);
             if (product == null || !product.isOpenForChat()) {
                 throw new IllegalArgumentException("Bài đăng không tồn tại hoặc đã ngừng bán");
             }
@@ -115,7 +116,7 @@ public class ChatService {
                 messageDAO.markAllRead(c, conversationId, userId);
             }
             // Chỉ hỏi bảng orders khi đã có offer được chấp nhận
-            Map<String, NewOrder> orders = offers.stream().anyMatch(o -> o.getStatus() == OfferStatus.ACCEPTED)
+            Map<String, OrderLink> orders = offers.stream().anyMatch(o -> o.getStatus() == OfferStatus.ACCEPTED)
                     ? orderDAO.findByConversationOffers(c, conversationId)
                     : Map.of();
             return new ChatUpdate(messages, offers, orders);
@@ -178,7 +179,7 @@ public class ChatService {
             PriceOffer offer = requireOffer(c, offerId);
             Conversation conv = requireParticipant(c, offer.getConversationId(), userId);
             requireOpen(conv);
-            ProductRef product = productDAO.findForUpdate(c, conv.getProductId());
+            ProductRef product = productDAO.findRefForUpdate(c, conv.getProductId());
             if (product == null || !product.isAvailable()) {
                 throw new IllegalStateException("Món này đã được chốt với người khác hoặc đã ngừng bán");
             }
@@ -188,11 +189,11 @@ public class ChatService {
                 other.autoDecline();
                 offerDAO.updateStatus(c, other);
             }
-            productDAO.updateStatus(c, product.id(), "reserved");
+            productDAO.updateStatus(c, product.id(), ProductStatus.RESERVED);
             // tạo đơn qua OrderService để dùng chung luật với đơn từ giỏ hàng
             Order created = orderService.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
                     product.id(), offer.getAmount());
-            NewOrder order = new NewOrder(created.getId(), created.getCode());
+            OrderLink order = new OrderLink(created.getId(), created.getCode());
             insertMessage(c, conv.getId(), userId, MessageType.TEXT,
                     "Đã chấp nhận giá " + money(offer.getAmount()) + ". Đơn " + order.code() + " đã được tạo.");
             convHolder[0] = conv;
@@ -279,7 +280,7 @@ public class ChatService {
 
     /** Chỉ trả giá được khi món còn available (chưa ai chốt). */
     private void requireAvailable(Connection c, Conversation conv) throws SQLException {
-        ProductRef product = productDAO.find(c, conv.getProductId());
+        ProductRef product = productDAO.findRef(c, conv.getProductId());
         if (product == null || !product.isAvailable()) {
             throw new IllegalStateException("Món này đã được chốt với người khác hoặc đã ngừng bán");
         }

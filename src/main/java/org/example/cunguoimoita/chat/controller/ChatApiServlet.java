@@ -11,7 +11,7 @@ import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.chat.service.ChatService;
 import org.example.cunguoimoita.chat.service.ChatService.ChatUpdate;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderLink;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.JsonUtil;
 import org.example.cunguoimoita.common.util.MediaStore;
@@ -178,7 +178,7 @@ public class ChatApiServlet extends HttpServlet {
         return t.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
-    private static void appendMessage(StringBuilder json, Message m, String userId, Map<String, NewOrder> orders) {
+    private static void appendMessage(StringBuilder json, Message m, String userId, Map<String, OrderLink> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(m.getId()))
             .append(",\"mine\":").append(userId.equals(m.getSenderId()))
             .append(",\"type\":").append(JsonUtil.quote(m.getType().dbValue()))
@@ -194,13 +194,13 @@ public class ChatApiServlet extends HttpServlet {
     }
 
     /** Offer đã chấp nhận thì kèm orderId/orderCode của đơn vừa tạo (chat.js hiện nút "Xem đơn"). */
-    private static void appendOffer(StringBuilder json, PriceOffer o, String userId, Map<String, NewOrder> orders) {
+    private static void appendOffer(StringBuilder json, PriceOffer o, String userId, Map<String, OrderLink> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(o.getId()))
             .append(",\"amount\":").append(o.getAmount())
             .append(",\"status\":").append(JsonUtil.quote(o.getStatus().dbValue()))
             .append(",\"canRespond\":").append(o.isPending() && !userId.equals(o.getProposerId()))
             .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()));
-        NewOrder order = orders.get(o.getId());
+        OrderLink order = orders.get(o.getId());
         if (order != null) {
             json.append(",\"orderId\":").append(JsonUtil.quote(order.id()))
                 .append(",\"orderCode\":").append(JsonUtil.quote(order.code()));

@@ -5,7 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderRef;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.shipping.model.Shipment;

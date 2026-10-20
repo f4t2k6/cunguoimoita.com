@@ -2,8 +2,7 @@ package org.example.cunguoimoita.order.service;
 
 import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.account.model.Address;
-import org.example.cunguoimoita.common.dao.ProductRefDAO;
-import org.example.cunguoimoita.common.dao.ProductRefDAO.ProductRef;
+import org.example.cunguoimoita.product.dao.ProductDAO.ProductRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.dao.DisputeDAO;
 import org.example.cunguoimoita.dispute.model.Payout;
@@ -28,6 +27,8 @@ import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.service.ShippingService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,7 +46,7 @@ public class OrderService {
     private final OrderDAO orderDAO = new OrderDAO();
     private final CartDAO cartDAO = new CartDAO();
     private final VoucherDAO voucherDAO = new VoucherDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final ProductDAO productDAO = new ProductDAO();
     private final AddressDAO addressDAO = new AddressDAO();
     private final NotificationService notificationService = new NotificationService();
     private final ReviewService reviewService = new ReviewService();
@@ -137,8 +138,8 @@ public class OrderService {
     }
 
     // Tên + ảnh của từng món trong đơn (productId → ProductCard), để trang đơn hiện thay cho mã sản phẩm.
-    public Map<String, ProductRefDAO.ProductCard> getItemCards(Order order) throws SQLException {
-        Map<String, ProductRefDAO.ProductCard> cards = new LinkedHashMap<>();
+    public Map<String, ProductDAO.ProductCard> getItemCards(Order order) throws SQLException {
+        Map<String, ProductDAO.ProductCard> cards = new LinkedHashMap<>();
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             for (OrderItem item : order.getItems()) {
                 cards.put(item.getProductId(), productDAO.findCard(c, item.getProductId()));
@@ -261,7 +262,7 @@ public class OrderService {
             o.cancel(reason);
             orderDAO.update(c, o);
             for (OrderItem item : o.getItems()) {
-                productDAO.updateStatus(c, item.getProductId(), "available");
+                productDAO.updateStatus(c, item.getProductId(), ProductStatus.AVAILABLE);
             }
             Refund refund = wasPaid
                     ? refundService.refundOrder(c, o.getId(), o.getBuyerId(), 0, RefundReason.CANCELLED)
@@ -305,7 +306,7 @@ public class OrderService {
         o.confirmReceived();              // shipping → delivered → completed
         orderDAO.update(c, o);
         for (OrderItem item : o.getItems()) {
-            productDAO.updateStatus(c, item.getProductId(), "sold");
+            productDAO.updateStatus(c, item.getProductId(), ProductStatus.SOLD);
         }
         reviewService.recalculateTier(c, o.getBuyerId());    // cộng điểm và xét hạng cả hai bên
         reviewService.recalculateTier(c, o.getSellerId());
@@ -372,11 +373,11 @@ public class OrderService {
 
     // Khoá dòng sản phẩm, kiểm tra còn bán, rồi chuyển reserved → người khác không đặt trùng.
     private void reserveProduct(Connection c, String productId, String productName) throws SQLException {
-        ProductRef product = productDAO.findForUpdate(c, productId);
+        ProductRef product = productDAO.findRefForUpdate(c, productId);
         if (product == null || !product.isAvailable()) {
             throw new IllegalStateException("\"" + productName + "\" đã có người đặt. Hãy xoá món này khỏi giỏ rồi đặt lại.");
         }
-        productDAO.updateStatus(c, productId, "reserved");
+        productDAO.updateStatus(c, productId, ProductStatus.RESERVED);
     }
 
     // Địa chỉ mặc định của người mua (danh sách đã sắp mặc định lên đầu).
