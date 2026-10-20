@@ -34,14 +34,15 @@ public class AdminReportServlet extends AdminBaseServlet {
         String id = req.getParameter("id");
         handle(req, resp, "/admin/reports" + query(req, "status"), () -> {
             switch (String.valueOf(req.getParameter("action"))) {
-                case "resolve":
+                case "resolve" -> {
                     adminService.resolveReport(id, req.getParameter("do"), adminId(req));
                     return "Đã xử lý báo cáo và báo cho người gửi";
-                case "reject":
+                }
+                case "reject" -> {
                     adminService.rejectReport(id, adminId(req));
                     return "Đã bác bỏ báo cáo";
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         });
     }

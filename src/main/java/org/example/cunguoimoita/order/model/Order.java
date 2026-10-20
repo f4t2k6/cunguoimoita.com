@@ -27,27 +27,27 @@ public class Order {
         NEW, AWAITING_PAYMENT, PAID, SHIPPING, DELIVERED, COMPLETED, CANCELLED, REFUNDED;
 
         public boolean canMoveTo(Status next) {
-            switch (this) {
-                case NEW: return next == AWAITING_PAYMENT || next == PAID
+            return switch (this) {
+                case NEW -> next == AWAITING_PAYMENT || next == PAID
                         || next == SHIPPING || next == CANCELLED;
-                case AWAITING_PAYMENT: return next == PAID || next == CANCELLED;
-                case PAID: return next == SHIPPING || next == CANCELLED || next == REFUNDED;
-                case SHIPPING: return next == DELIVERED || next == REFUNDED;
-                case DELIVERED: return next == COMPLETED || next == REFUNDED;
-                default: return false ;
-            }
+                case AWAITING_PAYMENT -> next == PAID || next == CANCELLED;
+                case PAID -> next == SHIPPING || next == CANCELLED || next == REFUNDED;
+                case SHIPPING -> next == DELIVERED || next == REFUNDED;
+                case DELIVERED -> next == COMPLETED || next == REFUNDED;
+                default -> false;
+            };
         }
         public String label() {
-            switch (this) {
-                case NEW:              return "Mới tạo";
-                case AWAITING_PAYMENT: return "Chờ thanh toán";
-                case PAID:             return "Đã thanh toán";
-                case SHIPPING:         return "Đang giao";
-                case DELIVERED:        return "Đã giao";
-                case COMPLETED:        return "Hoàn tất";
-                case CANCELLED:        return "Đã huỷ";
-                default:               return "Đã hoàn tiền";
-            }
+            return switch (this) {
+                case NEW -> "Mới tạo";
+                case AWAITING_PAYMENT -> "Chờ thanh toán";
+                case PAID -> "Đã thanh toán";
+                case SHIPPING -> "Đang giao";
+                case DELIVERED -> "Đã giao";
+                case COMPLETED -> "Hoàn tất";
+                case CANCELLED -> "Đã huỷ";
+                default -> "Đã hoàn tiền";
+            };
         }
     }
     public enum PaymentMethod {ONLINE, COD}

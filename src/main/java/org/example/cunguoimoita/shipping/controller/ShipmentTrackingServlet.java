@@ -80,7 +80,7 @@ public class ShipmentTrackingServlet extends HttpServlet {
         try {
             shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), true);
             switch (action == null ? "" : action) {
-                case "handover": {
+                case "handover" -> {
                     String h = req.getParameter("handover");
                     ShippingService.Handover method = "pickup".equals(h) ? ShippingService.Handover.PICKUP
                             : "dropoff".equals(h) ? ShippingService.Handover.DROPOFF : null;
@@ -88,26 +88,18 @@ public class ShipmentTrackingServlet extends HttpServlet {
                     resp.sendRedirect(redirect + "&message=" + FormUtil.encode("Đã xác nhận giao hàng: " + where));
                     return;
                 }
-                case "ship":
-                    shippingService.markShipped(orderId, req.getParameter("trackingCode"));
-                    break;
-                case "status": {
+                case "ship" -> shippingService.markShipped(orderId, req.getParameter("trackingCode"));
+                case "status" -> {
                     ShipmentStatus next = ShipmentStatus.fromDb(req.getParameter("status"));
                     // Hoàn hàng là yêu cầu của người mua (Trả hàng/Hoàn tiền), người bán không tự bấm được
                     if (next == ShipmentStatus.RETURNED && !CurrentUser.isAdmin(req)) {
                         throw new SecurityException("Người bán không thể tự hoàn hàng");
                     }
                     shippingService.updateStatus(orderId, next);
-                    break;
                 }
-                case "cod_collected":
-                    shippingService.confirmCodCollected(orderId);
-                    break;
-                case "cod_remitted":
-                    shippingService.confirmCodRemitted(orderId);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                case "cod_collected" -> shippingService.confirmCodCollected(orderId);
+                case "cod_remitted" -> shippingService.confirmCodRemitted(orderId);
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirect += "&error=" + FormUtil.encode(e.getMessage());

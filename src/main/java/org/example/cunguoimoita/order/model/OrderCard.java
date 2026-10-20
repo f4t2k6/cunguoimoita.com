@@ -74,11 +74,14 @@ public class OrderCard {
 
     /** Dòng trạng thái trong khung xanh nhạt. */
     public String getNotice() {
-        switch (order.getStatus()) {
-            case CANCELLED: return "Đơn đã huỷ";
-            case REFUNDED:  return "Đã hoàn tiền cho người mua";
-            case COMPLETED: return "Đơn đã hoàn tất";
-            default: break;
+        String closed = switch (order.getStatus()) {
+            case CANCELLED -> "Đơn đã huỷ";
+            case REFUNDED -> "Đã hoàn tiền cho người mua";
+            case COMPLETED -> "Đơn đã hoàn tất";
+            default -> null;
+        };
+        if (closed != null) {
+            return closed;
         }
         if (isAwaitingPayment()) {
             return seller ? "Đã chốt giá, chờ người mua thanh toán" : "Đã chốt giá, chờ bạn thanh toán để người bán giao hàng";

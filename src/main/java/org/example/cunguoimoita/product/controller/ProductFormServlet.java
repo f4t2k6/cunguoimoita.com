@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import org.example.cunguoimoita.common.util.MediaStore;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.product.model.ListingType;
@@ -22,7 +23,7 @@ import java.util.List;
 
 /** Form đăng bài và sửa bài (multipart). */
 @WebServlet({"/product/new", "/product/edit"})
-@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 45 * 1024 * 1024)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = 9 * MediaStore.MAX_FILE_SIZE)
 public class ProductFormServlet extends HttpServlet {
 
     private final ProductService productService = new ProductService();

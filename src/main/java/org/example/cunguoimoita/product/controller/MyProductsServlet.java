@@ -71,20 +71,19 @@ public class MyProductsServlet extends HttpServlet {
         try {
             String action = String.valueOf(req.getParameter("action"));
             switch (action) {
-                case "pause":
+                case "pause" -> {
                     productService.pause(sellerId, id);
                     back += sep + "message=" + FormUtil.encode("Đã ẩn bài, khách sẽ không thấy bài này nữa");
-                    break;
-                case "resume":
+                }
+                case "resume" -> {
                     productService.resume(sellerId, id);
                     back += sep + "message=" + FormUtil.encode("Bài đã hiện lại trên bảng tin");
-                    break;
-                case "delete":
+                }
+                case "delete" -> {
                     productService.delete(sellerId, id);
                     back = req.getContextPath() + "/product/mine?message=" + FormUtil.encode("Đã xoá bài");
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             back += sep + "error=" + FormUtil.encode(e.getMessage());

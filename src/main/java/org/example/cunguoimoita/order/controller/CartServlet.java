@@ -57,23 +57,17 @@ public class CartServlet extends HttpServlet {
         String redirect = req.getContextPath() + "/order/cart";
         try {
             switch (action == null ? "add" : action) {
-                case "add":
+                case "add" -> {
                     cartService.addToCart(userId, productId);
                     redirect += "?message=" + FormUtil.encode("Đã thêm vào giỏ");
-                    break;
-                case "remove":
-                    cartService.removeFromCart(userId, productId);
-                    break;
-                case "clear":
-                    cartService.clearCart(userId);
-                    break;
-                case "removeSelected": {     // nút "Xoá mục đã chọn" (các ô tick productId)
+                }
+                case "remove" -> cartService.removeFromCart(userId, productId);
+                case "clear" -> cartService.clearCart(userId);
+                case "removeSelected" -> {     // nút "Xoá mục đã chọn" (các ô tick productId)
                     String[] ids = req.getParameterValues("productId");
                     cartService.removeFromCart(userId, ids == null ? List.of() : Arrays.asList(ids));
-                    break;
                 }
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             redirect += "?error=" + FormUtil.encode(e.getMessage());

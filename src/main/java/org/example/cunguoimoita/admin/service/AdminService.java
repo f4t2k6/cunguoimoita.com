@@ -253,7 +253,7 @@ public class AdminService {
             Report r = requirePendingReport(c, reportId);
             String result;
             switch (action == null ? "" : action) {
-                case "hide_product":
+                case "hide_product" -> {
                     if (!r.isProductTarget()) {
                         throw new IllegalArgumentException("Báo cáo này không nhắm vào bài đăng");
                     }
@@ -264,8 +264,8 @@ public class AdminService {
                                 "Bài \"" + p.name() + "\" đã bị ẩn do vi phạm: " + r.getReason().getLabel(), null));
                     }
                     result = "bài đăng đã bị ẩn";
-                    break;
-                case "ban_user":
+                }
+                case "ban_user" -> {
                     if (r.getTargetOwnerId() == null) {
                         throw new IllegalArgumentException("Không tìm thấy người cần khoá");
                     }
@@ -274,12 +274,9 @@ public class AdminService {
                         banInTx(c, u.id(), adminId);
                     }
                     result = "tài khoản vi phạm đã bị khoá";
-                    break;
-                case "none":
-                    result = "admin đã xem xét và ghi nhận";
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                case "none" -> result = "admin đã xem xét và ghi nhận";
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
             reportDAO.close(c, reportId, Report.RESOLVED, adminId);
             notices.add(new Notice(r.getReporterId(), NotificationType.SYSTEM,

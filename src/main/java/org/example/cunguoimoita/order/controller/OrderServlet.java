@@ -66,32 +66,20 @@ public class OrderServlet extends HttpServlet {
                 : req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId);
         try {
             switch (action == null ? "" : action) {
-                case "address":
-                    orderService.chooseAddress(orderId, userId, req.getParameter("addressId"));
-                    break;
-                case "carrier":
-                    orderService.chooseCarrier(orderId, userId, req.getParameter("carrierId"));
-                    break;
-                case "voucher":
-                    orderService.applyVoucher(orderId, userId, req.getParameter("code"));
-                    break;
-                case "payment": {
+                case "address" -> orderService.chooseAddress(orderId, userId, req.getParameter("addressId"));
+                case "carrier" -> orderService.chooseCarrier(orderId, userId, req.getParameter("carrierId"));
+                case "voucher" -> orderService.applyVoucher(orderId, userId, req.getParameter("code"));
+                case "payment" -> {
                     Order.PaymentMethod method = parseMethod(req.getParameter("method"));
                     orderService.choosePaymentMethod(orderId, userId, method);
                     if (method == Order.PaymentMethod.ONLINE) {
                         resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + FormUtil.encode(orderId));
                         return;
                     }
-                    break;
                 }
-                case "cancel":
-                    orderService.cancel(orderId, userId, req.getParameter("reason"));
-                    break;
-                case "received":
-                    orderService.confirmReceived(orderId, userId);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                case "cancel" -> orderService.cancel(orderId, userId, req.getParameter("reason"));
+                case "received" -> orderService.confirmReceived(orderId, userId);
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
             redirect += "&message=" + FormUtil.encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {

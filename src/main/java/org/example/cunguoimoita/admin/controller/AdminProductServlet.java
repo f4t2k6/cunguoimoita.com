@@ -35,20 +35,23 @@ public class AdminProductServlet extends AdminBaseServlet {
         String reason = req.getParameter("reason");
         handle(req, resp, "/admin/products" + query(req, "filter", "q"), () -> {
             switch (String.valueOf(req.getParameter("action"))) {
-                case "approve":
+                case "approve" -> {
                     adminService.approveProduct(id, adminId(req));
                     return "Đã duyệt bài, bài đã lên bảng tin";
-                case "reject":
+                }
+                case "reject" -> {
                     adminService.rejectProduct(id, reason);
                     return "Đã từ chối bài và báo lý do cho người bán";
-                case "hide":
+                }
+                case "hide" -> {
                     adminService.setProductHidden(id, true, reason);
                     return "Đã ẩn bài";
-                case "show":
+                }
+                case "show" -> {
                     adminService.setProductHidden(id, false, null);
                     return "Đã hiện lại bài";
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         });
     }

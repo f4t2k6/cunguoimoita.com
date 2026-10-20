@@ -26,7 +26,7 @@ public final class CurrentUser {
     public static String id(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         Object value = session == null ? null : session.getAttribute(SESSION_KEY);
-        return value instanceof String ? (String) value : null;
+        return value instanceof String s ? s : null;
     }
 
     /** true nếu người đang đăng nhập là admin (LoginServlet lưu userRole vào session). */

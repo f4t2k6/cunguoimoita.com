@@ -79,12 +79,12 @@ public class Product {
     }
 
     public String getStateLabel() {
-        switch (getStateCode()) {
-            case "rejected": return "Bị từ chối";
-            case "pending":  return "Chờ duyệt";
-            case "paused":   return "Đang tạm ẩn";
-            default:         return status.getLabel();
-        }
+        return switch (getStateCode()) {
+            case "rejected" -> "Bị từ chối";
+            case "pending" -> "Chờ duyệt";
+            case "paused" -> "Đang tạm ẩn";
+            default -> status.getLabel();
+        };
     }
 
     /** Người bán chỉ sửa được khi bài chưa có ai đặt và chưa bị admin ẩn. */

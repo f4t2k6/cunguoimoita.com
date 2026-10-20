@@ -14,7 +14,7 @@ import org.example.cunguoimoita.common.util.MediaStore;
 import java.io.IOException;
 
 @WebServlet("/account/avatar")
-@MultipartConfig(maxFileSize = 5 * 1024 * 1024, maxRequestSize = 5 * 1024 * 1024)
+@MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = MediaStore.MAX_FILE_SIZE)
 public class AvatarServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final MediaStore mediaStore = new MediaStore();
@@ -24,7 +24,7 @@ public class AvatarServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         Part part = req.getPart("avatar");
-        if (part == null || part.getSize() == 0 || part.getSize() > 5L * 1024 * 1024) {
+        if (part == null || part.getSize() == 0 || part.getSize() > MediaStore.MAX_FILE_SIZE) {
             redirect(resp, req, "invalid");
             return;
         }

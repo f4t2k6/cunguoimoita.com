@@ -33,23 +33,13 @@ public class AdminProductDAO {
 
     /** @param limit số dòng tối đa (trang tổng quan chỉ lấy vài bài mới nhất) */
     public List<AdminProductRow> find(Connection c, String filter, String keyword, int limit) throws SQLException {
-        String where;
-        switch (filter) {
-            case "approved":
-                where = " WHERE p.approved_by_admin_id IS NOT NULL AND p.status <> 'hidden'";
-                break;
-            case "hidden":
-                where = " WHERE p.status = 'hidden'";
-                break;
-            case "rejected":
-                where = " WHERE p.verified_status = 'rejected'";
-                break;
-            case "all":
-                where = " WHERE TRUE";
-                break;
-            default:
-                where = " WHERE p.approved_by_admin_id IS NULL AND p.verified_status <> 'rejected' AND p.status = 'draft'";
-        }
+        String where = switch (filter) {
+            case "approved" -> " WHERE p.approved_by_admin_id IS NOT NULL AND p.status <> 'hidden'";
+            case "hidden" -> " WHERE p.status = 'hidden'";
+            case "rejected" -> " WHERE p.verified_status = 'rejected'";
+            case "all" -> " WHERE TRUE";
+            default -> " WHERE p.approved_by_admin_id IS NULL AND p.verified_status <> 'rejected' AND p.status = 'draft'";
+        };
         boolean search = keyword != null && !keyword.isBlank();
         String sql = SELECT + where
                 + (search ? " AND (p.name ILIKE ? OR u.fullname ILIKE ?)" : "")

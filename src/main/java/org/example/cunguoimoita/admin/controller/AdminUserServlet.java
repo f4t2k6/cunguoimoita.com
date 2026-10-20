@@ -30,14 +30,15 @@ public class AdminUserServlet extends AdminBaseServlet {
         String id = req.getParameter("id");
         handle(req, resp, "/admin/users" + query(req, "q", "status"), () -> {
             switch (String.valueOf(req.getParameter("action"))) {
-                case "ban":
+                case "ban" -> {
                     adminService.banUser(id, adminId(req));
                     return "Đã khoá tài khoản và ẩn các bài đang bán của người này";
-                case "unban":
+                }
+                case "unban" -> {
                     adminService.unbanUser(id);
                     return "Đã mở khoá tài khoản";
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         });
     }

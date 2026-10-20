@@ -84,20 +84,16 @@ public class DisputeServlet extends HttpServlet {
         try {
             String images = String.join(",", mediaStore.saveAll(req.getParts(), "images", MAX_IMAGES, userId));
             switch (path) {
-                case "/dispute/create": {
+                case "/dispute/create" -> {
                     Dispute d = disputeService.openDispute(orderId, userId, DisputeReason.fromDb(req.getParameter("reason")),
                             req.getParameter("description"), images.isEmpty() ? null : images);
                     back = "/dispute?id=" + FormUtil.encode(d.getId());
-                    break;
                 }
-                case "/dispute/respond":
+                case "/dispute/respond" -> {
                     disputeService.respond(disputeId, userId, req.getParameter("response"), images);
-                    break;
-                case "/dispute/evidence":
-                    disputeService.submitEvidence(disputeId, userId, images);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                case "/dispute/evidence" -> disputeService.submitEvidence(disputeId, userId, images);
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
             resp.sendRedirect(req.getContextPath() + back + "&message=" + FormUtil.encode("Đã gửi"));
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {

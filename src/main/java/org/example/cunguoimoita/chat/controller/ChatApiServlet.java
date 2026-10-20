@@ -94,20 +94,11 @@ public class ChatApiServlet extends HttpServlet {
             } else {
                 String offerId = req.getParameter("offerId");
                 switch (String.valueOf(req.getParameter("action"))) {
-                    case "make":
-                        chatService.makeOffer(req.getParameter("conversationId"), userId, amount(req));
-                        break;
-                    case "accept":
-                        chatService.acceptOffer(offerId, userId);
-                        break;
-                    case "decline":
-                        chatService.declineOffer(offerId, userId);
-                        break;
-                    case "counter":
-                        chatService.counterOffer(offerId, userId, amount(req));
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Thao tác không hợp lệ");
+                    case "make" -> chatService.makeOffer(req.getParameter("conversationId"), userId, amount(req));
+                    case "accept" -> chatService.acceptOffer(offerId, userId);
+                    case "decline" -> chatService.declineOffer(offerId, userId);
+                    case "counter" -> chatService.counterOffer(offerId, userId, amount(req));
+                    default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
                 }
             }
             JsonUtil.write(resp, 200, "{\"ok\":true}");

@@ -312,17 +312,14 @@ public class ShippingService {
             return null;
         }
         switch (s.getStatus()) {
-            case PICKED_UP:
-            case IN_TRANSIT:
+            case PICKED_UP, IN_TRANSIT -> {
                 orderDAO.updateStatusIfIn(c, order.id(), Order.Status.SHIPPING,
                         Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID);
-                break;
-            case DELIVERED:
+            }
+            case DELIVERED -> {
                 orderDAO.updateStatusIfIn(c, order.id(), Order.Status.DELIVERED,
                         Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID, Order.Status.SHIPPING);
-                break;
-            default:
-                break;
+            }
         }
         return order;
     }

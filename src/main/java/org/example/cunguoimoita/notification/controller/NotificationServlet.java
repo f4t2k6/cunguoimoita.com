@@ -35,22 +35,21 @@ public class NotificationServlet extends HttpServlet {
         }
         try {
             switch (req.getServletPath()) {
-                case "/notifications/count":
+                case "/notifications/count" -> {
                     int[] counts = notificationService.badgeCounts(userId);
                     JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + counts[0] + ",\"chat\":" + counts[1] + "}");
-                    return;
-                case "/notifications/list":
-                    JsonUtil.write(resp, 200, listJson(notificationService.list(userId, 20)));
-                    return;
-                case "/notifications/open":
+                }
+                case "/notifications/list" -> JsonUtil.write(resp, 200, listJson(notificationService.list(userId, 20)));
+                case "/notifications/open" -> {
                     String link = notificationService.open(userId, req.getParameter("id"));
                     // Chỉ chuyển tới đường dẫn trong trang (bắt đầu bằng một dấu "/"), tránh bị dẫn ra trang ngoài
                     boolean safe = link != null && link.startsWith("/") && !link.startsWith("//");
                     resp.sendRedirect(req.getContextPath() + (safe ? link : "/notifications"));
-                    return;
-                default:
+                }
+                default -> {
                     req.setAttribute("notifications", notificationService.list(userId));
                     req.getRequestDispatcher("/WEB-INF/views/chat/notifications.jsp").forward(req, resp);
+                }
             }
         } catch (SQLException e) {
             throw new ServletException(e);

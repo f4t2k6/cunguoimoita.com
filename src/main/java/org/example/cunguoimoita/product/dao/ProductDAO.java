@@ -295,11 +295,11 @@ public class ProductDAO {
     }
 
     private String orderBy(ProductFilter f) {
-        switch (f.getSort()) {
-            case PRICE_ASC:  return " ORDER BY COALESCE(p.price, p.estimated_value) ASC NULLS LAST, p.id";
-            case PRICE_DESC: return " ORDER BY COALESCE(p.price, p.estimated_value) DESC NULLS LAST, p.id";
-            default:         return " ORDER BY p.posted_date DESC, p.id DESC";
-        }
+        return switch (f.getSort()) {
+            case PRICE_ASC -> " ORDER BY COALESCE(p.price, p.estimated_value) ASC NULLS LAST, p.id";
+            case PRICE_DESC -> " ORDER BY COALESCE(p.price, p.estimated_value) DESC NULLS LAST, p.id";
+            default -> " ORDER BY p.posted_date DESC, p.id DESC";
+        };
     }
 
     /** Dấu % và _ người dùng gõ vào ô tìm kiếm được hiểu là ký tự thường, không phải ký tự đại diện. */
