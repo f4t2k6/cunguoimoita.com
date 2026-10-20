@@ -11,17 +11,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Bảng tin, tìm kiếm và Bucket List (F3).
- * Khách chưa đăng nhập vẫn xem và tìm được; lưu bài thì cần đăng nhập (servlet kiểm tra).
- */
+/** Bảng tin, tìm kiếm và Bucket List. */
 public class FeedService {
 
-    /**
-     * Một trang kết quả kèm tổng số bài để vẽ phân trang.
-     * Viết thành class thường (không dùng record) vì EL của Tomcat 11 chỉ đọc được tên thành phần
-     * của record, không gọi được các getter tính thêm như getTotalPages().
-     */
+    /** Dùng class thường vì EL của Tomcat 11 không gọi được getter tính thêm (getTotalPages) trên record. */
     public static final class Page {
         private final List<Product> items;
         private final int total;
@@ -46,10 +39,7 @@ public class FeedService {
     private final ProductDAO productDAO = new ProductDAO();
     private final WishlistDAO wishlistDAO = new WishlistDAO();
 
-    /**
-     * Guest.browseProduct() / searchProduct(): bài đã duyệt, đang bán, theo bộ lọc.
-     * viewerId khác null thì đánh dấu những bài người xem đã lưu.
-     */
+    /** Guest.browseProduct() / searchProduct(); viewerId khác null thì đánh dấu các bài người xem đã lưu. */
     public Page search(ProductFilter filter, String viewerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             int total = productDAO.count(c, filter);
@@ -86,10 +76,7 @@ public class FeedService {
         }
     }
 
-    /**
-     * Wishlist.add() / remove().
-     * @param save true để lưu, false để bỏ lưu
-     */
+    /** Wishlist.add() / remove(). */
     public void setSaved(String customerId, String productId, boolean save) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             if (save) {

@@ -35,11 +35,11 @@ public class PublicSellerProfileServlet extends HttpServlet {
                 return;
             }
             req.setAttribute("seller", profile);
-            // Bài đang bán của người này (F2), hiện bên dưới thẻ hồ sơ
+            // Bài đang bán của người này, hiện bên dưới thẻ hồ sơ
             req.setAttribute("sellerProducts", productService.publicOfSeller(userId, 12));
-            // F8: các đánh giá người này nhận được (mới nhất trước)
+            // các đánh giá người này nhận được (mới nhất trước)
             req.setAttribute("reviews", reviewService.getReviewsOf(userId));
-            // F10: nút "Báo cáo người dùng" — không hiện khi xem hồ sơ của chính mình
+            // nút "Báo cáo người dùng" — không hiện khi xem hồ sơ của chính mình
             req.setAttribute("isSelf", userId.equals(CurrentUser.id(req)));
             req.getRequestDispatcher("/WEB-INF/views/account/public-profile.jsp").forward(req, resp);
         } catch (SQLException e) {

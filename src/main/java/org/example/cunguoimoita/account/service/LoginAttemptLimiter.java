@@ -3,9 +3,8 @@ package org.example.cunguoimoita.account.service;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Chặn dò mật khẩu: đếm số lần đăng nhập sai của mỗi email trong một bảng băm (ConcurrentHashMap).
- * Sai {@value #MAX_FAILURES} lần liên tiếp thì khoá đăng nhập email đó {@value #LOCK_MINUTES} phút.
- * Bảng nằm trong bộ nhớ của Tomcat: tra cứu O(1), khởi động lại Tomcat thì xoá hết.
+ * Chặn dò mật khẩu: sai {@value #MAX_FAILURES} lần liên tiếp thì khoá email đó {@value #LOCK_MINUTES} phút.
+ * Lưu trong bộ nhớ nên khởi động lại Tomcat là xoá hết.
  */
 public final class LoginAttemptLimiter {
     public static final int MAX_FAILURES = 5;
@@ -42,10 +41,7 @@ public final class LoginAttemptLimiter {
         return left > 0 ? (left + 999) / 1000 : 0;
     }
 
-    /**
-     * Ghi một lần đăng nhập sai.
-     * @return số lần còn được thử trước khi bị khoá (0 nghĩa là vừa bị khoá)
-     */
+    /** @return số lần còn được thử trước khi bị khoá (0 nghĩa là vừa bị khoá) */
     public int recordFailure(String email) {
         long now = System.currentTimeMillis();
         if (attempts.size() >= MAX_ENTRIES) {

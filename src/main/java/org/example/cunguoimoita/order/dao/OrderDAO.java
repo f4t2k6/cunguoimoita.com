@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Chạy SQL trên bảng orders và order_items.
 public class OrderDAO {
 
     // Lưu đơn mới kèm toàn bộ món (Order ◆── OrderItem: lưu đơn là lưu luôn món).
@@ -30,14 +29,14 @@ public class OrderDAO {
             ps.setString(3, o.getBuyerId());
             ps.setString(4, o.getSellerId());
             ps.setString(5, o.getShippingAddressId());
-            ps.setString(6, o.getVoucherId());             // null được: cột cho phép NULL
+            ps.setString(6, o.getVoucherId());
             ps.setString(7, o.getOfferId());
-            ps.setString(8, o.getPaymentMethod().name().toLowerCase());   // COD → "cod"
+            ps.setString(8, o.getPaymentMethod().name().toLowerCase());
             ps.setDouble(9, o.getSubTotal());
             ps.setDouble(10, o.getShippingFee());
             ps.setDouble(11, o.getDiscountAmount());
             ps.setDouble(12, o.getTotalAmount());
-            ps.setString(13, o.getStatus().name().toLowerCase());          // NEW → "new"
+            ps.setString(13, o.getStatus().name().toLowerCase());
             ps.setObject(14, o.getOrderDate());
             ps.executeUpdate();
         }
@@ -46,7 +45,6 @@ public class OrderDAO {
         }
     }
 
-    // Tìm 1 đơn theo id (kèm món). Không có → null.
     public Order findById(Connection c, String orderId) throws SQLException {
         return findOne(c, "SELECT * FROM orders WHERE id = ?", orderId);
     }
@@ -57,7 +55,7 @@ public class OrderDAO {
         return findOne(c, "SELECT * FROM orders WHERE id = ? FOR UPDATE", orderId);
     }
 
-    // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất (F6).
+    // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất.
     public List<String> findDeliveredIdsForAutoComplete(Connection c, int days) throws SQLException {
         String sql = "SELECT o.id FROM orders o JOIN shipments s ON s.order_id = o.id"
                 + " WHERE o.status = 'delivered' AND s.delivered_date <= CURRENT_DATE - ?"
@@ -94,7 +92,6 @@ public class OrderDAO {
         }
     }
 
-    // Sinh id và mã đơn cho đơn mới (vd ORD-1A2B3C4D).
     public static String newId() {
         return UUID.randomUUID().toString();
     }
@@ -102,8 +99,6 @@ public class OrderDAO {
     public static String codeFor(String orderId) {
         return "ORD-" + orderId.substring(0, 8).toUpperCase();
     }
-
-    // ===================== HÀM PHỤ =====================
 
     private void insertItem(Connection c, OrderItem item) throws SQLException {
         String sql = "INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?, ?)";
@@ -137,7 +132,6 @@ public class OrderDAO {
         return items;
     }
 
-    // Chạy câu SELECT trả về 1 đơn (có nạp món).
     private Order findOne(Connection c, String sql, String param) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, param);
@@ -152,7 +146,6 @@ public class OrderDAO {
         }
     }
 
-    // Chạy câu SELECT trả về nhiều đơn (không nạp món).
     private List<Order> findMany(Connection c, String sql, String param) throws SQLException {
         List<Order> list = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -166,10 +159,7 @@ public class OrderDAO {
         return list;
     }
 
-    /**
-     * Thẻ đơn cho trang Đơn mua (asSeller = false) / Đơn bán (asSeller = true), mới nhất trước.
-     * 3 câu SELECT cho cả danh sách: đơn + tên người bên kia, các món + tên/ảnh sản phẩm, vận đơn.
-     */
+    /** 3 câu SELECT cho cả danh sách: đơn, các món, vận đơn. */
     public List<OrderCard> findCards(Connection c, String userId, boolean asSeller) throws SQLException {
         String mine = asSeller ? "seller_id" : "buyer_id";
         String partner = asSeller ? "buyer_id" : "seller_id";
@@ -221,7 +211,6 @@ public class OrderDAO {
         return new ArrayList<>(cards.values());
     }
 
-    // Chuyển 1 dòng ResultSet → object Order.
     private Order map(ResultSet rs) throws SQLException {
         Order o = new Order();
         o.setId(rs.getString("id"));

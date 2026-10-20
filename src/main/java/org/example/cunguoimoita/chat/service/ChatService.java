@@ -32,30 +32,22 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Nghiệp vụ F7 phần tin nhắn và trả giá.
- * Các hàm start/sendMessage/makeOffer/markAllRead/close tương ứng method của Conversation trong class diagram;
- * acceptOffer/declineOffer/counterOffer tương ứng accept/decline/counter của PriceOffer.
- */
+/** Tin nhắn và trả giá (Conversation, PriceOffer trong class diagram). */
 public class ChatService {
 
     private final ConversationDAO conversationDAO = new ConversationDAO();
     private final MessageDAO messageDAO = new MessageDAO();
     private final PriceOfferDAO offerDAO = new PriceOfferDAO();
     private final ProductRefDAO productDAO = new ProductRefDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();             // chỉ còn dùng để tìm đơn của các offer (nút "Xem đơn")
-    private final OrderService orderService = new OrderService();       // F4: tạo đơn khi chấp nhận giá
+    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final OrderService orderService = new OrderService();
     private final NotificationService notificationService = new NotificationService();
 
     /** Kết quả khi chấp nhận giá: offer đã accepted và đơn hàng vừa tạo. */
     public record AcceptResult(PriceOffer offer, String orderId, String orderCode) {
     }
 
-    /**
-     * Kết quả loadMessages: tin nhắn (tin price_offer có kèm khung giá) và mọi offer của cuộc trò chuyện.
-     * offers dùng để chat.js cập nhật trạng thái các khung giá cũ; rỗng khi không có tin mới.
-     * orders: đơn đã tạo từ offer được chấp nhận (theo id offer), để hiện nút "Xem đơn".
-     */
+    /** offers để chat.js cập nhật các khung giá cũ; orders để hiện nút "Xem đơn" theo id offer. */
     public record ChatUpdate(List<Message> messages, List<PriceOffer> offers, Map<String, NewOrder> orders) {
     }
 
@@ -103,11 +95,7 @@ public class ChatService {
         }
     }
 
-    /**
-     * Tin nhắn (kèm khung giá cho tin price_offer), đồng thời markAllRead cho người đang xem.
-     * after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này (chat.js hỏi tin mới).
-     * Không có tin mới thì chỉ tốn 1 câu SELECT; chỉ đọc offer và đánh dấu đã đọc khi thật sự có tin.
-     */
+    /** Không có tin mới thì chỉ tốn 1 câu SELECT; chỉ đọc offer và đánh dấu đã đọc khi thật sự có tin. */
     public ChatUpdate loadMessages(String conversationId, String userId, Timestamp after) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             List<Message> messages = messageDAO.findForParticipant(c, conversationId, userId, after);
@@ -146,10 +134,7 @@ public class ChatService {
         }
     }
 
-    /**
-     * Gửi ảnh: servlet lưu ảnh qua MediaStore trước, ở đây ghi tin type = image, content = đường dẫn ảnh.
-     * Kiểm tra quyền trước khi lưu file thì gọi requireCanSend(...).
-     */
+    /** Ảnh đã được servlet lưu qua MediaStore; ở đây chỉ ghi tin type = image. */
     public Message sendImage(String conversationId, String senderId, String imageUrl) throws SQLException {
         // Ảnh chat giờ lưu trong database (MediaStore, "/media/<id>"); vẫn nhận đường dẫn cũ /uploads/chat/
         if (imageUrl == null || !(imageUrl.startsWith(MediaStore.URL_PREFIX) || imageUrl.startsWith("/uploads/chat/"))) {
@@ -186,12 +171,7 @@ public class ChatService {
         });
     }
 
-    /**
-     * PriceOffer.accept(): Order. Trong cùng một transaction:
-     * offer chuyển accepted, các offer pending khác của cùng Product chuyển declined,
-     * Product chuyển reserved, và tạo Order (offerId = offer này) với giá đã chốt.
-     * Sau đó báo cho người còn lại qua Notification.
-     */
+    /** Trong một transaction: offer accepted, các offer pending khác của cùng Product declined, Product reserved, tạo Order theo giá đã chốt. */
     public AcceptResult acceptOffer(String offerId, String userId) throws SQLException {
         Conversation[] convHolder = new Conversation[1];
         AcceptResult result = inTransaction(c -> {
@@ -209,7 +189,7 @@ public class ChatService {
                 offerDAO.updateStatus(c, other);
             }
             productDAO.updateStatus(c, product.id(), "reserved");
-            // F4: tạo đơn qua OrderService để dùng chung luật với đơn từ giỏ hàng
+            // tạo đơn qua OrderService để dùng chung luật với đơn từ giỏ hàng
             Order created = orderService.createFromOffer(c, offer.getId(), conv.getAskerId(), conv.getSellerId(),
                     product.id(), offer.getAmount());
             NewOrder order = new NewOrder(created.getId(), created.getCode());
@@ -253,7 +233,7 @@ public class ChatService {
         });
     }
 
-    /** + close(): khi món đã bán (F2/F4 gọi). */
+    /** + close(): khi món đã bán. */
     public void close(String conversationId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Conversation conv = conversationDAO.findById(c, conversationId);
@@ -263,8 +243,6 @@ public class ChatService {
             }
         }
     }
-
-    // ---------------------------------------------------------------------
 
     private void saveOffer(Connection c, PriceOffer offer) throws SQLException {
         offerDAO.insert(c, offer);

@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/users?q=&status=active|banned   tìm người dùng
- *      Attribute gửi sang JSP: users (List&lt;AdminUserRow&gt;), q, status
- * POST /admin/users  field: id, action = ban | unban
- */
+/** Tìm, khoá và mở khoá người dùng. */
 @WebServlet("/admin/users")
 public class AdminUserServlet extends AdminBaseServlet {
 

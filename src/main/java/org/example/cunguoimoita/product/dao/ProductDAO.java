@@ -17,11 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Đọc / ghi bảng products (F2, F3).
- * Mọi hàm nhận Connection từ ConnectionPool để service có thể gộp nhiều câu lệnh vào một transaction.
- * Chỉ dùng PreparedStatement; điều kiện lọc ghép bằng dấu ? chứ không ghép chuỗi giá trị người dùng nhập.
- */
+/** Bảng products; mọi hàm nhận Connection để service gộp nhiều câu lệnh vào một transaction. */
 public class ProductDAO {
 
     /** Cột images lưu danh sách đường dẫn ảnh, ngăn cách bằng dấu phẩy. */
@@ -37,9 +33,6 @@ public class ProductDAO {
             + " JOIN categories cg ON cg.id = p.category_id"
             + " LEFT JOIN categories pc ON pc.id = cg.parent_category_id";
 
-    // ------------------------------------------------------------------
-    // Đọc
-    // ------------------------------------------------------------------
 
     public Product findById(Connection c, String id) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(SELECT + " WHERE p.id = ?")) {
@@ -119,10 +112,7 @@ public class ProductDAO {
         }
     }
 
-    /**
-     * Product.suggestMatches(): các bài khác có nhận trao đổi, giá trị ước tính lệch không quá tolerance
-     * (ví dụ 0.3 = 30%), gần giá trị nhất xếp trước. Không gợi ý bài của chính người bán.
-     */
+    /** Product.suggestMatches(): bài nhận trao đổi có giá trị ước tính lệch không quá tolerance, gần nhất xếp trước. */
     public List<Product> findSwapMatches(Connection c, Product p, double tolerance, int limit) throws SQLException {
         BigDecimal value = p.getSwapValue();
         if (value == null) {
@@ -160,9 +150,6 @@ public class ProductDAO {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Ghi
-    // ------------------------------------------------------------------
 
     /** Customer.postProduct(): bài mới luôn ở trạng thái draft, chưa duyệt. */
     public void insert(Connection c, Product p) throws SQLException {
@@ -215,9 +202,6 @@ public class ProductDAO {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Hỗ trợ
-    // ------------------------------------------------------------------
 
     /** Gán các cột người bán nhập trong form, bắt đầu từ vị trí start; trả về vị trí dấu ? tiếp theo. */
     private int bindEditable(PreparedStatement ps, Product p, int start) throws SQLException {

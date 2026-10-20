@@ -6,11 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 
-/**
- * Đăng ký đang chờ xác nhận email (bảng email_verifications, xem sql/10_email_verification.sql).
- * Tài khoản thật trong users chỉ được tạo khi người dùng nhập đúng mã.
- * Mọi hàm nhận Connection để service gói nhiều bước trong một transaction.
- */
+/** Đăng ký đang chờ xác nhận email; tài khoản trong users chỉ được tạo khi nhập đúng mã. */
 public class EmailVerificationDAO {
 
     /** Một dòng đang chờ. */

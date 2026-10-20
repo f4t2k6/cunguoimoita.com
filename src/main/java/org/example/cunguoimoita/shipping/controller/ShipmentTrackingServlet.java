@@ -16,18 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-/**
- * GET  /shipping/track?orderId=...  → trang theo dõi đơn (dòng thời gian trạng thái).
- *      Attribute gửi sang JSP: shipment (Shipment), steps (ShipmentStatus[]), error
- * POST /shipping/track  → các nút trên trang theo dõi. Field: orderId, action, trackingCode, status
- *      action = handover      người bán xác nhận bàn giao: handover = dropoff (mang ra bưu cục) | pickup (kèm addressId);
- *                             mã vận đơn đã tự sinh khi người mua thanh toán. Xong quay về trang chi tiết đơn.
- *               ship          người bán bấm "Đã gửi hàng" (kèm trackingCode, cách cũ)
- *               status        nút giả lập đổi trạng thái (kèm status: in_transit, delivered, returned)
- *               cod_collected shipper đã thu tiền COD
- *               cod_remitted  shipper đã nộp tiền COD về sàn
- * Phải đăng nhập. Người mua và người bán của đơn xem được; chỉ người bán (hoặc admin) bấm được các nút.
- */
+/** Theo dõi vận đơn; người bán (hoặc admin) xác nhận bàn giao và bấm các nút giả lập trạng thái. */
 @WebServlet("/shipping/track")
 public class ShipmentTrackingServlet extends HttpServlet {
 

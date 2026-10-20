@@ -12,12 +12,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-// Service của giỏ hàng: Servlet gọi vào đây, đây gọi Model (Cart) để kiểm tra luật rồi gọi DAO để lưu.
-// Mỗi hàm tự mượn 1 Connection từ pool của nhóm và trả lại khi xong (try-with-resources).
+// Giỏ hàng: Cart kiểm tra luật, CartDAO lưu.
 public class CartService {
 
     private final CartDAO cartDAO = new CartDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();   // DAO tạm của nhóm cho bảng products (F2)
+    private final ProductRefDAO productDAO = new ProductRefDAO();
 
     // Danh sách món trong giỏ để hiển thị (kèm tên, giá, người bán).
     public List<CartLine> getLines(String userId) throws SQLException {
@@ -27,7 +26,6 @@ public class CartService {
         }
     }
 
-    // Thêm sản phẩm vào giỏ.
     public void addToCart(String userId, String productId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             ProductRef product = productDAO.find(c, productId);
@@ -41,8 +39,8 @@ public class CartService {
                 throw new IllegalStateException("Bạn không thể mua sản phẩm của chính mình");
             }
             Cart cart = findOrCreateCart(c, userId);
-            CartItem item = cart.addItem(productId);      // Model kiểm tra trùng món
-            cartDAO.insertItem(c, item);                  // DAO lưu xuống DB
+            CartItem item = cart.addItem(productId);
+            cartDAO.insertItem(c, item);
         }
     }
 
@@ -57,7 +55,6 @@ public class CartService {
         addToCart(userId, productId);
     }
 
-    // Bỏ nhiều món đã tick chọn khỏi giỏ.
     public void removeFromCart(String userId, List<String> productIds) throws SQLException {
         if (productIds == null || productIds.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn sản phẩm để xoá");
@@ -68,16 +65,14 @@ public class CartService {
         }
     }
 
-    // Bỏ 1 sản phẩm khỏi giỏ.
     public void removeFromCart(String userId, String productId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Cart cart = findOrCreateCart(c, userId);
-            cart.removeItem(productId);                   // Model báo lỗi nếu món không có trong giỏ
+            cart.removeItem(productId);
             cartDAO.deleteItem(c, cart.getId(), productId);
         }
     }
 
-    // Xoá cả giỏ.
     public void clearCart(String userId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Cart cart = findOrCreateCart(c, userId);

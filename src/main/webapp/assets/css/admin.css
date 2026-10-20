@@ -1,4 +1,4 @@
-/* F10 Trang quản trị (admin) + form báo cáo vi phạm. Tông trắng đen theo style.css chung. */
+/* Trang quản trị (admin) + form báo cáo vi phạm. Tông trắng đen theo style.css chung. */
 .admin-page { display: flex; flex-direction: column; gap: 14.5px; }
 .admin-page h1 { font-size: 23.5px; margin: 3.5px 0 0; }
 .admin-note { margin: -5.5px 0 0; color: #555; font-size: 12.5px; }
@@ -133,7 +133,7 @@ a.admin-stat:hover { background: #f2f2f2; }
 .admin-tabs a { padding: 6.5px 11px; }
 .admin-jobs { margin-top: 0; }
 
-/* ===== Khung trang quản trị (.page-card ở style.css): dễ đọc, khoảng cách đều ===== */
+/* Khung trang quản trị (.page-card ở style.css): dễ đọc, khoảng cách đều */
 .admin-page.page-card { gap: 14.5px; }
 .admin-page.page-card > .page-card-head { margin: 0; }
 .admin-page .admin-note { margin: 0; padding: 9px 12.5px; background: #f6f6f6; border-radius: 9px; font-size: 12px; line-height: 1.5; }

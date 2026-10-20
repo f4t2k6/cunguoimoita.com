@@ -6,10 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Class Conversation trong class diagram.
- * start(), sendMessage(), makeOffer(), markAllRead() cần đọc/ghi DB nên nằm trong ChatService cùng tên.
- */
+/** Các method start/sendMessage/makeOffer/markAllRead của diagram nằm trong ChatService vì cần DB. */
 public class Conversation {
 
     private String id;

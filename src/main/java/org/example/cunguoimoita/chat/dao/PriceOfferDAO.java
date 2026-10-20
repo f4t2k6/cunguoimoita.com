@@ -76,10 +76,7 @@ public class PriceOfferDAO {
         return list;
     }
 
-    /**
-     * Ghi expired xuống DB cho offer pending đã quá hạn của một cuộc trò chuyện.
-     * Chỉ gọi trước khi tạo offer mới (để không vướng uq_one_pending_offer); khi đọc thì map() đã tự coi là expired.
-     */
+    /** Chỉ gọi trước khi tạo offer mới để không vướng uq_one_pending_offer; khi đọc, map() đã tự coi là expired. */
     public int expireDue(Connection c, String conversationId) throws SQLException {
         String sql = "UPDATE price_offers SET status = 'expired'"
                 + " WHERE conversation_id = ? AND status = 'pending' AND expires_at < ?";

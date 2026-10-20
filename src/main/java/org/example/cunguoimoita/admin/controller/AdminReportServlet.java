@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/reports?status=pending|resolved|rejected|all   danh sách báo cáo vi phạm (mặc định: chờ xử lý)
- *      Attribute gửi sang JSP: reports (List&lt;Report&gt;), status
- * POST /admin/reports  field: id, action = resolve (kèm do = none | hide_product | ban_user) | reject
- */
+/** Xử lý báo cáo vi phạm. */
 @WebServlet("/admin/reports")
 public class AdminReportServlet extends AdminBaseServlet {
 

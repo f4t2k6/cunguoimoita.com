@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
 
-/** DAO F1: mọi truy vấn đều dùng PreparedStatement và ConnectionPool chung. */
+/** mọi truy vấn đều dùng PreparedStatement và ConnectionPool chung. */
 public class UserDAO {
     private static final String SELECT_USER = "SELECT u.id, u.email, u.password_hash, u.user_role, "
             + "u.status, u.fullname, u.phone, u.avatar_url, u.join_date, c.tier_id, c.payout_account_ref "

@@ -15,11 +15,8 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Chế độ khách: chưa đăng nhập vẫn xem được bảng tin (/home), tìm kiếm, chi tiết bài đăng và ảnh.
- * Mọi thao tác khác (lưu bài, giỏ hàng, mua, nhắn tin, trả giá, đăng bài, hồ sơ, đơn hàng...) chuyển về /login;
- * fetch/AJAX nhận 401 + JSON {"error", "login"}.
- * Trang đang xem được nhớ lại (redirectAfterLogin) để đăng nhập xong quay về đúng chỗ.
- * Đã đăng nhập mà mở /login hoặc /register thì chuyển về trang chính.
+ * Khách chưa đăng nhập chỉ xem được bảng tin, tìm kiếm, chi tiết bài và ảnh; thao tác khác chuyển về /login (AJAX nhận 401).
+ * Trang đang xem được nhớ lại để đăng nhập xong quay về đúng chỗ.
  */
 @WebFilter("/*")
 public class LoginRequiredFilter implements Filter {

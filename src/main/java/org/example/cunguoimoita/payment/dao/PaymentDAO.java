@@ -12,10 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng payments trong cơ sở dữ liệu.
- * Mọi hàm nhận Connection để chạy chung transaction với PaymentService / OrderService.
- */
 public class PaymentDAO {
 
     public void insert(Connection c, Payment p) throws SQLException {

@@ -38,27 +38,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Service của đơn hàng: nơi ghép Model + DAO thành 1 nghiệp vụ hoàn chỉnh.
+// Đơn hàng.
 // Nghiệp vụ nào ghi nhiều bảng thì chạy trong 1 transaction (inTransaction): lỗi 1 chỗ → huỷ hết.
 public class OrderService {
 
     private final OrderDAO orderDAO = new OrderDAO();
     private final CartDAO cartDAO = new CartDAO();
     private final VoucherDAO voucherDAO = new VoucherDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();          // bảng products (F2)
-    private final AddressDAO addressDAO = new AddressDAO();                // sổ địa chỉ (F1)
-    private final NotificationService notificationService = new NotificationService();   // thông báo (F7)
-    private final ReviewService reviewService = new ReviewService();      // F8: xét hạng khi đơn hoàn tất
-    private final ShippingService shippingService = new ShippingService(); // F6: vận đơn + phí ship
-    private final PaymentService paymentService = new PaymentService();   // F5: điều kiện COD
-    private final PayoutService payoutService = new PayoutService();      // F9: trả tiền người bán khi hoàn tất
-    private final RefundService refundService = new RefundService();      // F9: hoàn tiền khi huỷ đơn đã trả
-    private final DisputeDAO disputeDAO = new DisputeDAO();               // F9: đơn đang khiếu nại thì chưa hoàn tất
+    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final AddressDAO addressDAO = new AddressDAO();
+    private final NotificationService notificationService = new NotificationService();
+    private final ReviewService reviewService = new ReviewService();
+    private final ShippingService shippingService = new ShippingService();
+    private final PaymentService paymentService = new PaymentService();
+    private final PayoutService payoutService = new PayoutService();
+    private final RefundService refundService = new RefundService();
+    private final DisputeDAO disputeDAO = new DisputeDAO();
 
     /** Số ngày sau khi giao mà người mua không bấm "Đã nhận hàng" / không khiếu nại thì đơn tự hoàn tất. */
     public static final int AUTO_COMPLETE_DAYS = 7;
-
-    // ===================== CHECKOUT =====================
 
     // Customer.checkout() / Cart.checkout(): tách cả giỏ thành mỗi người bán 1 đơn.
     public List<Order> checkout(String buyerId) throws SQLException {
@@ -96,11 +94,11 @@ public class OrderService {
             for (Map.Entry<String, List<CartLine>> group : bySeller.entrySet()) {
                 Order order = newOrder(buyerId, group.getKey(), addressId, null);
                 for (CartLine line : group.getValue()) {
-                    reserveProduct(c, line.productId(), line.productName());   // khoá món, chuyển reserved
+                    reserveProduct(c, line.productId(), line.productName());
                     order.getItems().add(newItem(order.getId(), line.productId(), line.price()));
                     orderedProductIds.add(line.productId());
                 }
-                order.calculateTotal();          // subTotal + phí ship (0) − giảm giá (0)
+                order.calculateTotal();
                 orderDAO.insert(c, order);
                 created.add(order);
             }
@@ -117,9 +115,9 @@ public class OrderService {
         return orders;
     }
 
-    // PriceOffer.accept(): Order — F7 gọi hàm này khi người bán chấp nhận giá.
-    // F7 đã chuyển sản phẩm sang reserved rồi, nên ở đây chỉ tạo đơn 1 món với giá đã chốt.
-    // Nhận Connection để chạy chung transaction với F7.
+    // PriceOffer.accept(): Order: gọi khi người bán chấp nhận giá trong chat.
+    // ChatService đã chuyển sản phẩm sang reserved rồi, nên ở đây chỉ tạo đơn 1 món với giá đã chốt.
+    // Nhận Connection để chạy chung transaction với ChatService.
     public Order createFromOffer(Connection c, String offerId, String buyerId, String sellerId,
                                  String productId, double amount) throws SQLException {
         Order order = newOrder(buyerId, sellerId, defaultAddressId(buyerId), offerId);
@@ -128,8 +126,6 @@ public class OrderService {
         orderDAO.insert(c, order);
         return order;
     }
-
-    // ===================== XEM ĐƠN =====================
 
     // Chi tiết 1 đơn: chỉ người mua hoặc người bán của đơn được xem.
     public Order getOrder(String orderId, String userId) throws SQLException {
@@ -158,8 +154,6 @@ public class OrderService {
         }
     }
 
-    // ===================== TRANG THANH TOÁN (người mua) =====================
-
     // Order.chooseAddress(): địa chỉ phải thuộc sổ địa chỉ của chính người mua.
     public void chooseAddress(String orderId, String buyerId, String addressId) throws SQLException {
         boolean owned = addressDAO.findByUserId(buyerId).stream()
@@ -181,7 +175,7 @@ public class OrderService {
         });
     }
 
-    // Order.chooseCarrier(carrierId): người mua chọn hãng → F6 tạo/đổi vận đơn và tính phí → đơn cộng phí ship vào tổng.
+    // Order.chooseCarrier(carrierId): người mua chọn hãng → ShippingService tạo/đổi vận đơn và tính phí → đơn cộng phí ship vào tổng.
     public void chooseCarrier(String orderId, String buyerId, String carrierId) throws SQLException {
         inTransaction(c -> {
             Order order = requireEditableOrder(c, orderId, buyerId);
@@ -197,7 +191,6 @@ public class OrderService {
         return shippingService.quoteForOrder(orderId);
     }
 
-    // Vận đơn của đơn (null nếu chưa chọn hãng).
     public Shipment getShipment(String orderId) throws SQLException {
         return shippingService.findByOrder(orderId);
     }
@@ -226,17 +219,15 @@ public class OrderService {
             if (voucher == null) {
                 throw new IllegalArgumentException("Mã voucher không tồn tại");
             }
-            order.applyVoucher(voucher);         // voucher → used, đơn có discountAmount mới
+            order.applyVoucher(voucher);
             voucherDAO.updateStatus(c, voucher);
             orderDAO.update(c, order);
             return null;
         });
     }
 
-    // Order.choosePaymentMethod(): phải chọn hãng vận chuyển trước (để tổng tiền đã gồm phí ship).
-    //  - online → đơn "chờ thanh toán", Servlet chuyển sang trang thanh toán của F5.
-    //  - COD    → kiểm tra điều kiện COD, đơn giữ "new", vận đơn ghi số tiền shipper phải thu = tổng đơn.
-    //             Từ lúc này người bán được gửi hàng và người mua không sửa đơn được nữa.
+    // Phải chọn hãng vận chuyển trước để tổng tiền đã gồm phí ship. Online → chờ thanh toán;
+    // COD → giữ new, vận đơn ghi số tiền shipper phải thu. Từ đây người mua không sửa đơn được nữa.
     public void choosePaymentMethod(String orderId, String buyerId, Order.PaymentMethod method) throws SQLException {
         Order order = inTransaction(c -> {
             Order o = requireEditableOrder(c, orderId, buyerId);
@@ -260,10 +251,8 @@ public class OrderService {
         }
     }
 
-    // ===================== HUỶ / HOÀN TẤT =====================
-
     // Order.cancel(): người mua hoặc người bán huỷ → trả sản phẩm về available.
-    // Đơn đã thanh toán online → tạo khoản hoàn tiền (F9) cho người mua trong cùng transaction.
+    // Đơn đã thanh toán online → tạo khoản hoàn tiền cho người mua trong cùng transaction.
     public void cancel(String orderId, String userId, String reason) throws SQLException {
         Cancelled result = inTransaction(c -> {
             Order o = orderDAO.findByIdForUpdate(c, orderId);
@@ -309,10 +298,8 @@ public class OrderService {
     }
 
     /**
-     * Order.complete(): đơn hoàn tất (người mua bấm nhận, tự hoàn tất sau 7 ngày, hoặc admin xử khiếu nại cho người bán).
-     * Chạy trên Connection của nơi gọi: chuyển completed, sản phẩm sold, cộng điểm + xét hạng 2 bên (F8),
-     * tạo khoản trả tiền người bán (F9). Gọi notifyCreated(payout) sau khi commit.
-     * @return khoản trả tiền vừa tạo (null nếu đã có)
+     * Order.complete(): chuyển completed, sản phẩm sold, xét hạng 2 bên, tạo khoản trả tiền người bán.
+     * Chạy trên Connection của nơi gọi; gọi notifyCreated(payout) sau khi commit.
      */
     public Payout completeOrder(Connection c, Order o) throws SQLException {
         o.confirmReceived();              // shipping → delivered → completed
@@ -320,16 +307,12 @@ public class OrderService {
         for (OrderItem item : o.getItems()) {
             productDAO.updateStatus(c, item.getProductId(), "sold");
         }
-        reviewService.recalculateTier(c, o.getBuyerId());    // F8: cộng điểm + xét hạng người mua
-        reviewService.recalculateTier(c, o.getSellerId());   // F8: và người bán
+        reviewService.recalculateTier(c, o.getBuyerId());    // cộng điểm và xét hạng cả hai bên
+        reviewService.recalculateTier(c, o.getSellerId());
         return payoutService.createForOrder(c, o.getId(), o.getSellerId(), o.getSubTotal());
     }
 
-    /**
-     * F6: đơn đã giao quá AUTO_COMPLETE_DAYS ngày mà người mua chưa bấm nhận và không khiếu nại → tự hoàn tất.
-     * Tác vụ nền (OrderJobs) gọi mỗi giờ; admin cũng bấm chạy ngay được. Mỗi đơn 1 transaction riêng.
-     * @return số đơn đã hoàn tất
-     */
+    /** Đơn giao quá AUTO_COMPLETE_DAYS ngày, chưa bấm nhận và không khiếu nại thì tự hoàn tất; mỗi đơn 1 transaction. */
     public int autoCompleteDelivered() throws SQLException {
         List<String> ids;
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -356,8 +339,6 @@ public class OrderService {
         return done;
     }
 
-    // ===================== HÀM PHỤ =====================
-
     // Kết quả trả ra khỏi transaction để gửi thông báo sau khi commit.
     private record Cancelled(Order order, Refund refund) {
     }
@@ -365,7 +346,6 @@ public class OrderService {
     private record Completed(Order order, Payout payout) {
     }
 
-    // Tạo object Order mới (chưa lưu DB).
     private Order newOrder(String buyerId, String sellerId, String addressId, String offerId) {
         Order order = new Order();
         order.setId(OrderDAO.newId());
@@ -448,9 +428,6 @@ public class OrderService {
         }
     }
 
-    // ===================== TRANSACTION =====================
-
-    // Một "công việc" chạy trên 1 Connection và trả về kết quả kiểu T.
     @FunctionalInterface
     private interface Work<T> {
         T run(Connection c) throws SQLException;
@@ -459,14 +436,14 @@ public class OrderService {
     // Chạy work trong 1 transaction: thành công → commit (lưu hết); lỗi → rollback (huỷ hết).
     private <T> T inTransaction(Work<T> work) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            c.setAutoCommit(false);              // tắt tự lưu sau mỗi câu SQL
+            c.setAutoCommit(false);
             try {
                 T result = work.run(c);
-                c.commit();                      // tất cả câu SQL thành công → lưu
+                c.commit();
                 return result;
             } catch (SQLException | RuntimeException e) {
-                c.rollback();                    // có lỗi → huỷ mọi thay đổi trong lần này
-                throw e;                         // ném tiếp để Servlet hiện thông báo
+                c.rollback();
+                throw e;
             } finally {
                 c.setAutoCommit(true);           // trả kết nối về pool ở trạng thái bình thường
             }

@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.payment.model;
 
-/**
- * Trạng thái thanh toán của khoản tiền Escrow.
- */
 public enum PaymentStatus {
     PENDING("pending", "Chờ thanh toán"),
     PAID("paid", "Đã thanh toán (Escrow tạm giữ)"),

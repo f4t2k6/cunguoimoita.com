@@ -12,9 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng refunds trong cơ sở dữ liệu.
- */
 public class RefundDAO {
 
     public void insert(Connection c, Refund r) throws SQLException {

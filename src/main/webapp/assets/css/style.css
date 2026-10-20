@@ -1,4 +1,4 @@
-/* ============ CSS DÙNG CHUNG (cả nhóm) – tông trắng đen ============ */
+/* CSS DÙNG CHUNG (cả nhóm) – tông trắng đen */
 :root {
     --bg: #f4f4f4;
     --card: #ffffff;
@@ -395,7 +395,7 @@ button.menu-item { font: inherit; font-size: 15.5px; color: inherit; background:
     .guest-auth .btn { height: 38px; padding: 0 12.5px; font-size: 13px; }
 }
 
-/* ============ KHUNG TRANG DÙNG CHUNG (.page-card) ============
+/* KHUNG TRANG DÙNG CHUNG (.page-card)
    Mọi trang chức năng (giỏ hàng, đơn mua/bán, hồ sơ, bài của tôi, đăng bài, đã lưu, tin nhắn, thu nhập,
    khiếu nại, hạng thành viên, chi tiết đơn...) bọc nội dung trong 1 thẻ trắng viền đen cho đồng bộ.
    Đầu thẻ: <div class="page-card-head"><p class="page-eyebrow">NHÓM</p><h1 class="page-title">Tên trang</h1></div>

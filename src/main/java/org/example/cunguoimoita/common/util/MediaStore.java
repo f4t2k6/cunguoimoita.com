@@ -15,11 +15,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Chỗ duy nhất lưu ảnh người dùng tải lên: ảnh đại diện, ảnh bài đăng, ảnh chat, ảnh khiếu nại, ảnh báo cáo.
- * Ảnh được đọc lại bằng ImageIO (file không phải ảnh bị loại), thu nhỏ, nén JPEG rồi lưu vào bảng media.
- * Trả về đường dẫn "/media/<id>" để lưu vào các bảng khác; MediaServlet đọc ảnh từ database trả cho trình duyệt.
- */
+/** Chỗ duy nhất lưu ảnh tải lên: đọc lại bằng ImageIO để loại file không phải ảnh, thu nhỏ, nén JPEG, lưu vào bảng media. */
 public class MediaStore {
 
     public static final String URL_PREFIX = "/media/";
@@ -31,11 +27,8 @@ public class MediaStore {
     private final MediaDAO mediaDAO = new MediaDAO();
 
     /**
-     * Lưu một ảnh.
-     * @param ownerId người tải lên
      * @param maxSide cạnh dài tối đa sau khi thu nhỏ (ảnh đại diện 512, ảnh khác 1600)
-     * @return đường dẫn ảnh, vd /media/<id>
-     * @throws IllegalArgumentException nếu file quá lớn hoặc không phải ảnh
+     * @return đường dẫn /media/<id>
      */
     public String save(Part part, String ownerId, int maxSide) throws IOException, SQLException {
         if (part.getSize() > MAX_FILE_SIZE) {
@@ -53,11 +46,7 @@ public class MediaStore {
         return URL_PREFIX + mediaDAO.insert(ownerId, "image/jpeg", out.toByteArray());
     }
 
-    /**
-     * Lưu mọi ảnh của một ô chọn nhiều file (input type=file multiple), bỏ qua ô trống.
-     * Lỗi giữa chừng thì xoá các ảnh đã lưu, không để ảnh thừa trong database.
-     * @return danh sách đường dẫn, tối đa maxFiles ảnh
-     */
+    /** Lỗi giữa chừng thì xoá các ảnh đã lưu để không để ảnh thừa trong database. */
     public List<String> saveAll(Iterable<Part> parts, String fieldName, int maxFiles, String ownerId)
             throws IOException, SQLException {
         List<String> urls = new ArrayList<>();

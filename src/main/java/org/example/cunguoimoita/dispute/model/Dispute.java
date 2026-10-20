@@ -4,12 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Thực thể Dispute ánh xạ từ Class Diagram Final:
- * Dispute (id, orderId, raisedById, againstId, reason, description, evidenceImages,
- *          status, createdDate, resolvedDate, handledByAdminId, resolutionNote)
- * Thêm phần phản hồi của người bán (sellerResponse, sellerEvidenceImages, sellerResponseDate), xem 11_hoan_thien_don_hang.sql.
- */
+/** Thêm phần phản hồi của người bán (sellerResponse...) ngoài class diagram, xem 11_hoan_thien_don_hang.sql. */
 public class Dispute implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -25,7 +20,7 @@ public class Dispute implements Serializable {
     private LocalDate resolvedDate;
     private String handledByAdminId;
     private String resolutionNote;
-    private String sellerResponse;              // người bán giải thích
+    private String sellerResponse;
     private String sellerEvidenceImages;        // ảnh của người bán, cách nhau bởi dấu phẩy
     private LocalDateTime sellerResponseDate;
 
@@ -136,7 +131,6 @@ public class Dispute implements Serializable {
         this.resolvedDate = LocalDate.now();
     }
 
-    // Getters and Setters
     public String getSellerResponse() {
         return sellerResponse;
     }

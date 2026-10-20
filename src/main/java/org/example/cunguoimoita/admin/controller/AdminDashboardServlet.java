@@ -10,12 +10,7 @@ import org.example.cunguoimoita.dispute.service.DisputeService;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET /admin/dashboard → trang tổng quan: số người dùng, bài đăng, đơn hàng, doanh thu phí, việc đang chờ.
- * Attribute gửi sang JSP: stats (DashboardStats), overview (đơn theo trạng thái, 5 bài chờ duyệt và 5 báo cáo mới nhất),
- * pendingDisputes (khiếu nại đang mở). Quyền được AdminAuthFilter kiểm tra.
- * POST /admin/dashboard → chạy ngay các tác vụ định kỳ (tự hoàn tất đơn sau 7 ngày, chuyển tiền người bán, voucher hết hạn).
- */
+/** Trang tổng quan admin; POST chạy ngay các tác vụ định kỳ của ScheduledJobs. */
 @WebServlet("/admin/dashboard")
 public class AdminDashboardServlet extends AdminBaseServlet {
 

@@ -52,7 +52,7 @@ public class ShippingCarrierDAO {
         return list;
     }
 
-    /** ShippingCarrier.managePartner(): thêm hãng mới (F10). */
+    /** ShippingCarrier.managePartner(): thêm hãng mới. */
     public void insert(ShippingCarrier s) throws SQLException {
         String sql = "INSERT INTO shipping_carriers (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection c = ConnectionPool.getInstance().getConnection();
@@ -62,7 +62,7 @@ public class ShippingCarrierDAO {
         }
     }
 
-    /** ShippingCarrier.managePartner(): sửa thông tin, phí cơ bản, bật/tắt (F10). @return true nếu có hãng này */
+    /** ShippingCarrier.managePartner(): sửa thông tin, phí cơ bản, bật/tắt. @return true nếu có hãng này */
     public boolean update(ShippingCarrier s) throws SQLException {
         String sql = "UPDATE shipping_carriers SET id = ?, name = ?, logo_url = ?, hotline = ?, base_fee = ?,"
                 + " estimated_days = ?, is_active = ? WHERE id = ?";

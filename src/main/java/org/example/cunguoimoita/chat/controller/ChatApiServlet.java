@@ -23,19 +23,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
-/**
- * API JSON cho chat.js (khung chat không tải lại trang).
- *  GET  /chat/messages?id=&after=   tin nhắn mới hơn mốc after (epoch ms), after bỏ trống để lấy hết.
- *                                   Có tin mới thì kèm "offers" (mọi offer của cuộc trò chuyện) để cập nhật khung giá cũ.
- *  GET  /chat/unread                số tin chưa đọc (icon tin nhắn trên header)
- *  GET  /chat/list                  các đoạn chat, mới nhất trước (khung chat nổi góc phải dưới, chat-dock.js):
- *                                   tên/ảnh người kia, món đang trao đổi, tin cuối, số tin chưa đọc
- *  POST /chat/send                  conversationId, content
- *                                   Offer đã chấp nhận kèm orderId, orderCode của đơn tạo ra.
- *  POST /chat/offer                 action=make (conversationId, amount) | accept | decline (offerId) | counter (offerId, amount)
- *  POST /chat/image   (multipart)   conversationId, image (1 ảnh ≤ 5 MB) → tin nhắn type "image", content = đường dẫn ảnh
- * Lỗi trả {"ok":false,"error":"..."}.
- */
+/** API JSON cho chat.js và chat-dock.js; lỗi trả {"ok":false,"error":"..."}. */
 @WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/list", "/chat/send", "/chat/offer", "/chat/image"})
 @MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = MediaStore.MAX_FILE_SIZE + 64 * 1024)
 public class ChatApiServlet extends HttpServlet {
@@ -171,10 +159,7 @@ public class ChatApiServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Mốc after (epoch ms) → Timestamp. Cộng thêm 0,999999 ms để tin cũ lưu lẻ micro giây
-     * (trước khi làm tròn tới ms) không bị trả lại ở mỗi lần hỏi.
-     */
+    /** Cộng thêm 0,999999 ms để tin cũ lưu lẻ micro giây không bị trả lại ở mỗi lần hỏi. */
     private static Timestamp afterParam(HttpServletRequest req) {
         String after = req.getParameter("after");
         if (after == null || after.isBlank()) {

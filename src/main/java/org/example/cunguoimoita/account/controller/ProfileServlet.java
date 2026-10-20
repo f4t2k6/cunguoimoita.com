@@ -20,7 +20,7 @@ public class ProfileServlet extends HttpServlet {
     private static final Pattern PHONE = Pattern.compile("^[0-9+()\\-\\s]{8,20}$");
     private final UserDAO userDAO = new UserDAO();
     private final AddressDAO addressDAO = new AddressDAO();
-    private final ReviewService reviewService = new ReviewService();   // F8: hạng thành viên hiện trong hồ sơ
+    private final ReviewService reviewService = new ReviewService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

@@ -17,11 +17,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-// POST /order/checkout → bấm "Mua hàng" ở trang giỏ: tách các món đã tick (productId, nhiều giá trị)
-//      thành mỗi người bán 1 đơn; món không tick vẫn ở lại giỏ.
-//      buyNow=productId → "Mua ngay" (trang chi tiết / khung chat): đặt riêng món đó với giá đang đăng.
-//      Thành công: 1 đơn → mở trang chi tiết đơn đó; nhiều đơn → mở danh sách đơn mua.
-//      Lỗi (giỏ trống, món đã có người đặt...) → quay lại giỏ kèm thông báo.
+// Đặt hàng từ giỏ (mỗi người bán 1 đơn) hoặc "Mua ngay" một món với giá đang đăng.
 @WebServlet("/order/checkout")
 public class CheckoutServlet extends HttpServlet {
 

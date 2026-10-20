@@ -10,10 +10,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Bài đăng phía admin (F10). Bảng products do TV2 tạo; ở đây chỉ đọc danh sách và đổi các cột duyệt / trạng thái.
- * Bài chờ duyệt: status = draft, approved_by_admin_id IS NULL, verified_status khác rejected.
- */
+/** Bài đăng phía admin. Bài chờ duyệt: status = draft, chưa có approved_by_admin_id, chưa bị từ chối. */
 public class AdminProductDAO {
 
     private static final String SELECT = "SELECT p.id, p.name, p.description, p.seller_id, u.fullname AS seller_name,"
@@ -25,7 +22,7 @@ public class AdminProductDAO {
 
     /**
      * @param filter pending | approved | hidden | rejected | all
-     * @param keyword tìm theo tên bài hoặc tên người bán, null để bỏ qua
+     * @param keyword tên bài hoặc tên người bán, null để bỏ qua
      */
     public List<AdminProductRow> find(Connection c, String filter, String keyword) throws SQLException {
         return find(c, filter, keyword, LIST_LIMIT);

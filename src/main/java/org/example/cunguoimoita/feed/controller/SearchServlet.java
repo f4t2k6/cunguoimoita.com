@@ -18,13 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * GET /feed/search → tìm kiếm và lọc bài đăng (Guest.searchProduct(), viewCategory()).
- *     Tham số: q (từ khoá), category, minPrice, maxPrice, condition (new|used|damaged),
- *              type (sale|swap), sort (newest|price_asc|price_desc), page
- *     JSP nhận: result (FeedService.Page), categories, activeCategory (Category hoặc null), filterError, backUrl
- * Ô tìm kiếm ở thanh trên cùng và các danh mục ở trang chủ đều dẫn về đây.
- */
+/** Tìm kiếm và lọc bài đăng (Guest.searchProduct, viewCategory). */
 @WebServlet("/feed/search")
 public class SearchServlet extends HttpServlet {
 

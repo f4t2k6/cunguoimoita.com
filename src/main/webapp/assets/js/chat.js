@@ -1,4 +1,4 @@
-// F7 khung chat kiểu Messenger (TV5). Tải tin nhắn qua /chat/messages rồi định kỳ hỏi tin mới.
+// Khung chat kiểu Messenger. Tải tin nhắn qua /chat/messages rồi định kỳ hỏi tin mới.
 // Để chạy nhẹ: chỉ hỏi phần tin mới (after), không hỏi khi tab bị ẩn, giãn dần nhịp hỏi khi không có tin,
 // không gửi 2 yêu cầu chồng nhau, và chỉ vẽ lại khi thật sự có thay đổi.
 // Dùng chung cho trang /chat/conversation và khung chat nổi góc phải dưới (chat-dock.js):

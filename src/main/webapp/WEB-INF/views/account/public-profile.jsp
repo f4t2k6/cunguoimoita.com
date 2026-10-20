@@ -41,7 +41,7 @@
         </c:if>
     </div>
 
-    <%-- F8: đánh giá nhận được --%>
+    <%-- Đánh giá nhận được --%>
     <section class="detail-section">
         <h2 class="section-heading">Đánh giá (${fn:length(reviews)})</h2>
         <c:choose>
@@ -61,7 +61,7 @@
         </c:choose>
     </section>
 
-    <%-- Bài đang bán của người này (F2); thẻ nhỏ dùng chung với trang chi tiết bài --%>
+    <%-- Bài đang bán của người này; thẻ nhỏ dùng chung với trang chi tiết bài --%>
     <link rel="stylesheet" href="${ctx}/assets/css/product.css?v=${assetVer}">
     <section class="detail-section">
         <h2 class="section-heading">Đang bán (${fn:length(sellerProducts)})</h2>

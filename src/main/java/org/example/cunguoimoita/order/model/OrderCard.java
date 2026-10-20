@@ -4,10 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Một thẻ đơn ở trang Đơn mua / Đơn bán (kiểu Shopee): đơn + tên người bên kia + các món + tình trạng giao hàng.
- * Chỉ để hiển thị, không lưu xuống DB.
- */
+/** Thẻ đơn ở trang Đơn mua / Đơn bán, chỉ để hiển thị. */
 public class OrderCard {
 
     /** Một món trong thẻ: tên, ảnh bìa, số lượng, giá đã chốt. */

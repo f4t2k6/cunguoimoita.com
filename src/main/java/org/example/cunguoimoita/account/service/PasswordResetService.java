@@ -20,10 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Quên mật khẩu, 3 bước: (1) nhập email, kiểm tra có tài khoản rồi gửi mã 6 số;
- * (2) nhập mã; (3) đặt mật khẩu mới.
- * Mã chỉ sống 10 phút nên lưu trong session (mã đã băm SHA-256), không cần thêm bảng.
- * Lỗi người dùng cần biết được ném ra bằng VerificationException kèm câu thông báo.
+ * Quên mật khẩu: gửi mã 6 số, nhập mã, đặt mật khẩu mới.
+ * Mã chỉ sống 10 phút nên lưu (đã băm SHA-256) trong session, không cần thêm bảng.
  */
 public class PasswordResetService {
     public static final int VALID_MINUTES = EmailVerificationService.VALID_MINUTES;

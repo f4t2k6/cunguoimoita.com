@@ -18,23 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * GET /home?page= → trang chủ: các bài đã duyệt, mới nhất trước, mỗi bài hiện như một post.
- *     Attribute gửi sang JSP:
- *       categories: List&lt;Map&gt; {slug, name, icon}   danh mục gốc cho thanh danh mục
- *       posts:      List&lt;Product&gt;                     bài của trang hiện tại
- *       result:     FeedService.Page                  để vẽ nút trang trước / trang sau
- *       backUrl:    trang quay về sau khi bấm Lưu
- */
+/** Trang chủ: bài đã duyệt, mới nhất trước. */
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
 
-    /**
-     * Icon của từng danh mục gốc: file ảnh trong assets/images, tên là category-<id danh mục>.png.
-     * Danh mục chưa có ảnh riêng thì dùng category-mac-dinh.png. Muốn đổi icon chỉ cần thay file ảnh;
-     * danh mục mới chỉ cần thêm file category-<id>.png (hoặc category-<tên không dấu>.png, vd "Quần áo" -> category-quan-ao.png),
-     * không phải sửa code.
-     */
+    /** Icon danh mục là assets/images/category-<id>.png hoặc category-<tên không dấu>.png; thêm file là đủ, không cần sửa code. */
     private static final String ICON_DIR = "/assets/images/";
     private static final String DEFAULT_ICON = ICON_DIR + "category-mac-dinh.png";
 

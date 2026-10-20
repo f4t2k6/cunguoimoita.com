@@ -2,10 +2,7 @@ package org.example.cunguoimoita.product.model;
 
 import java.math.BigDecimal;
 
-/**
- * Điều kiện tìm kiếm và lọc ở trang chủ / trang tìm kiếm (F3).
- * Trường nào null là không lọc theo trường đó.
- */
+/** Trường nào null là không lọc theo trường đó. */
 public class ProductFilter {
 
     /** Cách sắp xếp kết quả. */

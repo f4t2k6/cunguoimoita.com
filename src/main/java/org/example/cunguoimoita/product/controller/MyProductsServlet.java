@@ -17,12 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * "Bài đăng của tôi" (F2).
- *   GET  /product/mine?tab=all|pending|selling|paused|done|rejected
- *        JSP nhận: products (đã lọc theo tab), tab, tabCounts (Map tab → số bài), message, error
- *   POST /product/mine  field: id, action = pause | resume | delete
- */
+/** Bài đăng của tôi: lọc theo tab, tạm ẩn, hiện lại, xoá. */
 @WebServlet("/product/mine")
 public class MyProductsServlet extends HttpServlet {
 

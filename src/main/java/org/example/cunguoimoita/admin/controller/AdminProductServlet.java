@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/products?filter=pending|approved|hidden|rejected|all&q=   danh sách bài đăng (mặc định: chờ duyệt)
- *      Attribute gửi sang JSP: products (List&lt;AdminProductRow&gt;), filter, q
- * POST /admin/products  field: id, action = approve | reject (kèm reason) | hide (kèm reason) | show
- */
+/** Duyệt, từ chối, ẩn và hiện lại bài đăng. */
 @WebServlet("/admin/products")
 public class AdminProductServlet extends AdminBaseServlet {
 

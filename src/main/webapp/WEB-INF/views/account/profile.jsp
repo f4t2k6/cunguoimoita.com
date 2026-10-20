@@ -62,7 +62,7 @@
         <div class="account-alert account-alert-error">Vui lòng kiểm tra lại thông tin địa chỉ.</div>
     </c:if>
 
-    <%-- ========== HẠNG THÀNH VIÊN (F8): dữ liệu ProfileServlet lấy từ ReviewService, giống trang /review/tier ========== --%>
+    <%-- HẠNG THÀNH VIÊN: dữ liệu ProfileServlet lấy từ ReviewService, giống trang /review/tier --%>
     <c:set var="p" value="${progress}"/>
     <section class="account-card account-tier-card" id="hang-thanh-vien">
         <div class="account-card-heading">

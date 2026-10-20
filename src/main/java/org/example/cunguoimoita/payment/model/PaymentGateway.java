@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.payment.model;
 
-/**
- * Các cổng thanh toán hỗ trợ trong hệ thống (Ánh xạ từ Class Diagram Final).
- */
 public enum PaymentGateway {
     VNPAY("vnpay", "VNPay QR / Thẻ ATM"),
     MOMO("momo", "Ví điện tử MoMo"),

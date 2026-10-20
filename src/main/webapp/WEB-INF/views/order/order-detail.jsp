@@ -36,7 +36,7 @@
   <c:if test="${not empty error}"><p class="order-alert error"><c:out value="${error}"/></p></c:if>
   <c:if test="${not empty message}"><p class="order-alert"><c:out value="${message}"/></p></c:if>
 
-  <%-- ========== TRẠNG THÁI ĐƠN ========== --%>
+  <%-- TRẠNG THÁI ĐƠN --%>
   <c:choose>
     <c:when test="${o.status == 'CANCELLED'}"><p class="order-state-banner">Đơn đã huỷ.</p></c:when>
     <c:when test="${o.status == 'REFUNDED'}"><p class="order-state-banner">Đơn đã hoàn tiền cho người mua.</p></c:when>
@@ -57,7 +57,7 @@
     <c:when test="${isSeller}"><p class="order-state-banner">Chờ người mua chọn vận chuyển và thanh toán.</p></c:when>
   </c:choose>
 
-  <%-- ========== CÁC MÓN + TIỀN ========== --%>
+  <%-- CÁC MÓN + TIỀN --%>
   <section class="order-card">
     <h2>Sản phẩm</h2>
     <div class="table-scroll">
@@ -101,12 +101,12 @@
     </table>
   </section>
 
-  <%-- ========== ĐẶT HÀNG & THANH TOÁN: người mua, khi đơn còn sửa được ========== --%>
+  <%-- ĐẶT HÀNG & THANH TOÁN: người mua, khi đơn còn sửa được --%>
   <c:if test="${isBuyer and editable}">
     <section class="order-card checkout-steps" id="dat-hang">
       <h2>Đặt hàng &amp; thanh toán</h2>
 
-      <%-- 1. Địa chỉ giao: chọn từ sổ địa chỉ (F1). Chọn xong là tự lưu (không cần nút), phí ship tính lại. --%>
+      <%-- 1. Địa chỉ giao: chọn từ sổ địa chỉ. Chọn xong là tự lưu (không cần nút), phí ship tính lại. --%>
       <h3>1. Địa chỉ giao</h3>
       <%-- #dat-hang: tải lại xong trình duyệt cuộn về đúng khung này, không nhảy lên đầu trang --%>
       <form method="post" action="${ctx}/order/detail#dat-hang">
@@ -122,7 +122,7 @@
         <noscript><button class="secondary">Lưu địa chỉ</button></noscript>
       </form>
 
-      <%-- 2. Đơn vị vận chuyển (F6): phí đã tính theo tỉnh người bán → tỉnh giao. Bấm chọn là tự lưu (không cần nút). --%>
+      <%-- 2. Đơn vị vận chuyển: phí đã tính theo tỉnh người bán → tỉnh giao. Bấm chọn là tự lưu (không cần nút). --%>
       <h3>2. Đơn vị vận chuyển</h3>
       <form method="post" action="${ctx}/order/detail#dat-hang">
         <input type="hidden" name="id" value="${o.id}">
@@ -141,7 +141,7 @@
         <noscript><button class="secondary">${empty shipment ? 'Chọn đơn vị này' : 'Đổi đơn vị vận chuyển'}</button></noscript>
       </form>
 
-      <%-- 3. Voucher (F4): gợi ý voucher còn dùng được của người mua --%>
+      <%-- 3. Voucher: gợi ý voucher còn dùng được của người mua --%>
       <h3>3. Voucher</h3>
       <c:choose>
         <c:when test="${empty o.voucherId}">
@@ -167,7 +167,7 @@
         <c:otherwise><p>Đã áp voucher ✔</p></c:otherwise>
       </c:choose>
 
-      <%-- 4. Thanh toán (F5): phải chọn vận chuyển trước để tổng tiền đã gồm phí ship --%>
+      <%-- 4. Thanh toán: phải chọn vận chuyển trước để tổng tiền đã gồm phí ship --%>
       <h3>4. Thanh toán</h3>
       <c:choose>
         <c:when test="${empty shipment}">
@@ -214,7 +214,7 @@
     </section>
   </c:if>
 
-  <%-- ========== NGƯỜI BÁN: XÁC NHẬN GIAO HÀNG CHO ĐƠN VỊ VẬN CHUYỂN ========== --%>
+  <%-- NGƯỜI BÁN: XÁC NHẬN GIAO HÀNG CHO ĐƠN VỊ VẬN CHUYỂN --%>
   <c:if test="${isSeller and placed and not empty shipment and shipment.status == 'CREATED'}">
     <section class="order-card" id="ban-giao">
       <h2>Xác nhận giao hàng</h2>
@@ -254,7 +254,7 @@
     </section>
   </c:if>
 
-  <%-- ========== HOÀN TIỀN / TIỀN NGƯỜI BÁN NHẬN / KHIẾU NẠI (F9) ========== --%>
+  <%-- HOÀN TIỀN / TIỀN NGƯỜI BÁN NHẬN / KHIẾU NẠI --%>
   <c:if test="${not empty refund}">
     <p class="order-alert">Đã hoàn <strong><fmt:formatNumber value="${refund.amount}" pattern="#,##0"/> đ</strong>
       cho người mua (${refund.reason.displayName}).</p>
@@ -270,7 +270,7 @@
       <a href="${ctx}/dispute?id=${dispute.id}">Xem khiếu nại</a></p>
   </c:if>
 
-  <%-- ========== NGƯỜI MUA: NHẬN HÀNG / TRẢ HÀNG / ĐÁNH GIÁ ========== --%>
+  <%-- NGƯỜI MUA: NHẬN HÀNG / TRẢ HÀNG / ĐÁNH GIÁ --%>
   <%-- Chỉ khi vận đơn đã qua đủ các bước tới "đã giao" mới hiện 2 lựa chọn; người bán không có các nút này --%>
   <c:if test="${isBuyer and not disputeOpen and o.status == 'DELIVERED'}">
     <section class="order-card actions">
@@ -283,7 +283,7 @@
       <p class="hint">Đơn tự hoàn tất sau 7 ngày kể từ khi giao nếu bạn không yêu cầu trả hàng/hoàn tiền.</p>
     </section>
   </c:if>
-  <%-- F8: đơn hoàn tất → chỉ người mua đánh giá giao dịch --%>
+  <%-- Đơn hoàn tất → chỉ người mua đánh giá giao dịch --%>
   <c:if test="${isBuyer and o.status == 'COMPLETED'}">
     <c:choose>
       <c:when test="${not empty myReview}">
@@ -308,7 +308,7 @@
     </c:choose>
   </c:if>
 
-  <%-- ========== HUỶ ĐƠN: khi hàng chưa giao cho đơn vị vận chuyển. Người mua đang tạo đơn thì không có ô này. ========== --%>
+  <%-- HUỶ ĐƠN: khi hàng chưa giao cho đơn vị vận chuyển. Người mua đang tạo đơn thì không có ô này. --%>
   <c:if test="${canCancel}">
     <section class="order-card cancel-box">
       <h2>Huỷ đơn hàng</h2>

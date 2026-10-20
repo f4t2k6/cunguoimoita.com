@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Danh mục (F10 thêm/sửa; F2/F3 của TV2 đọc). */
+/** Danh mục cha – con của bài đăng. */
 public class CategoryDAO {
 
     /** Danh mục cha trước, con ngay dưới cha của nó. */

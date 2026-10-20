@@ -13,13 +13,7 @@ import org.example.cunguoimoita.feed.service.FeedService;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * POST /feed/wishlist → lưu / bỏ lưu một bài vào Bucket List.
- *      Field: productId, action = save | remove, back (trang quay về sau khi xong)
- * Nút "Lưu" trên trang gửi bằng fetch (assets/js/feed.js) để không phải tải lại trang:
- * khi đó servlet trả JSON {"saved": true|false} hoặc {"error": "...", "login": "..."}.
- * Trình duyệt tắt JavaScript thì form vẫn gửi bình thường và được chuyển về trang cũ.
- */
+/** Lưu / bỏ lưu bài. Gọi bằng fetch thì trả JSON, gửi form thường thì redirect về trang cũ. */
 @WebServlet("/feed/wishlist")
 public class WishlistServlet extends HttpServlet {
 

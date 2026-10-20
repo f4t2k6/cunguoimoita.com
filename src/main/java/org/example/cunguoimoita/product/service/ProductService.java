@@ -17,25 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ đăng và quản lý bài (F2).
- * Servlet chỉ đọc form rồi gọi các hàm ở đây; mọi kiểm tra quyền và dữ liệu đều nằm trong service.
- * Lỗi người dùng nhập sai ném IllegalArgumentException, thao tác không hợp với trạng thái bài ném
- * IllegalStateException; servlet bắt hai loại này để hiện thông báo trên trang.
- */
+/** Lỗi nhập liệu ném IllegalArgumentException, sai trạng thái ném IllegalStateException; servlet bắt để hiện thông báo. */
 public class ProductService {
 
     public static final int MAX_IMAGES = 8;
-    private static final BigDecimal MAX_MONEY = new BigDecimal("9999999999");   // vừa cột NUMERIC(12,2)
+    private static final BigDecimal MAX_MONEY = new BigDecimal("9999999999");
     private static final double SWAP_TOLERANCE = 0.3;                             // gợi ý món lệch giá trị tối đa 30%
 
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
     private final MediaStore imageStore = new MediaStore();
 
-    // ==================================================================
-    // Đọc
-    // ==================================================================
 
     /** Danh mục cha trước, con ngay sau cha (dùng cho ô chọn danh mục và thanh danh mục). */
     public List<Category> categories() throws SQLException {
@@ -58,11 +50,7 @@ public class ProductService {
         }
     }
 
-    /**
-     * Bài cho trang chi tiết. Khách chỉ xem được bài đã duyệt đang hiện;
-     * người bán và admin xem được cả bài chờ duyệt / đang ẩn để kiểm tra.
-     * @return null nếu không có hoặc người xem không được phép xem
-     */
+    /** Khách chỉ xem bài đã duyệt; người bán và admin xem được cả bài chờ duyệt / đang ẩn. @return null nếu không được xem */
     public Product detail(String productId, String viewerId, boolean viewerIsAdmin) throws SQLException {
         if (isBlank(productId)) {
             return null;
@@ -94,14 +82,8 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Đăng / sửa
-    // ==================================================================
 
-    /**
-     * Customer.postProduct(): lưu ảnh rồi tạo bài ở trạng thái chờ duyệt.
-     * @return id bài mới
-     */
+    /** Customer.postProduct(): lưu ảnh rồi tạo bài ở trạng thái chờ duyệt. */
     public String post(String sellerId, Product input, List<Part> photos) throws SQLException, IOException {
         validate(input);
         List<Part> uploads = nonEmpty(photos);
@@ -125,10 +107,7 @@ public class ProductService {
         return input.getId();
     }
 
-    /**
-     * Sửa bài. keepImages là các ảnh cũ người bán giữ lại (theo thứ tự trên form), photos là ảnh mới thêm.
-     * Bài đang bị từ chối thì sửa xong tự gửi duyệt lại.
-     */
+    /** Bài đang bị từ chối thì sửa xong tự gửi duyệt lại. */
     public void update(String sellerId, String productId, Product input, List<String> keepImages, List<Part> photos)
             throws SQLException, IOException {
         validate(input);
@@ -184,9 +163,6 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Ẩn / hiện / xoá (người bán)
-    // ==================================================================
 
     /** Người bán tạm ẩn bài đang bán: bài về draft nhưng vẫn giữ trạng thái đã duyệt. */
     public void pause(String sellerId, String productId) throws SQLException {
@@ -238,14 +214,9 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Cho chức năng khác gọi (F4 đặt hàng, F7 chốt giá)
+    // Cho đặt hàng và chốt giá trong chat gọi
     // Nhận Connection để chạy chung transaction với nghiệp vụ gọi tới.
-    // ==================================================================
 
-    // ==================================================================
-    // Kiểm tra dữ liệu
-    // ==================================================================
 
     private void validate(Product p) {
         p.setName(trimToNull(p.getName()));

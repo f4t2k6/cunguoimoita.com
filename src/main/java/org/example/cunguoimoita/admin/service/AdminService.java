@@ -30,12 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ F10 – trang quản trị. Ứng với các method của Admin trong class diagram:
- * approveProduct(), banUser(), Report.resolve(), addCategory(), ShippingCarrier.managePartner(),
- * MemberTier.manageMemberTier(). resolveDispute() thuộc F9 (TV4), chỉ gắn link ở menu admin.
- * Mọi hàm ở đây chỉ được gọi từ servlet /admin/* (AdminAuthFilter đã kiểm tra quyền admin).
- */
+/** Nghiệp vụ trang quản trị (các method của Admin trong class diagram). Chỉ gọi từ servlet /admin/*. */
 public class AdminService {
 
     private static final List<String> TIER_ORDER = List.of("Bronze", "Silver", "Gold", "Diamond");
@@ -52,8 +47,6 @@ public class AdminService {
     /** Thông báo gửi sau khi transaction đã commit (để không báo cho người dùng một việc bị rollback). */
     private record Notice(String userId, NotificationType type, String content, String link) {
     }
-
-    // ============================ Tổng quan ============================
 
     public DashboardStats stats() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -83,8 +76,6 @@ public class AdminService {
                     reportDAO.find(c, "pending", limit));
         }
     }
-
-    // ============================ Duyệt bài ============================
 
     public List<AdminProductRow> products(String filter, String keyword) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -150,18 +141,13 @@ public class AdminService {
         send(notices);
     }
 
-    // ============================ Người dùng ============================
-
     public List<AdminUserRow> users(String keyword, String status) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return userDAO.search(c, keyword, status);
         }
     }
 
-    /**
-     * Admin.banUser(): khoá tài khoản (không đăng nhập được nữa, phiên đang mở bị đá ra ở lần vào trang
-     * tài khoản kế tiếp) và ẩn các bài đang bán của người đó.
-     */
+    /** Admin.banUser(): khoá tài khoản và ẩn các bài đang bán của người đó. */
     public void banUser(String userId, String adminId) throws SQLException {
         inTransaction(c -> {
             banInTx(c, userId, adminId);
@@ -196,18 +182,13 @@ public class AdminService {
         productDAO.hideAvailableOfSeller(c, userId);
     }
 
-    // ============================ Báo cáo vi phạm ============================
-
     public List<Report> reports(String status) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return reportDAO.find(c, status == null ? "pending" : status);
         }
     }
 
-    /**
-     * Người dùng gửi báo cáo (nút "Báo cáo" trên bài đăng / hồ sơ).
-     * @param targetType product | user
-     */
+    /** @param targetType product | user */
     public void submitReport(String reporterId, String targetType, String targetId, String reason,
                              String description, String evidenceImages) throws SQLException {
         if (!"product".equals(targetType) && !"user".equals(targetType)) {
@@ -260,11 +241,7 @@ public class AdminService {
         }
     }
 
-    /**
-     * Report.resolve(): xử lý báo cáo.
-     * @param action none (chỉ đánh dấu đã xử lý) | hide_product (ẩn bài bị báo cáo) | ban_user (khoá người
-     *               bị báo cáo, hoặc người bán của bài bị báo cáo)
-     */
+    /** @param action none | hide_product | ban_user (khoá người bị báo cáo hoặc người bán của bài bị báo cáo) */
     public void resolveReport(String reportId, String action, String adminId) throws SQLException {
         List<Notice> notices = new ArrayList<>();
         inTransaction(c -> {
@@ -319,8 +296,6 @@ public class AdminService {
         });
         send(notices);
     }
-
-    // ============================ Danh mục ============================
 
     public List<Category> categories() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -377,8 +352,6 @@ public class AdminService {
         }
     }
 
-    // ============================ Đơn vị vận chuyển ============================
-
     public List<ShippingCarrier> carriers() throws SQLException {
         return carrierDAO.findAll();
     }
@@ -409,8 +382,6 @@ public class AdminService {
         }
         ShippingService.clearCarrierCache();
     }
-
-    // ============================ Hạng thành viên ============================
 
     public List<MemberTier> tiers() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -445,8 +416,6 @@ public class AdminService {
             return null;
         });
     }
-
-    // ---------------------------------------------------------------------
 
     private AdminProductRow requireProduct(Connection c, String productId) throws SQLException {
         AdminProductRow p = productId == null ? null : productDAO.findById(c, productId);

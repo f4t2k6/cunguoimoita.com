@@ -9,11 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Thông báo cho cả nhóm dùng. Ví dụ F4 báo người bán có đơn mới:
- *   new NotificationService().send(sellerId, NotificationType.ORDER, "Bạn có đơn hàng mới", "/order/detail?id=" + orderId);
- * linkUrl viết không kèm context path (bắt đầu bằng "/").
- */
+/** Gửi thông báo cho người dùng; linkUrl không kèm context path. */
 public class NotificationService {
 
     private final NotificationDAO notificationDAO = new NotificationDAO();

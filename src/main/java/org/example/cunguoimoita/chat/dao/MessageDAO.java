@@ -30,11 +30,7 @@ public class MessageDAO {
         }
     }
 
-    /**
-     * Tin nhắn của cuộc trò chuyện, cũ trước mới sau. after = null để lấy hết, hoặc chỉ lấy tin mới hơn mốc này.
-     * Chỉ trả tin khi userId là một trong hai người của cuộc trò chuyện (kiểm tra quyền luôn trong câu SELECT,
-     * để mỗi lần chat.js hỏi tin mới chỉ tốn 1 câu lệnh).
-     */
+    /** Kiểm tra quyền ngay trong câu SELECT để mỗi lần chat.js hỏi tin mới chỉ tốn 1 câu lệnh. */
     public List<Message> findForParticipant(Connection c, String conversationId, String userId, Timestamp after)
             throws SQLException {
         String sql = "SELECT m.* FROM messages m JOIN conversations cv ON cv.id = m.conversation_id"

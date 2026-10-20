@@ -14,11 +14,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tác vụ chạy nền, bắt đầu khi Tomcat khởi động web và dừng khi tắt:
- *  1. F6: đơn đã giao quá 7 ngày, không khiếu nại → tự hoàn tất (kéo theo F8 xét hạng, F9 trả tiền người bán).
- *  2. F9: chuyển các khoản trả tiền đang chờ cho người bán vừa khai tài khoản nhận tiền.
- *  3. F4: voucher quá hạn chưa dùng → expired.
- * Chạy 2 phút sau khi khởi động, rồi mỗi giờ 1 lần. Admin bấm "Chạy ngay" ở trang Tổng quan cũng gọi runNow().
+ * Tác vụ nền mỗi giờ: tự hoàn tất đơn đã giao quá 7 ngày, chuyển tiền người bán đang chờ, đánh dấu voucher hết hạn.
+ * Admin bấm "Chạy ngay" ở trang Tổng quan cũng gọi runNow().
  */
 @WebListener
 public class ScheduledJobs implements ServletContextListener {
@@ -29,7 +26,7 @@ public class ScheduledJobs implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "cunguoimoita-jobs");
-            t.setDaemon(true);           // không giữ Tomcat lại khi tắt
+            t.setDaemon(true);
             return t;
         });
         scheduler.scheduleWithFixedDelay(ScheduledJobs::runQuietly, 2, 60, TimeUnit.MINUTES);

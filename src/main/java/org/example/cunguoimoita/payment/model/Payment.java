@@ -3,10 +3,6 @@ package org.example.cunguoimoita.payment.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * Thực thể Payment ánh xạ 100% từ Class Diagram:
- * Payment (id, code, orderId, payerId, amount, gateway, gatewayTxnId, status, createdAt, paidAt)
- */
 public class Payment implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -41,7 +37,6 @@ public class Payment implements Serializable {
         this.paidAt = paidAt;
     }
 
-    // Các hàm nghiệp vụ theo Class Diagram
     public void markPaid(String gatewayTxnId) {
         this.status = PaymentStatus.PAID;
         this.gatewayTxnId = gatewayTxnId;
@@ -56,7 +51,6 @@ public class Payment implements Serializable {
         this.status = PaymentStatus.REFUNDED;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

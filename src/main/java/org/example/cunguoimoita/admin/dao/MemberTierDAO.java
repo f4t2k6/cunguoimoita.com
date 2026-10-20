@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Hạng thành viên (F10 sửa; F8 của TV3 đọc để tính ưu đãi). */
+/** Hạng thành viên: admin sửa, ReviewService đọc để xét hạng và ưu đãi. */
 public class MemberTierDAO {
 
     public List<MemberTier> findAll(Connection c) throws SQLException {

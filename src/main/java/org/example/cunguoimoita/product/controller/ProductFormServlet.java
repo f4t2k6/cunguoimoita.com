@@ -20,15 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Form đăng bài và sửa bài (F2).
- *   GET  /product/new          form trống
- *   GET  /product/edit?id=     form điền sẵn bài cũ
- *   POST cùng hai đường dẫn    (multipart) lưu bài; thành công thì về "Bài đăng của tôi"
- * Field: name, description, categoryId (danh mục cha), childCategoryId (danh mục con, có thể trống), condition, listingType, price, estimatedValue,
- *        desiredExchangeNote, acceptCod, photos (nhiều file), keepImage (ảnh cũ giữ lại, khi sửa)
- * JSP nhận: product, categories, editing (true khi sửa), error, maxImages
- */
+/** Form đăng bài và sửa bài (multipart). */
 @WebServlet({"/product/new", "/product/edit"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 45 * 1024 * 1024)
 public class ProductFormServlet extends HttpServlet {

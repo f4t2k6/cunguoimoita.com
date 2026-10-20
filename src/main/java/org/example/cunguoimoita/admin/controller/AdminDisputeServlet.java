@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * Controller Quản trị Trọng tài Tranh chấp & Khiếu nại (F10 -> F9 - Tuấn Anh).
- * Kế thừa AdminBaseServlet (được AdminAuthFilter bảo vệ quyền admin).
- */
+/** Admin xử lý khiếu nại (Admin.resolveDispute). */
 @WebServlet(name = "AdminDisputeServlet", urlPatterns = {"/admin/disputes", "/admin/disputes/resolve"})
 public class AdminDisputeServlet extends AdminBaseServlet {
 

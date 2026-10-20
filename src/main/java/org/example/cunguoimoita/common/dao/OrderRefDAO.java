@@ -7,14 +7,10 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Đọc/ghi tối thiểu bảng orders cho F6 (vận chuyển) và F7 (nút "Xem đơn" trong chat).
- * Tạo đơn và tính tiền đã chuyển sang OrderService của F4; ở đây chỉ còn đọc đơn và đổi trạng thái theo vận đơn.
- * Mọi hàm nhận Connection để chạy chung transaction với nghiệp vụ gọi nó.
- */
+/** Truy vấn bảng orders cho vận chuyển và chat. Mọi hàm nhận Connection để chạy chung transaction. */
 public class OrderRefDAO {
 
-    /** Vài cột của Order mà F6 cần, kèm thành phố gửi (địa chỉ mặc định người bán) và thành phố nhận. */
+    /** Vài cột của Order cho vận chuyển, kèm thành phố gửi (địa chỉ mặc định người bán) và thành phố nhận. */
     public record OrderRef(String id, String code, String buyerId, String sellerId, String status,
                            String fromCity, String toCity) {
     }
@@ -42,10 +38,7 @@ public class OrderRefDAO {
         }
     }
 
-    /**
-     * Đơn đã tạo từ các offer của một cuộc trò chuyện, theo id offer.
-     * Chat dùng để gắn nút "Xem đơn" dưới khung giá đã chấp nhận.
-     */
+    /** Đơn tạo từ các offer của một cuộc trò chuyện, theo id offer (nút "Xem đơn" trong chat). */
     public Map<String, NewOrder> findByConversationOffers(Connection c, String conversationId) throws SQLException {
         String sql = "SELECT o.offer_id, o.id, o.code FROM orders o"
                 + " JOIN price_offers po ON po.id = o.offer_id"

@@ -18,15 +18,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-/**
- * Trang chọn cổng thanh toán online (F5). Phải đăng nhập và là người mua của đơn.
- * GET  /payment/checkout?orderId=...  → đơn phải đang "chờ thanh toán" (người mua chọn "Thanh toán online" ở trang đơn).
- *      Attribute gửi sang JSP: order, gateways, vnpayReal (true nếu đã cấu hình khoá VNPay thật), error
- * POST /payment/checkout  field: orderId, gateway (vnpay | momo | bank_transfer)
- *      → tạo Payment với số tiền = tổng đơn trong DB, rồi chuyển sang VNPay thật (nếu có khoá)
- *        hoặc trang giả lập cổng /payment/sandbox.
- * COD không đi qua đây: người mua chọn COD ngay ở trang chi tiết đơn.
- */
+/** Chọn cổng thanh toán online; số tiền luôn lấy từ tổng đơn trong DB. */
 @WebServlet(name = "PaymentCheckoutServlet", urlPatterns = {"/payment/checkout"})
 public class PaymentCheckoutServlet extends HttpServlet {
 

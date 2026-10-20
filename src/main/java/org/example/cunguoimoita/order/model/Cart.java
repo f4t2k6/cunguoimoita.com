@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Cart {
     private String id;
-    private String ownerId;         // Customer sở hữu giỏ
+    private String ownerId;
     private LocalDate createdDate;
 
     public String getId() { return id; }
@@ -53,7 +53,5 @@ public class Cart {
     public boolean isEmpty() {
         return items.isEmpty();
     }
-
-
 
 }

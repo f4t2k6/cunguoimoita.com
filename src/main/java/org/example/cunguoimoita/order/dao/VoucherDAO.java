@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// Chạy SQL trên bảng vouchers.
 public class VoucherDAO {
 
     // Tìm voucher theo mã người dùng nhập (vd SALE50K). Không có → null.
@@ -80,7 +79,6 @@ public class VoucherDAO {
         }
     }
 
-    // Phát voucher mới cho khách (admin dùng).
     public void insert(Connection c, Voucher v) throws SQLException {
         v.setId(UUID.randomUUID().toString());
         String sql = "INSERT INTO vouchers (id, code, customer_id, discount_value, min_order_value, status, expiry_date)"
@@ -91,8 +89,8 @@ public class VoucherDAO {
             ps.setString(3, v.getCustomerId());
             ps.setDouble(4, v.getDiscountValue());
             ps.setDouble(5, v.getMinOrderValue());
-            ps.setString(6, v.getStatus().name().toLowerCase());   // enum ISSUED → chữ "issued" trong DB
-            ps.setObject(7, v.getExpiryDate());                    // setObject chấp nhận cả null
+            ps.setString(6, v.getStatus().name().toLowerCase());
+            ps.setObject(7, v.getExpiryDate());
             ps.executeUpdate();
         }
     }
@@ -107,7 +105,6 @@ public class VoucherDAO {
         }
     }
 
-    // Chuyển 1 dòng ResultSet → object Voucher
     private Voucher map(ResultSet rs) throws SQLException {
         Voucher v = new Voucher();
         v.setId(rs.getString("id"));
@@ -115,7 +112,7 @@ public class VoucherDAO {
         v.setCustomerId(rs.getString("customer_id"));
         v.setDiscountValue(rs.getDouble("discount_value"));
         v.setMinOrderValue(rs.getDouble("min_order_value"));
-        v.setStatus(Voucher.VoucherStatus.valueOf(rs.getString("status").toUpperCase()));   // "issued" → ISSUED
+        v.setStatus(Voucher.VoucherStatus.valueOf(rs.getString("status").toUpperCase()));
         v.setIssuedDate(rs.getObject("issued_date", LocalDate.class));
         v.setExpiryDate(rs.getObject("expiry_date", LocalDate.class));
         return v;

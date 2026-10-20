@@ -12,9 +12,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * CRUD địa chỉ; mọi thao tác đều khóa theo userId để không sửa địa chỉ người khác.
- * Theo database chung (00_database_chung.sql): addresses(customer_id, label, street, ward, district, city, is_default).
- * Bảng không có người nhận và số điện thoại riêng, nên lấy họ tên và số điện thoại của chủ tài khoản.
+ * Địa chỉ của khách hàng; mọi thao tác đều lọc theo userId để không sửa địa chỉ người khác.
+ * Bảng addresses không có người nhận và số điện thoại riêng nên lấy của chủ tài khoản.
  */
 public class AddressDAO {
     private static final String COLUMNS = "a.id, a.customer_id, a.label, u.fullname, u.phone, a.street, "

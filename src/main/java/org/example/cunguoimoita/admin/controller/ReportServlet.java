@@ -15,11 +15,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * Phía người dùng của F10: nút "Báo cáo" trên bài đăng / hồ sơ trỏ tới đây.
- * GET  /report?type=product|user&id=...   form báo cáo. Attribute gửi sang JSP: type, id, targetName, reasons, error, sent
- * POST /report   (multipart) field: type, id, reason (scam | fake_item | prohibited_item | spam | other), description,
- *                images (tối đa 3 ảnh bằng chứng, mỗi ảnh ≤ 5 MB)
- * Phải đăng nhập bằng tài khoản khách hàng (bảng reports.reporter_id trỏ customers).
+ * Người dùng gửi báo cáo vi phạm cho bài đăng hoặc người dùng (tối đa 3 ảnh bằng chứng).
+ * Chỉ tài khoản khách hàng được báo cáo vì reports.reporter_id trỏ tới customers.
  */
 @WebServlet("/report")
 @MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = 4 * MediaStore.MAX_FILE_SIZE)

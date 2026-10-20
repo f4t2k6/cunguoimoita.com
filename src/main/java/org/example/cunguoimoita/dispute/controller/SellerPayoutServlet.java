@@ -12,12 +12,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 
-/**
- * Thu nhập của người bán (F9 Payout). Phải đăng nhập.
- * GET /seller/payouts         → tổng tiền, phí sàn theo hạng, các khoản trả tiền theo đơn.
- *     Attribute gửi sang JSP: payouts (List&lt;Payout&gt;), summary (SellerEarningsSummary), info (SellerInfo)
- * GET /seller/payouts/export  → tải file CSV đối soát (đặt header Content-Disposition để trình duyệt tải về).
- */
+/** Thu nhập của người bán và file CSV đối soát. */
 @WebServlet(name = "SellerPayoutServlet", urlPatterns = {"/seller/payouts", "/seller/payouts/export"})
 public class SellerPayoutServlet extends HttpServlet {
 

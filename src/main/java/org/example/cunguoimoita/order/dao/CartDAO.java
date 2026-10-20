@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-
 public class CartDAO {
 
     // Một dòng hiển thị trong giỏ: món + thông tin sản phẩm + người bán (JOIN với products, users).
@@ -25,16 +24,15 @@ public class CartDAO {
         }
     }
 
-    // Tìm giỏ của khách (kèm danh sách món). Không có giỏ → trả null.
     public Cart findByOwner(Connection c, String ownerId) throws SQLException {
         String sql = "SELECT id, owner_id, created_date FROM carts WHERE owner_id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, ownerId);                      // thay dấu ? thứ 1 bằng ownerId
+            ps.setString(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     return null;
                 }
-                Cart cart = new Cart();                    // "mapping": 1 dòng trong DB → 1 object Java
+                Cart cart = new Cart();
                 cart.setId(rs.getString("id"));
                 cart.setOwnerId(rs.getString("owner_id"));
                 cart.setCreatedDate(rs.getObject("created_date", java.time.LocalDate.class));
@@ -47,18 +45,17 @@ public class CartDAO {
     // Tạo giỏ mới cho khách chưa có giỏ (khách đăng ký sau dữ liệu mẫu).
     public Cart create(Connection c, String ownerId) throws SQLException {
         Cart cart = new Cart();
-        cart.setId(UUID.randomUUID().toString());          // tự sinh id ngẫu nhiên, không trùng
+        cart.setId(UUID.randomUUID().toString());
         cart.setOwnerId(ownerId);
         String sql = "INSERT INTO carts (id, owner_id) VALUES (?, ?)";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, cart.getId());
             ps.setString(2, ownerId);
-            ps.executeUpdate();                            // INSERT/UPDATE/DELETE dùng executeUpdate()
+            ps.executeUpdate();
         }
         return cart;
     }
 
-    // Lưu 1 món mới vào giỏ (món do Cart.addItem() tạo ra).
     public void insertItem(Connection c, CartItem item) throws SQLException {
         item.setId(UUID.randomUUID().toString());
         String sql = "INSERT INTO cart_items (id, cart_id, product_id, quantity) VALUES (?, ?, ?, ?)";
@@ -71,7 +68,6 @@ public class CartDAO {
         }
     }
 
-    // Xoá 1 món khỏi giỏ.
     public void deleteItem(Connection c, String cartId, String productId) throws SQLException {
         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -88,7 +84,6 @@ public class CartDAO {
         }
     }
 
-    // Xoá hết món trong giỏ.
     public void clear(Connection c, String cartId) throws SQLException {
         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -109,7 +104,7 @@ public class CartDAO {
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {                        // nhiều dòng → dùng while
+                while (rs.next()) {
                     String images = rs.getString("images");
                     String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
                     lines.add(new CartLine(rs.getString("id"), rs.getString("name"), rs.getDouble("price"),
@@ -120,7 +115,6 @@ public class CartDAO {
         return lines;
     }
 
-    // Đọc các món của 1 giỏ (private: chỉ findByOwner dùng).
     private List<CartItem> findItems(Connection c, String cartId) throws SQLException {
         String sql = "SELECT id, cart_id, product_id, quantity FROM cart_items WHERE cart_id = ?";
         List<CartItem> items = new ArrayList<>();

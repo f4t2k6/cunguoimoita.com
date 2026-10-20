@@ -15,21 +15,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ Phân hệ F9: Hoàn tiền cho Người mua (Refund).
- */
 public class RefundService {
 
     private final RefundDAO refundDAO = new RefundDAO();
     private final PaymentDAO paymentDAO = new PaymentDAO();
 
     /**
-     * Hoàn tiền cho người mua của 1 đơn (huỷ đơn đã trả tiền, hoặc admin xử khiếu nại cho người mua).
-     * Chạy trên Connection của nghiệp vụ gọi nó để chung transaction.
-     * - Đơn trả online: hoàn đúng số tiền đã thanh toán, khoản thanh toán chuyển refunded.
-     * - Đơn COD: chỉ hoàn khi shipper đã thu tiền (codCollectedAmount > 0).
-     * Hoàn tiền là giả lập nên ghi luôn trạng thái done. Mỗi đơn tối đa 1 khoản hoàn.
-     * @return khoản hoàn vừa tạo, null nếu người mua chưa trả đồng nào hoặc đơn đã được hoàn trước đó
+     * Online hoàn đúng số đã trả; COD chỉ hoàn khi shipper đã thu. Hoàn tiền là giả lập nên ghi luôn done.
+     * @return null nếu người mua chưa trả đồng nào hoặc đơn đã được hoàn
      */
     public Refund refundOrder(Connection c, String orderId, String buyerId, double codCollectedAmount,
                               RefundReason reason) throws SQLException {

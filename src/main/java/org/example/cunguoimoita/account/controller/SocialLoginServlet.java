@@ -32,15 +32,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Đăng nhập bằng Google / Facebook (OAuth 2.0, luồng authorization code).
- *   /oauth/google, /oauth/facebook            -> chuyển sang trang đăng nhập của Google / Facebook
- *   /oauth/google/callback, /oauth/facebook/callback -> nhận code, đổi lấy email + tên
- * Email đã có tài khoản thì đăng nhập vào tài khoản đó; chưa có thì tạo tài khoản khách hàng mới
- * (mật khẩu ngẫu nhiên, muốn đăng nhập bằng mật khẩu thì dùng "Quên mật khẩu").
- *
- * Cấu hình bằng các dòng <Parameter> trong META-INF/context.xml (xem context.xml.example):
- * oauth.google.clientId, oauth.google.clientSecret, oauth.facebook.appId, oauth.facebook.appSecret,
- * tuỳ chọn app.baseUrl (vd https://cunguoimoita.onrender.com) khi chạy sau proxy.
+ * Đăng nhập bằng Google/Facebook (OAuth 2.0 authorization code). Email chưa có tài khoản thì tạo khách hàng mới.
+ * Khoá OAuth và app.baseUrl cấu hình bằng <Parameter> trong META-INF/context.xml.
  */
 @WebServlet("/oauth/*")
 public class SocialLoginServlet extends HttpServlet {

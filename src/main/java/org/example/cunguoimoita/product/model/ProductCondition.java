@@ -1,9 +1,6 @@
 package org.example.cunguoimoita.product.model;
 
-/**
- * Tình trạng món đồ (Product.condition trong class diagram: mới, cũ, hỏng nhẹ).
- * Database lưu mã không dấu (new | used | damaged), giao diện hiện nhãn tiếng Việt.
- */
+/** Database lưu mã new | used | damaged, giao diện hiện nhãn tiếng Việt. */
 public enum ProductCondition {
     NEW("new", "Mới"),
     USED("used", "Đã qua sử dụng"),

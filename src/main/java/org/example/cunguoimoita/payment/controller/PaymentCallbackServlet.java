@@ -19,14 +19,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Kết quả từ cổng thanh toán (F5).
- * GET /payment/vnpay-return   VNPay chuyển người mua về: kiểm tra chữ ký + số tiền rồi mới ghi nhận đã thanh toán.
- * GET /payment/sandbox?paymentId=...   trang giả lập cổng (khi chưa có khoá VNPay/MoMo thật). Chỉ người trả tiền mở được.
- * POST /payment/sandbox   field: paymentId, result (success | fail) → ghi nhận kết quả, chuyển sang /payment/result
- * GET /payment/result?paymentId=...    CHỈ HIỂN THỊ kết quả (không đổi dữ liệu). Người trả tiền mở được.
- *      Attribute gửi sang JSP: payment, payStatus (paid | failed | pending | refunded)
- */
+/** Kết quả từ cổng thanh toán: VNPay trả về, trang giả lập sandbox và trang hiển thị kết quả. */
 @WebServlet(name = "PaymentCallbackServlet", urlPatterns = {"/payment/vnpay-return", "/payment/result", "/payment/sandbox"})
 public class PaymentCallbackServlet extends HttpServlet {
 

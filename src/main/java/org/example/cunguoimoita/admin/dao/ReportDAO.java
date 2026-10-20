@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Bảng reports (F10). target_id trỏ products hoặc users tuỳ target_type nên lấy tên bằng LEFT JOIN cả hai. */
+/** Bảng reports. target_id trỏ products hoặc users tuỳ target_type nên lấy tên bằng LEFT JOIN cả hai. */
 public class ReportDAO {
 
     private static final String SELECT = "SELECT r.*, ru.fullname AS reporter_name,"

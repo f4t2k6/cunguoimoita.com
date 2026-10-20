@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Khiếu nại & hoàn tiền (F9). Dữ liệu từ DisputeServlet:
+<%-- Khiếu nại & hoàn tiền. Dữ liệu từ DisputeServlet:
      userDisputes, userRefunds, currentDispute (khi ?id=), order (khi ?id= hoặc ?orderId=), openProblem, reasons, userId, error, message --%>
 <c:set var="pageTitle" value="Khiếu nại & hoàn tiền"/>
 <c:set var="pageCss" value="order.css"/>
@@ -21,7 +21,7 @@
 
   <c:set var="d" value="${currentDispute}"/>
   <c:choose>
-    <%-- ========== CHI TIẾT 1 KHIẾU NẠI ========== --%>
+    <%-- CHI TIẾT 1 KHIẾU NẠI --%>
     <c:when test="${not empty d}">
       <section class="order-card">
         <h2>Khiếu nại đơn <a href="${ctx}/order/detail?id=${d.orderId}"><c:out value="${order.code}"/></a>
@@ -79,7 +79,7 @@
       </section>
     </c:when>
 
-    <%-- ========== FORM MỞ KHIẾU NẠI CHO 1 ĐƠN ========== --%>
+    <%-- FORM MỞ KHIẾU NẠI CHO 1 ĐƠN --%>
     <c:when test="${not empty order}">
       <section class="order-card">
         <h2>Khiếu nại đơn <a href="${ctx}/order/detail?id=${order.id}"><c:out value="${order.code}"/></a></h2>
@@ -110,7 +110,7 @@
     </c:when>
   </c:choose>
 
-  <%-- ========== DANH SÁCH ========== --%>
+  <%-- DANH SÁCH --%>
   <section class="order-card">
     <h2>Khiếu nại của tôi</h2>
     <c:choose>

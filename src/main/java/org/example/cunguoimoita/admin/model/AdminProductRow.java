@@ -21,7 +21,6 @@ public record AdminProductRow(String id, String name, String description, String
         return "hidden".equals(status);
     }
 
-    // getter kiểu JavaBean cho EL trong JSP
     public String getId() { return id; }
     public String getName() { return name; }
     public String getDescription() { return description; }

@@ -5,8 +5,8 @@ package org.example.cunguoimoita.order.model;
 public class CartItem {
 
     private String id;
-    private String cartId;       // giỏ chứa món này
-    private String productId;    // sản phẩm được thêm vào giỏ
+    private String cartId;
+    private String productId;
     private int quantity = 1;    // đồ thanh lý mỗi bài 1 món → luôn là 1
 
     public String getId() { return id; }

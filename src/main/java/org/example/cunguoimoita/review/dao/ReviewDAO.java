@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// Chạy SQL cho F8: bảng reviews, cột customers.tier_id, và tính các thuộc tính dẫn xuất
+// bảng reviews, cột customers.tier_id, và tính các thuộc tính dẫn xuất
 // (/avgRating, /totalSales, /ecoPoints) bằng câu SELECT — không lưu cột riêng.
 public class ReviewDAO {
 
@@ -25,8 +25,6 @@ public class ReviewDAO {
 
     // 10.000đ giao dịch hoàn tất = 1 ecoPoint (cả tiền mua lẫn tiền bán)
     public static final int VND_PER_POINT = 10000;
-
-    // ===================== REVIEW =====================
 
     public void insert(Connection c, Review r) throws SQLException {
         r.setId(UUID.randomUUID().toString());
@@ -121,8 +119,6 @@ public class ReviewDAO {
             }
         }
     }
-
-    // ===================== ECO POINT & HẠNG =====================
 
     // User./ecoPoints: tổng tiền các đơn COMPLETED người này đã mua (total_amount) và đã bán (sub_total),
     // chia cho VND_PER_POINT. Tính mỗi lần cần, không lưu cột → không bao giờ lệch dữ liệu.

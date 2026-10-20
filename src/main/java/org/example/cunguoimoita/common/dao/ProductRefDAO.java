@@ -5,11 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * Đọc/ghi tối thiểu bảng products cho các chức năng khác (F7 chat, trả giá).
- * TẠM THỜI: khi TV2 làm xong ProductDAO/ProductService thì chuyển sang gọi của TV2 và bỏ class này.
- * Mọi hàm nhận Connection để chạy chung transaction với nghiệp vụ gọi nó.
- */
+/** Truy vấn bảng products cho giỏ hàng, đơn hàng và chat. Mọi hàm nhận Connection để chạy chung transaction. */
 public class ProductRefDAO {
 
     /** Vài cột của Product mà các module khác cần. status theo enum {draft, available, reserved, sold, exchanged, hidden}. */

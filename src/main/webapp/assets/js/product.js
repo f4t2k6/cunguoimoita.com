@@ -1,7 +1,7 @@
-// Bảng tin, chi tiết bài, form đăng bài (F2, F3). Nạp ở các trang của hai chức năng này.
+// Bảng tin, chi tiết bài, form đăng bài. Nạp ở các trang của hai chức năng này.
 // Trang vẫn dùng được khi tắt JavaScript: mọi nút đều là form gửi bình thường.
 (function () {
-  // ---- Thanh danh mục cuộn ngang: hiện mũi tên trái/phải khi còn mục ở phía đó ----
+  // Thanh danh mục cuộn ngang: hiện mũi tên trái/phải khi còn mục ở phía đó
   const catBar = document.querySelector('.category-bar');
   const catPrev = document.querySelector('.cat-prev');
   const catNext = document.querySelector('.cat-next');
@@ -19,7 +19,7 @@
     updateArrows();
   }
 
-  // ---- Nút Xem thêm ở bảng tin: tải trang kế tiếp, nối các bài vào trước nút ----
+  // Nút Xem thêm ở bảng tin: tải trang kế tiếp, nối các bài vào trước nút
   document.addEventListener('click', async (e) => {
     const more = e.target.closest('a.js-load-more');
     if (!more) return;
@@ -47,7 +47,7 @@
     }
   });
 
-  // ---- Nút Lưu / Đã lưu: gửi bằng fetch để không tải lại trang (khỏi mất chỗ đang cuộn) ----
+  // Nút Lưu / Đã lưu: gửi bằng fetch để không tải lại trang (khỏi mất chỗ đang cuộn)
   document.addEventListener('submit', async (e) => {
     const form = e.target.closest('form.js-save');
     if (!form) return;
@@ -82,13 +82,13 @@
     }
   });
 
-  // ---- Hỏi lại trước khi xoá ----
+  // Hỏi lại trước khi xoá
   document.addEventListener('submit', (e) => {
     const form = e.target.closest('form.js-confirm');
     if (form && !window.confirm(form.dataset.confirm)) e.preventDefault();
   });
 
-  // ---- Thông báo nhỏ góc dưới màn hình ----
+  // Thông báo nhỏ góc dưới màn hình
   let toastTimer;
   function toast(text) {
     let el = document.getElementById('pdToast');
@@ -105,7 +105,7 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
-  // ---- Trang chi tiết: bấm ảnh nhỏ để đổi ảnh lớn ----
+  // Trang chi tiết: bấm ảnh nhỏ để đổi ảnh lớn
   const mainPhoto = document.getElementById('mainPhoto');
   document.querySelectorAll('.detail-thumbs .thumb').forEach((thumb) => {
     thumb.addEventListener('click', () => {
@@ -114,7 +114,7 @@
     });
   });
 
-  // ---- Ô nhập tiền: tự thêm dấu chấm ngăn cách hàng nghìn khi gõ (1500000 → 1.500.000) ----
+  // Ô nhập tiền: tự thêm dấu chấm ngăn cách hàng nghìn khi gõ (1500000 → 1.500.000)
   document.querySelectorAll('input.js-money').forEach((input) => {
     const format = () => {
       const digits = input.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
@@ -124,7 +124,7 @@
     format();
   });
 
-  // ---- Form đăng bài ----
+  // Form đăng bài
   const form = document.querySelector('form.product-form');
   if (!form) return;
 

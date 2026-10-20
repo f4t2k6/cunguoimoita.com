@@ -16,7 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-// Service của F8: đánh giá sau giao dịch + ecoPoints + hạng thành viên.
+// Đánh giá sau giao dịch + ecoPoints + hạng thành viên.
 public class ReviewService {
 
     // Tiến độ hạng để hiện thanh %: điểm hiện có, hạng hiện tại, hạng kế tiếp (null nếu đã cao nhất).
@@ -24,11 +24,9 @@ public class ReviewService {
     }
 
     private final ReviewDAO reviewDAO = new ReviewDAO();
-    private final OrderDAO orderDAO = new OrderDAO();                  // đọc đơn (F4)
-    private final MemberTierDAO tierDAO = new MemberTierDAO();         // danh sách hạng
+    private final OrderDAO orderDAO = new OrderDAO();
+    private final MemberTierDAO tierDAO = new MemberTierDAO();
     private final NotificationService notificationService = new NotificationService();
-
-    // ===================== ĐÁNH GIÁ =====================
 
     // Customer.rateUser(targetId, rating): người mua chấm điểm người bán của 1 đơn đã hoàn tất.
     // Người được đánh giá tự suy ra từ đơn, không lấy từ form → không ai đánh giá bừa người ngoài đơn.
@@ -44,7 +42,7 @@ public class ReviewService {
             review.setTargetUserId(targetId);
             review.setRating(rating);
             review.setContent(content);
-            review.create();                     // Model kiểm tra 1–5 sao, độ dài nhận xét
+            review.create();
             reviewDAO.insert(c, review);
         }
         notify(targetId, "Bạn vừa nhận được đánh giá " + rating + " sao", "/review/tier");
@@ -66,7 +64,7 @@ public class ReviewService {
             }
             review.setRating(rating);
             review.setContent(content);
-            review.create();                     // kiểm tra lại dữ liệu (không đổi ngày tạo trong DB)
+            review.create();
             reviewDAO.update(c, review);
         }
     }
@@ -93,8 +91,6 @@ public class ReviewService {
             return reviewDAO.findSummary(c, userId);
         }
     }
-
-    // ===================== ECO POINT & HẠNG =====================
 
     // Điểm + hạng hiện tại + hạng kế tiếp + % tiến độ, cho trang "Hạng thành viên".
     public TierProgress getTierProgress(String userId) throws SQLException {
@@ -134,8 +130,6 @@ public class ReviewService {
             reviewDAO.updateTier(c, userId, reached.getId());
         }
     }
-
-    // ===================== HÀM PHỤ =====================
 
     // Luật đánh giá: đơn tồn tại, người này là người mua của đơn (người bán không đánh giá), đơn COMPLETED, chưa đánh giá đơn này.
     private Order requireReviewable(Connection c, String orderId, String userId) throws SQLException {

@@ -32,7 +32,7 @@ public class DashboardDAO {
                 // Tổng giá trị giao dịch: đơn đã giao / hoàn tất
                 + " (SELECT COALESCE(SUM(total_amount), 0) FROM orders"
                 + "    WHERE status IN ('delivered', 'completed')) AS gmv,"
-                // Doanh thu phí của sàn: hoa hồng trên các khoản đã giải ngân cho người bán (F9)
+                // Doanh thu phí của sàn: hoa hồng trên các khoản đã giải ngân cho người bán
                 + " (SELECT COALESCE(SUM(commission_fee), 0) FROM payouts WHERE status = 'done') AS commission,"
                 + " (SELECT COUNT(*) FROM users WHERE user_role = 'customer'"
                 + "    AND join_date >= CURRENT_DATE - 6) AS new_customers_7d,"

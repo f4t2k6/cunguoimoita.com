@@ -18,27 +18,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ Phân hệ F9: Giải ngân tiền bán hàng (Payout), Tự động tính phí hoa hồng
- * theo Hạng thành viên (F8 MemberTier) và Xuất báo cáo đối soát CSV (Chương 18).
- */
+/** Trả tiền người bán (Payout), phí hoa hồng theo hạng thành viên, xuất CSV đối soát. */
 public class PayoutService {
 
     private final PayoutDAO payoutDAO = new PayoutDAO();
     private final NotificationService notificationService = new NotificationService();
 
-    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán (F8). */
+    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán. */
     public static final double BASE_COMMISSION = 0.05;
 
     /**
-     * Tạo khoản trả tiền người bán khi đơn hoàn tất (người mua bấm "Đã nhận hàng", tự hoàn tất sau 7 ngày,
-     * hoặc admin xử khiếu nại cho người bán). Chạy trên Connection của nghiệp vụ gọi nó (chung transaction).
-     * 1. Mỗi đơn chỉ 1 khoản: đơn đã có payout thì bỏ qua (trả về null).
-     * 2. Phí hoa hồng = tiền hàng × 5% × (1 − discount_rate của hạng người bán).
-     * 3. Người bán đã khai tài khoản nhận tiền → chuyển ngay (giả lập, status done);
-     *    chưa khai → để scheduled, tác vụ định kỳ chuyển khi người bán khai tài khoản.
-     * Thông báo cho người bán gọi notifyCreated(...) sau khi commit.
-     * @param grossAmount tiền hàng của đơn (sub_total), không gồm phí ship
+     * Mỗi đơn 1 khoản; phí = tiền hàng × COMMISSION_RATE × (1 − discount_rate của hạng). Người bán chưa khai tài khoản
+     * nhận tiền thì để scheduled, tác vụ định kỳ chuyển sau. Gọi notifyCreated(...) sau khi commit.
      */
     public Payout createForOrder(Connection c, String orderId, String sellerId, double grossAmount) throws SQLException {
         if (payoutDAO.findByOrderId(c, orderId) != null || grossAmount <= 0) {
@@ -112,9 +103,6 @@ public class PayoutService {
         return a.contains("momo") || a.contains("zalo") || a.contains("ví") || a.contains("vi dien tu");
     }
 
-    /**
-     * Xác nhận giải ngân thành công cho người bán.
-     */
     public void processPayout(String payoutId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Payout p = payoutDAO.findById(c, payoutId);
@@ -169,11 +157,8 @@ public class PayoutService {
         }
     }
 
-    /**
-     * Xuất dữ liệu đối soát giải ngân ra định dạng CSV (Chương 18 kỹ thuật Servlet Response Header).
-     */
     public void exportCsv(PrintWriter out, String sellerId) throws SQLException {
-        out.write('\ufeff'); // UTF-8 BOM
+        out.write('\ufeff');
         out.println("Mã Payout,Mã Đơn Hàng,Doanh Thu Gốc (VND),Phí Sàn (VND),Thực Nhận (VND),Hình Thức,Trạng Thái,Ngày Giải Ngân");
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");

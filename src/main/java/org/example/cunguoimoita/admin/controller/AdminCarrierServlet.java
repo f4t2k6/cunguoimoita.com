@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/carriers   đơn vị vận chuyển (cả hãng đã tắt). Attribute gửi sang JSP: carriers (List&lt;ShippingCarrier&gt;)
- * POST /admin/carriers   action = save (id rỗng = thêm; name, hotline, logoUrl, baseFee, estimatedDays, active)
- *                               | toggle (id, active)
- */
+/** Quản lý đơn vị vận chuyển: thêm/sửa và bật/tắt hãng. */
 @WebServlet("/admin/carriers")
 public class AdminCarrierServlet extends AdminBaseServlet {
 

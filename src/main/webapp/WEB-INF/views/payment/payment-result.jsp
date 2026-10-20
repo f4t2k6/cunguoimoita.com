@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
-<%-- Kết quả thanh toán (F5), chỉ hiển thị. Dữ liệu từ PaymentCallbackServlet: payment, payStatus --%>
+<%-- Kết quả thanh toán, chỉ hiển thị. Dữ liệu từ PaymentCallbackServlet: payment, payStatus --%>
 <c:set var="pageTitle" value="Kết quả thanh toán"/>
 <c:set var="pageCss" value="order.css"/>
 <c:set var="backUrl" value="/order/detail?id=${payment.orderId}"/>

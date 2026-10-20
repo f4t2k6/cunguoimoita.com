@@ -18,10 +18,7 @@ public final class FormUtil {
         return v == null || v.isBlank() ? null : v.trim();
     }
 
-    /**
-     * Số tiền người dùng gõ, chấp nhận cả kiểu "1.700.000" hay "1,700,000".
-     * Ô trống trả null; gõ chữ thì báo lỗi.
-     */
+    /** Chấp nhận cả "1.700.000" và "1,700,000"; ô trống trả null. */
     public static BigDecimal money(HttpServletRequest req, String name, String fieldLabel) {
         String v = text(req, name);
         if (v == null) {
@@ -51,10 +48,7 @@ public final class FormUtil {
                 && "customer".equals(session.getAttribute("userRole"));
     }
 
-    /**
-     * Đường dẫn quay lại sau khi xử lý form. Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/"
-     * (không nhận "//host" hay "http://...") để không bị lợi dụng chuyển hướng sang trang lạ.
-     */
+    /** Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/" để không bị lợi dụng chuyển hướng sang trang lạ. */
     public static String safeBack(HttpServletRequest req, String fallback) {
         String back = req.getParameter("back");
         if (back == null || !back.startsWith("/") || back.startsWith("//") || back.contains("\\")

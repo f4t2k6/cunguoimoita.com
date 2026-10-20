@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Lý do hoàn tiền (Ánh xạ từ Class Diagram Final).
- */
 public enum RefundReason {
     CANCELLED("cancelled", "Đơn hàng đã huỷ trước khi gửi"),
     NOT_RECEIVED("not_received", "Không nhận được hàng"),

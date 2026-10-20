@@ -7,13 +7,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Connection pool dùng chung cho cả nhóm.
- * Pool do Tomcat quản lý (DBCP), khai báo trong src/main/webapp/META-INF/context.xml với tên jdbc/cunguoimoita.
- *
- * Cách dùng trong DAO (luôn kèm PreparedStatement):
- *   try (Connection c = ConnectionPool.getInstance().getConnection();
- *        PreparedStatement ps = c.prepareStatement("SELECT ... WHERE id = ?")) { ... }
- * close() (try-with-resources tự gọi) không đóng hẳn kết nối mà trả nó về pool.
+ * Connection pool dùng chung (JNDI jdbc/cunguoimoita khai báo trong META-INF/context.xml).
+ * DAO luôn dùng kèm PreparedStatement; close() trả kết nối về pool chứ không đóng hẳn.
  */
 public final class ConnectionPool {
 

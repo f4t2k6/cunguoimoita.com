@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Chọn cổng thanh toán online (F5). Dữ liệu từ PaymentCheckoutServlet: order, gateways, vnpayReal, error.
+<%-- Chọn cổng thanh toán online. Dữ liệu từ PaymentCheckoutServlet: order, gateways, vnpayReal, error.
      Số tiền chỉ để hiển thị: server luôn lấy tổng đơn trong DB khi tạo thanh toán. --%>
 <c:set var="pageTitle" value="Thanh toán đơn ${order.code}"/>
 <c:set var="pageCss" value="order.css"/>

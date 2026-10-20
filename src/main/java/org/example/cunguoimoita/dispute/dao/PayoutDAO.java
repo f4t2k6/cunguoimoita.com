@@ -12,9 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng payouts trong cơ sở dữ liệu.
- */
 public class PayoutDAO {
 
     public record SellerEarningsSummary(double totalGross, double totalCommission, double totalNet,
