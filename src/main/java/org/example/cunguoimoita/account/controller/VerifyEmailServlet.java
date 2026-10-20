@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import org.example.cunguoimoita.account.model.User;
 import org.example.cunguoimoita.account.service.EmailVerificationService;
 import org.example.cunguoimoita.account.service.VerificationException;
+import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.MailSender;
 
 import java.io.IOException;
@@ -67,15 +68,9 @@ public class VerifyEmailServlet extends HttpServlet {
         }
     }
 
-    /** Giống LoginServlet: đổi session id rồi lưu thông tin người dùng. */
     private void logIn(HttpServletRequest req, User user) {
-        HttpSession session = req.getSession(true);
-        req.changeSessionId();
-        session.removeAttribute(PENDING_EMAIL);
-        session.setAttribute("userId", user.getId());
-        session.setAttribute("userRole", user.getRole().databaseValue());
-        session.setAttribute("fullName", user.getFullName());
-        session.setAttribute("avatarPath", user.getAvatarPath());
+        req.getSession(true).removeAttribute(PENDING_EMAIL);
+        CurrentUser.logIn(req, user.getId(), user.getRole().databaseValue(), user.getFullName(), user.getAvatarPath());
     }
 
     private void showForm(HttpServletRequest req, HttpServletResponse resp, String email)

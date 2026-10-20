@@ -1,22 +1,22 @@
-/* Bài đăng (F2) và bảng tin, tìm kiếm, Bucket List (F3).
+/* Bài đăng và bảng tin, tìm kiếm, Bucket List.
    Giữ đúng tông trắng đen của style.css: viền đen 1.5px, bo tròn lớn, bóng đổ lệch đen như trang hồ sơ. */
 
 .page-main [hidden] { display: none !important; }
 
-/* ---------- Tiêu đề trang ---------- */
+/* Tiêu đề trang */
 .search-head { margin: 16px 3.5px 14.5px; }
 .search-head.with-action { display: flex; align-items: flex-end; justify-content: space-between; gap: 14.5px; flex-wrap: wrap; }
 .page-eyebrow { margin: 0 0 3.5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
 .page-title { margin: 0; font-family: 'Bungee', sans-serif; font-size: clamp(21.5px, 3vw, 29px); line-height: 1.15; word-break: break-word; }
 .page-subtitle { margin: 5.5px 0 0; color: var(--muted); line-height: 1.5; }
 
-/* ---------- Thông báo ---------- */
+/* Thông báo */
 .alert { margin: 12.5px 0; padding: 11px 14.5px; border: 1.5px solid #111; border-radius: 12.5px; font-size: 12.5px; font-weight: 600; background: #fff; }
 .alert-success { background: #f1f8f2; border-color: #14532d; color: #14532d; }
 .alert-error { background: #fdf1f1; border-color: #b42318; color: #b42318; }
 .alert-info { background: #f6f6f6; }
 
-/* ---------- Nút (bổ sung cho .btn của style.css) ---------- */
+/* Nút (bổ sung cho .btn của style.css) */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5.5px; white-space: nowrap; transition: background .15s, transform .1s; }
 .btn:hover { background: #ececec; }
 .btn-dark:hover { background: #2a2a2a; }
@@ -30,7 +30,7 @@
 .btn-save.is-saved::before { content: '✓'; }
 .page-main form { margin: 0; }
 
-/* ---------- Ô "Bạn muốn thanh lý gì?" ---------- */
+/* Ô "Bạn muốn thanh lý gì?" */
 .composer {
     display: flex; align-items: center; gap: 11px;
     margin-top: 18px; padding: 12.5px 16px;
@@ -45,7 +45,7 @@
 .composer-input:hover { background: #e9e9e9; }
 .composer-btn { padding: 9px 16px; font-weight: 600; }
 
-/* ---------- Post trên bảng tin ---------- */
+/* Post trên bảng tin */
 .feed-post .post-head { align-items: center; }
 .post-meta { flex: 1; min-width: 0; }
 .post-author { font-family: "Bungee", sans-serif; font-size: 16px; letter-spacing: 1px; display: block; }
@@ -94,7 +94,7 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
     background: linear-gradient(160deg, #e3e3e3, #c4c4c4); color: #fff; font-size: 11.5px;
 }
 
-/* ---------- Trống, phân trang ---------- */
+/* Trống, phân trang */
 .empty-state { text-align: center; padding: 32.5px 21.5px; }
 .empty-state h2 { margin: 5.5px 0; font-family: 'Bungee', sans-serif; font-size: 16px; }
 .empty-state p { margin: 0 0 14.5px; color: var(--muted); }
@@ -102,7 +102,7 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 .pager { display: flex; align-items: center; justify-content: center; gap: 12.5px; margin: 23.5px 0 5.5px; }
 .pager-info { color: var(--muted); font-size: 12.5px; }
 
-/* ---------- Bộ lọc tìm kiếm ---------- */
+/* Bộ lọc tìm kiếm */
 .filter-card {
     padding: 14.5px 18px; background: var(--card); border: var(--line); border-radius: 25px;
     display: flex; flex-direction: column; gap: 11px;
@@ -123,7 +123,7 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 }
 .filter-actions { display: flex; justify-content: flex-end; gap: 9px; }
 
-/* ---------- Chi tiết bài ---------- */
+/* Chi tiết bài */
 .crumbs { display: flex; flex-wrap: wrap; gap: 7px; margin: 14.5px 3.5px 3.5px; font-size: 12.5px; color: var(--muted); }
 .crumbs a:hover { color: #000; text-decoration: underline; }
 .detail-layout {
@@ -191,7 +191,7 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 .state-rejected, .state-hidden { color: #b42318; border-color: #b42318; background: #fdf1f1; }
 .state-paused, .state-sold, .state-exchanged, .state-reserved { color: #555; border-color: #999; background: #f2f2f2; }
 
-/* ---------- Thẻ nhỏ ---------- */
+/* Thẻ nhỏ */
 .mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(153px, 1fr)); gap: 12.5px; }
 .mini-card {
     display: flex; flex-direction: column; background: #fff; border: 1.5px solid #111;
@@ -208,13 +208,13 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 .mini-meta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-meta .tag { font-size: 10px; padding: 0 7px; margin-right: 2px; vertical-align: 1px; }
 
-/* ---------- Bucket List ---------- */
+/* Bucket List */
 .saved-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(189px, 1fr)); gap: 14.5px; }
 .saved-item { display: flex; flex-direction: column; gap: 7px; }
 .saved-actions { display: flex; flex-wrap: wrap; gap: 5.5px; }
 .saved-actions .btn { padding: 4.5px 11px; font-size: 11.5px; }
 
-/* ---------- Bài đăng của tôi ---------- */
+/* Bài đăng của tôi */
 .tab-row { display: flex; gap: 7px; overflow-x: auto; padding: 2px 2px 7px; scrollbar-width: none; }
 .tab {
     flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; padding: 6.5px 12.5px;
@@ -239,7 +239,7 @@ a.post-author:hover, .post-category:hover { text-decoration: underline; }
 .my-hint { font-size: 11px; color: #b42318; }
 .my-actions { display: flex; gap: 5.5px; flex-wrap: wrap; justify-content: flex-end; }
 
-/* ---------- Form đăng bài ---------- */
+/* Form đăng bài */
 .product-form { display: flex; flex-direction: column; gap: 16px; }
 .form-card {
     margin: 0; padding: 18px 20px 20px; min-width: 0;
@@ -304,7 +304,7 @@ div[data-show-for]:not(.form-row) { display: flex; flex-direction: column; gap: 
 .photo-add-icon { font-size: 25px; line-height: 1; }
 .form-submit { display: flex; justify-content: flex-end; gap: 9px; }
 
-/* ---------- Thông báo nhỏ ---------- */
+/* Thông báo nhỏ */
 .pd-toast {
     position: fixed; left: 50%; bottom: 23.5px; z-index: 50; transform: translate(-50%, 18px);
     padding: 9px 16px; border-radius: 899px; background: #000; color: #fff; font-size: 12.5px;
@@ -312,7 +312,7 @@ div[data-show-for]:not(.form-row) { display: flex; flex-direction: column; gap: 
 }
 .pd-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* ---------- Màn hình hẹp ---------- */
+/* Màn hình hẹp */
 @media (max-width: 864px) {
     .detail-layout { grid-template-columns: 1fr; }
 }

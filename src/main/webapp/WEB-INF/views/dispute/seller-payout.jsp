@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Thu nhập người bán (F9). Dữ liệu từ SellerPayoutServlet: payouts, summary, info --%>
+<%-- Thu nhập người bán. Dữ liệu từ SellerPayoutServlet: payouts, summary, info --%>
 <c:set var="pageTitle" value="Thu nhập của tôi"/>
 <c:set var="pageCss" value="order.css"/>
 <%@ include file="/WEB-INF/views/common/header.jsp" %>

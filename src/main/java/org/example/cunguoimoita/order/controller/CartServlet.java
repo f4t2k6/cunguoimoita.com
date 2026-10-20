@@ -6,19 +6,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.order.dao.CartDAO.CartLine;
 import org.example.cunguoimoita.order.service.CartService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-// GET  /order/cart  → hiện trang giỏ hàng (cart.jsp).
-//      Gửi sang JSP: lines (List<CartLine>), total (double), error, message
-// POST /order/cart  → các nút trên trang. Field: action (add | remove | clear | removeSelected), productId (removeSelected: nhiều productId)
+// Trang giỏ hàng: thêm, bỏ, xoá món.
 @WebServlet("/order/cart")
 public class CartServlet extends HttpServlet {
 
@@ -26,9 +23,9 @@ public class CartServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String userId = CurrentUser.id(req);                 // lấy id người đăng nhập từ session
+        String userId = CurrentUser.id(req);
         if (userId == null) {
-            CurrentUser.redirectToLogin(req, resp);          // chưa đăng nhập → sang trang login
+            CurrentUser.redirectToLogin(req, resp);
             return;
         }
         try {
@@ -37,19 +34,19 @@ public class CartServlet extends HttpServlet {
             for (CartLine line : lines) {
                 total += line.price();
             }
-            req.setAttribute("lines", lines);                // đặt dữ liệu vào request cho JSP đọc
+            req.setAttribute("lines", lines);
             req.setAttribute("total", total);
         } catch (SQLException e) {
-            throw new ServletException(e);                   // lỗi DB → Tomcat hiện trang lỗi 500
+            throw new ServletException(e);
         }
         req.setAttribute("error", req.getParameter("error"));
         req.setAttribute("message", req.getParameter("message"));
-        req.getRequestDispatcher("/WEB-INF/views/order/cart.jsp").forward(req, resp);   // chuyển sang JSP
+        req.getRequestDispatcher("/WEB-INF/views/order/cart.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");                   // đọc đúng tiếng Việt trong form
+        req.setCharacterEncoding("UTF-8");
         String userId = CurrentUser.id(req);
         if (userId == null) {
             CurrentUser.redirectToLogin(req, resp);
@@ -60,34 +57,23 @@ public class CartServlet extends HttpServlet {
         String redirect = req.getContextPath() + "/order/cart";
         try {
             switch (action == null ? "add" : action) {
-                case "add":
+                case "add" -> {
                     cartService.addToCart(userId, productId);
-                    redirect += "?message=" + encode("Đã thêm vào giỏ");
-                    break;
-                case "remove":
-                    cartService.removeFromCart(userId, productId);
-                    break;
-                case "clear":
-                    cartService.clearCart(userId);
-                    break;
-                case "removeSelected": {     // nút "Xoá mục đã chọn" (các ô tick productId)
+                    redirect += "?message=" + FormUtil.encode("Đã thêm vào giỏ");
+                }
+                case "remove" -> cartService.removeFromCart(userId, productId);
+                case "clear" -> cartService.clearCart(userId);
+                case "removeSelected" -> {     // nút "Xoá mục đã chọn" (các ô tick productId)
                     String[] ids = req.getParameterValues("productId");
                     cartService.removeFromCart(userId, ids == null ? List.of() : Arrays.asList(ids));
-                    break;
                 }
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            redirect += "?error=" + encode(e.getMessage());  // lỗi nghiệp vụ → hiện lên trang giỏ
+            redirect += "?error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
-        resp.sendRedirect(redirect);                         // POST xong → redirect (PRG), tránh F5 gửi lại form
-    }
-
-    // Mã hoá chữ để đặt được lên URL (dấu cách, tiếng Việt...)
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+        resp.sendRedirect(redirect);
     }
 }

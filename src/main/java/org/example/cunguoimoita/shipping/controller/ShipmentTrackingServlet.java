@@ -5,29 +5,17 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderRef;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-/**
- * GET  /shipping/track?orderId=...  → trang theo dõi đơn (dòng thời gian trạng thái).
- *      Attribute gửi sang JSP: shipment (Shipment), steps (ShipmentStatus[]), error
- * POST /shipping/track  → các nút trên trang theo dõi. Field: orderId, action, trackingCode, status
- *      action = handover      người bán xác nhận bàn giao: handover = dropoff (mang ra bưu cục) | pickup (kèm addressId);
- *                             mã vận đơn đã tự sinh khi người mua thanh toán. Xong quay về trang chi tiết đơn.
- *               ship          người bán bấm "Đã gửi hàng" (kèm trackingCode, cách cũ)
- *               status        nút giả lập đổi trạng thái (kèm status: in_transit, delivered, returned)
- *               cod_collected shipper đã thu tiền COD
- *               cod_remitted  shipper đã nộp tiền COD về sàn
- * Phải đăng nhập. Người mua và người bán của đơn xem được; chỉ người bán (hoặc admin) bấm được các nút.
- */
+/** Theo dõi vận đơn; người bán (hoặc admin) xác nhận bàn giao và bấm các nút giả lập trạng thái. */
 @WebServlet("/shipping/track")
 public class ShipmentTrackingServlet extends HttpServlet {
 
@@ -51,7 +39,7 @@ public class ShipmentTrackingServlet extends HttpServlet {
             // thông báo cũ còn trỏ về đây cũng được chuyển sang đó.
             if (userId.equals(order.buyerId()) && !CurrentUser.isAdmin(req)) {
                 resp.sendRedirect(req.getContextPath() + "/order/detail?id="
-                        + java.net.URLEncoder.encode(orderId, java.nio.charset.StandardCharsets.UTF_8));
+                        + FormUtil.encode(orderId));
                 return;
             }
             Shipment shipment = shippingService.findByOrder(orderId);
@@ -85,51 +73,39 @@ public class ShipmentTrackingServlet extends HttpServlet {
         }
         String orderId = req.getParameter("orderId");
         String action = req.getParameter("action");
-        String redirect = req.getContextPath() + "/shipping/track?orderId=" + encode(orderId);
+        String redirect = req.getContextPath() + "/shipping/track?orderId=" + FormUtil.encode(orderId);
         if ("handover".equals(action)) {
-            redirect = req.getContextPath() + "/order/detail?id=" + encode(orderId);
+            redirect = req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId);
         }
         try {
             shippingService.requireAccess(orderId, userId, CurrentUser.isAdmin(req), true);
             switch (action == null ? "" : action) {
-                case "handover": {
+                case "handover" -> {
                     String h = req.getParameter("handover");
                     ShippingService.Handover method = "pickup".equals(h) ? ShippingService.Handover.PICKUP
                             : "dropoff".equals(h) ? ShippingService.Handover.DROPOFF : null;
                     String where = shippingService.confirmHandover(orderId, userId, method, req.getParameter("addressId"));
-                    resp.sendRedirect(redirect + "&message=" + encode("Đã xác nhận giao hàng: " + where));
+                    resp.sendRedirect(redirect + "&message=" + FormUtil.encode("Đã xác nhận giao hàng: " + where));
                     return;
                 }
-                case "ship":
-                    shippingService.markShipped(orderId, req.getParameter("trackingCode"));
-                    break;
-                case "status": {
+                case "ship" -> shippingService.markShipped(orderId, req.getParameter("trackingCode"));
+                case "status" -> {
                     ShipmentStatus next = ShipmentStatus.fromDb(req.getParameter("status"));
                     // Hoàn hàng là yêu cầu của người mua (Trả hàng/Hoàn tiền), người bán không tự bấm được
                     if (next == ShipmentStatus.RETURNED && !CurrentUser.isAdmin(req)) {
                         throw new SecurityException("Người bán không thể tự hoàn hàng");
                     }
                     shippingService.updateStatus(orderId, next);
-                    break;
                 }
-                case "cod_collected":
-                    shippingService.confirmCodCollected(orderId);
-                    break;
-                case "cod_remitted":
-                    shippingService.confirmCodRemitted(orderId);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                case "cod_collected" -> shippingService.confirmCodCollected(orderId);
+                case "cod_remitted" -> shippingService.confirmCodRemitted(orderId);
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
-            redirect += "&error=" + encode(e.getMessage());
+            redirect += "&error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
         resp.sendRedirect(redirect);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

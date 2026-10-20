@@ -16,8 +16,12 @@ import org.example.cunguoimoita.admin.model.OrderStatusCount;
 import org.example.cunguoimoita.admin.model.Report;
 import org.example.cunguoimoita.admin.model.ReportReason;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.common.model.AccountStatus;
+import org.example.cunguoimoita.common.util.Texts;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.shipping.dao.ShippingCarrierDAO;
 import org.example.cunguoimoita.shipping.model.ShippingCarrier;
 import org.example.cunguoimoita.shipping.service.ShippingService;
@@ -30,18 +34,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ F10 – trang quản trị. Ứng với các method của Admin trong class diagram:
- * approveProduct(), banUser(), Report.resolve(), addCategory(), ShippingCarrier.managePartner(),
- * MemberTier.manageMemberTier(). resolveDispute() thuộc F9 (TV4), chỉ gắn link ở menu admin.
- * Mọi hàm ở đây chỉ được gọi từ servlet /admin/* (AdminAuthFilter đã kiểm tra quyền admin).
- */
+/** Nghiệp vụ trang quản trị (các method của Admin trong class diagram). Chỉ gọi từ servlet /admin/*. */
 public class AdminService {
 
     private static final List<String> TIER_ORDER = List.of("Bronze", "Silver", "Gold", "Diamond");
 
     private final DashboardDAO dashboardDAO = new DashboardDAO();
-    private final AdminProductDAO productDAO = new AdminProductDAO();
+    private final AdminProductDAO adminProductDAO = new AdminProductDAO();
+    private final ProductDAO productDAO = new ProductDAO();
     private final AdminUserDAO userDAO = new AdminUserDAO();
     private final ReportDAO reportDAO = new ReportDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
@@ -53,7 +53,18 @@ public class AdminService {
     private record Notice(String userId, NotificationType type, String content, String link) {
     }
 
-    // ============================ Tổng quan ============================
+    /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
+    public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
+                           List<Report> latestReports) {
+        public List<OrderStatusCount> getOrderStatuses() { return orderStatuses; }
+        public List<AdminProductRow> getLatestPending() { return latestPending; }
+        public List<Report> getLatestReports() { return latestReports; }
+    }
+
+    @FunctionalInterface
+    private interface TxWork<T> {
+        T run(Connection c) throws SQLException;
+    }
 
     public DashboardStats stats() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -68,27 +79,17 @@ public class AdminService {
         }
     }
 
-    /** Dữ liệu thêm của trang tổng quan: đơn theo trạng thái, vài bài chờ duyệt và báo cáo mới nhất. */
-    public record Overview(List<OrderStatusCount> orderStatuses, List<AdminProductRow> latestPending,
-                           List<Report> latestReports) {
-        public List<OrderStatusCount> getOrderStatuses() { return orderStatuses; }
-        public List<AdminProductRow> getLatestPending() { return latestPending; }
-        public List<Report> getLatestReports() { return latestReports; }
-    }
-
     public Overview overview(int limit) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return new Overview(dashboardDAO.orderStatusCounts(c),
-                    productDAO.find(c, "pending", null, limit),
-                    reportDAO.find(c, "pending", limit));
+                    adminProductDAO.find(c, "pending", null, limit),
+                    reportDAO.find(c, Report.PENDING, limit));
         }
     }
 
-    // ============================ Duyệt bài ============================
-
     public List<AdminProductRow> products(String filter, String keyword) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return productDAO.find(c, filter == null ? "pending" : filter, keyword);
+            return adminProductDAO.find(c, filter == null ? "pending" : filter, keyword);
         }
     }
 
@@ -100,7 +101,7 @@ public class AdminService {
             if (!p.isPending()) {
                 throw new IllegalStateException("Bài này không ở trạng thái chờ duyệt");
             }
-            productDAO.approve(c, productId, adminId);
+            adminProductDAO.approve(c, productId, adminId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                     "Bài \"" + p.name() + "\" đã được duyệt và hiện trên bảng tin", "/product?id=" + productId));
             return null;
@@ -117,7 +118,7 @@ public class AdminService {
             if (!p.isPending()) {
                 throw new IllegalStateException("Bài này không ở trạng thái chờ duyệt");
             }
-            productDAO.reject(c, productId);
+            adminProductDAO.reject(c, productId);
             notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                     "Bài \"" + p.name() + "\" bị từ chối: " + why, "/product/mine?tab=rejected"));
             return null;
@@ -134,14 +135,14 @@ public class AdminService {
                 if (p.isHidden()) {
                     throw new IllegalStateException("Bài này đang ẩn rồi");
                 }
-                productDAO.updateStatus(c, productId, "hidden");
+                productDAO.updateStatus(c, productId, ProductStatus.HIDDEN);
                 notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM, "Bài \"" + p.name()
-                        + "\" đã bị ẩn" + (isBlank(reason) ? "" : ": " + reason.trim()), null));
+                        + "\" đã bị ẩn" + (Texts.isBlank(reason) ? "" : ": " + reason.trim()), null));
             } else {
                 if (!p.isHidden() || p.isPending() || p.isRejected()) {
                     throw new IllegalStateException("Chỉ hiện lại được bài đã duyệt đang bị ẩn");
                 }
-                productDAO.updateStatus(c, productId, "available");
+                productDAO.updateStatus(c, productId, ProductStatus.AVAILABLE);
                 notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                         "Bài \"" + p.name() + "\" đã được hiện lại", "/home"));
             }
@@ -150,18 +151,13 @@ public class AdminService {
         send(notices);
     }
 
-    // ============================ Người dùng ============================
-
     public List<AdminUserRow> users(String keyword, String status) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return userDAO.search(c, keyword, status);
         }
     }
 
-    /**
-     * Admin.banUser(): khoá tài khoản (không đăng nhập được nữa, phiên đang mở bị đá ra ở lần vào trang
-     * tài khoản kế tiếp) và ẩn các bài đang bán của người đó.
-     */
+    /** Admin.banUser(): khoá tài khoản và ẩn các bài đang bán của người đó. */
     public void banUser(String userId, String adminId) throws SQLException {
         inTransaction(c -> {
             banInTx(c, userId, adminId);
@@ -176,7 +172,7 @@ public class AdminService {
             if (!u.isBanned()) {
                 throw new IllegalStateException("Tài khoản này đang hoạt động");
             }
-            userDAO.updateStatus(c, userId, "active");
+            userDAO.updateStatus(c, userId, AccountStatus.ACTIVE);
             notices.add(new Notice(userId, NotificationType.SYSTEM,
                     "Tài khoản của bạn đã được mở khoá. Các bài bị ẩn khi khoá cần đăng lại hoặc liên hệ admin.", null));
             return null;
@@ -184,30 +180,13 @@ public class AdminService {
         send(notices);
     }
 
-    private void banInTx(Connection c, String userId, String adminId) throws SQLException {
-        AdminUserRow u = requireUser(c, userId);
-        if (u.isAdmin() || userId.equals(adminId)) {
-            throw new IllegalStateException("Không thể khoá tài khoản admin");
-        }
-        if (u.isBanned()) {
-            throw new IllegalStateException("Tài khoản này đã bị khoá");
-        }
-        userDAO.updateStatus(c, userId, "banned");
-        productDAO.hideAvailableOfSeller(c, userId);
-    }
-
-    // ============================ Báo cáo vi phạm ============================
-
     public List<Report> reports(String status) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return reportDAO.find(c, status == null ? "pending" : status);
+            return reportDAO.find(c, status == null ? Report.PENDING : status);
         }
     }
 
-    /**
-     * Người dùng gửi báo cáo (nút "Báo cáo" trên bài đăng / hồ sơ).
-     * @param targetType product | user
-     */
+    /** @param targetType product | user */
     public void submitReport(String reporterId, String targetType, String targetId, String reason,
                              String description, String evidenceImages) throws SQLException {
         if (!"product".equals(targetType) && !"user".equals(targetType)) {
@@ -240,8 +219,8 @@ public class AdminService {
             r.setTargetType(targetType);
             r.setTargetId(targetId);
             r.setReason(why);
-            r.setDescription(isBlank(desc) ? null : desc);
-            r.setEvidenceImages(isBlank(evidenceImages) ? null : evidenceImages);
+            r.setDescription(Texts.isBlank(desc) ? null : desc);
+            r.setEvidenceImages(Texts.isBlank(evidenceImages) ? null : evidenceImages);
             r.setCreatedDate(LocalDateTime.now());
             reportDAO.insert(c, r);
             return null;
@@ -252,7 +231,7 @@ public class AdminService {
     public String reportTargetName(String targetType, String targetId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             if ("product".equals(targetType)) {
-                AdminProductRow p = productDAO.findById(c, targetId);
+                AdminProductRow p = adminProductDAO.findById(c, targetId);
                 return p == null ? null : p.name();
             }
             AdminUserRow u = "user".equals(targetType) ? userDAO.findById(c, targetId) : null;
@@ -260,30 +239,26 @@ public class AdminService {
         }
     }
 
-    /**
-     * Report.resolve(): xử lý báo cáo.
-     * @param action none (chỉ đánh dấu đã xử lý) | hide_product (ẩn bài bị báo cáo) | ban_user (khoá người
-     *               bị báo cáo, hoặc người bán của bài bị báo cáo)
-     */
+    /** @param action none | hide_product | ban_user (khoá người bị báo cáo hoặc người bán của bài bị báo cáo) */
     public void resolveReport(String reportId, String action, String adminId) throws SQLException {
         List<Notice> notices = new ArrayList<>();
         inTransaction(c -> {
             Report r = requirePendingReport(c, reportId);
             String result;
             switch (action == null ? "" : action) {
-                case "hide_product":
+                case "hide_product" -> {
                     if (!r.isProductTarget()) {
                         throw new IllegalArgumentException("Báo cáo này không nhắm vào bài đăng");
                     }
                     AdminProductRow p = requireProduct(c, r.getTargetId());
                     if (!p.isHidden()) {
-                        productDAO.updateStatus(c, p.id(), "hidden");
+                        productDAO.updateStatus(c, p.id(), ProductStatus.HIDDEN);
                         notices.add(new Notice(p.sellerId(), NotificationType.SYSTEM,
                                 "Bài \"" + p.name() + "\" đã bị ẩn do vi phạm: " + r.getReason().getLabel(), null));
                     }
                     result = "bài đăng đã bị ẩn";
-                    break;
-                case "ban_user":
+                }
+                case "ban_user" -> {
                     if (r.getTargetOwnerId() == null) {
                         throw new IllegalArgumentException("Không tìm thấy người cần khoá");
                     }
@@ -292,14 +267,11 @@ public class AdminService {
                         banInTx(c, u.id(), adminId);
                     }
                     result = "tài khoản vi phạm đã bị khoá";
-                    break;
-                case "none":
-                    result = "admin đã xem xét và ghi nhận";
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                case "none" -> result = "admin đã xem xét và ghi nhận";
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            reportDAO.close(c, reportId, "resolved", adminId);
+            reportDAO.close(c, reportId, Report.RESOLVED, adminId);
             notices.add(new Notice(r.getReporterId(), NotificationType.SYSTEM,
                     "Báo cáo về \"" + nameOf(r) + "\" đã được xử lý: " + result + ". Cảm ơn bạn!", null));
             return null;
@@ -312,15 +284,13 @@ public class AdminService {
         List<Notice> notices = new ArrayList<>();
         inTransaction(c -> {
             Report r = requirePendingReport(c, reportId);
-            reportDAO.close(c, reportId, "rejected", adminId);
+            reportDAO.close(c, reportId, Report.REJECTED, adminId);
             notices.add(new Notice(r.getReporterId(), NotificationType.SYSTEM,
                     "Báo cáo về \"" + nameOf(r) + "\" đã được xem xét: chưa thấy vi phạm.", null));
             return null;
         });
         send(notices);
     }
-
-    // ============================ Danh mục ============================
 
     public List<Category> categories() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -333,8 +303,8 @@ public class AdminService {
         Category cg = new Category();
         cg.setId(UUID.randomUUID().toString());
         cg.setName(requireText(name, "Cần nhập tên danh mục"));
-        cg.setDescription(isBlank(description) ? null : description.trim());
-        cg.setParentCategoryId(isBlank(parentId) ? null : parentId);
+        cg.setDescription(Texts.isBlank(description) ? null : description.trim());
+        cg.setParentCategoryId(Texts.isBlank(parentId) ? null : parentId);
         inTransaction(c -> {
             checkParent(c, cg.getId(), cg.getParentCategoryId());
             categoryDAO.insert(c, cg);
@@ -346,8 +316,8 @@ public class AdminService {
         Category cg = new Category();
         cg.setId(id);
         cg.setName(requireText(name, "Cần nhập tên danh mục"));
-        cg.setDescription(isBlank(description) ? null : description.trim());
-        cg.setParentCategoryId(isBlank(parentId) ? null : parentId);
+        cg.setDescription(Texts.isBlank(description) ? null : description.trim());
+        cg.setParentCategoryId(Texts.isBlank(parentId) ? null : parentId);
         inTransaction(c -> {
             if (categoryDAO.isTopLevel(c, id) == null) {
                 throw new IllegalArgumentException("Không tìm thấy danh mục");
@@ -361,24 +331,6 @@ public class AdminService {
         });
     }
 
-    private void checkParent(Connection c, String id, String parentId) throws SQLException {
-        if (parentId == null) {
-            return;
-        }
-        if (parentId.equals(id)) {
-            throw new IllegalArgumentException("Danh mục không thể là cha của chính nó");
-        }
-        Boolean top = categoryDAO.isTopLevel(c, parentId);
-        if (top == null) {
-            throw new IllegalArgumentException("Không tìm thấy danh mục cha");
-        }
-        if (!top) {
-            throw new IllegalArgumentException("Danh mục cha phải là danh mục gốc (chỉ hỗ trợ 2 cấp)");
-        }
-    }
-
-    // ============================ Đơn vị vận chuyển ============================
-
     public List<ShippingCarrier> carriers() throws SQLException {
         return carrierDAO.findAll();
     }
@@ -387,11 +339,11 @@ public class AdminService {
     public void saveCarrier(String id, String name, String hotline, String logoUrl, String baseFee,
                             String estimatedDays, boolean active) throws SQLException {
         ShippingCarrier s = new ShippingCarrier();
-        boolean isNew = isBlank(id);
+        boolean isNew = Texts.isBlank(id);
         s.setId(isNew ? UUID.randomUUID().toString() : id);
         s.setName(requireText(name, "Cần nhập tên đơn vị vận chuyển"));
-        s.setHotline(isBlank(hotline) ? null : hotline.trim());
-        s.setLogoUrl(isBlank(logoUrl) ? null : logoUrl.trim());
+        s.setHotline(Texts.isBlank(hotline) ? null : hotline.trim());
+        s.setLogoUrl(Texts.isBlank(logoUrl) ? null : logoUrl.trim());
         s.setBaseFee(parseNumber(baseFee, 0, 10_000_000, "Phí cơ bản không hợp lệ"));
         s.setEstimatedDays((int) parseNumber(estimatedDays, 1, 60, "Số ngày giao phải từ 1 đến 60"));
         s.setActive(active);
@@ -410,8 +362,6 @@ public class AdminService {
         ShippingService.clearCarrierCache();
     }
 
-    // ============================ Hạng thành viên ============================
-
     public List<MemberTier> tiers() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return tierDAO.findAll(c);
@@ -425,7 +375,7 @@ public class AdminService {
         t.setId(id);
         t.setMinEcoPoints((int) parseNumber(minEcoPoints, 0, 1_000_000, "Ngưỡng điểm không hợp lệ"));
         t.setDiscountRate(parseNumber(discountPercent, 0, 50, "Ưu đãi phải từ 0 đến 50%") / 100.0);
-        t.setBenefitNote(isBlank(benefitNote) ? null : benefitNote.trim());
+        t.setBenefitNote(Texts.isBlank(benefitNote) ? null : benefitNote.trim());
         inTransaction(c -> {
             if (!tierDAO.update(c, t)) {
                 throw new IllegalArgumentException("Không tìm thấy hạng thành viên");
@@ -446,10 +396,36 @@ public class AdminService {
         });
     }
 
-    // ---------------------------------------------------------------------
+    private void banInTx(Connection c, String userId, String adminId) throws SQLException {
+        AdminUserRow u = requireUser(c, userId);
+        if (u.isAdmin() || userId.equals(adminId)) {
+            throw new IllegalStateException("Không thể khoá tài khoản admin");
+        }
+        if (u.isBanned()) {
+            throw new IllegalStateException("Tài khoản này đã bị khoá");
+        }
+        userDAO.updateStatus(c, userId, AccountStatus.BANNED);
+        adminProductDAO.hideAvailableOfSeller(c, userId);
+    }
+
+    private void checkParent(Connection c, String id, String parentId) throws SQLException {
+        if (parentId == null) {
+            return;
+        }
+        if (parentId.equals(id)) {
+            throw new IllegalArgumentException("Danh mục không thể là cha của chính nó");
+        }
+        Boolean top = categoryDAO.isTopLevel(c, parentId);
+        if (top == null) {
+            throw new IllegalArgumentException("Không tìm thấy danh mục cha");
+        }
+        if (!top) {
+            throw new IllegalArgumentException("Danh mục cha phải là danh mục gốc (chỉ hỗ trợ 2 cấp)");
+        }
+    }
 
     private AdminProductRow requireProduct(Connection c, String productId) throws SQLException {
-        AdminProductRow p = productId == null ? null : productDAO.findById(c, productId);
+        AdminProductRow p = productId == null ? null : adminProductDAO.findById(c, productId);
         if (p == null) {
             throw new IllegalArgumentException("Không tìm thấy bài đăng");
         }
@@ -481,7 +457,7 @@ public class AdminService {
             return null;
         }
         if ("product".equals(targetType)) {
-            AdminProductRow p = productDAO.findById(c, targetId);
+            AdminProductRow p = adminProductDAO.findById(c, targetId);
             return p == null ? null : p.sellerId();
         }
         AdminUserRow u = userDAO.findById(c, targetId);
@@ -498,12 +474,8 @@ public class AdminService {
         }
     }
 
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
-
     private static String requireText(String value, String message) {
-        if (isBlank(value)) {
+        if (Texts.isBlank(value)) {
             throw new IllegalArgumentException(message);
         }
         return value.trim();
@@ -519,11 +491,6 @@ public class AdminService {
         } catch (NumberFormatException | NullPointerException e) {
             throw new IllegalArgumentException(message);
         }
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

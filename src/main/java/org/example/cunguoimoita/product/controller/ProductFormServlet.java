@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
+import org.example.cunguoimoita.common.util.MediaStore;
 import org.example.cunguoimoita.product.model.ListingType;
 import org.example.cunguoimoita.product.model.Product;
 import org.example.cunguoimoita.product.model.ProductCondition;
@@ -20,17 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Form đăng bài và sửa bài (F2).
- *   GET  /product/new          form trống
- *   GET  /product/edit?id=     form điền sẵn bài cũ
- *   POST cùng hai đường dẫn    (multipart) lưu bài; thành công thì về "Bài đăng của tôi"
- * Field: name, description, categoryId (danh mục cha), childCategoryId (danh mục con, có thể trống), condition, listingType, price, estimatedValue,
- *        desiredExchangeNote, acceptCod, photos (nhiều file), keepImage (ảnh cũ giữ lại, khi sửa)
- * JSP nhận: product, categories, editing (true khi sửa), error, maxImages
- */
+/** Form đăng bài và sửa bài (multipart). */
 @WebServlet({"/product/new", "/product/edit"})
-@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 5 * 1024 * 1024, maxRequestSize = 45 * 1024 * 1024)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = 9 * MediaStore.MAX_FILE_SIZE)
 public class ProductFormServlet extends HttpServlet {
 
     private final ProductService productService = new ProductService();

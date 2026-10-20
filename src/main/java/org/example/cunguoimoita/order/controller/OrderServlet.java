@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.dispute.service.DisputeService;
 import org.example.cunguoimoita.dispute.service.PayoutService;
 import org.example.cunguoimoita.dispute.service.RefundService;
@@ -16,23 +17,9 @@ import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-// GET  /order/list?as=buyer|seller → "Đơn mua của tôi" / "Đơn bán của tôi" (order-list.jsp)
-//      Gửi sang JSP: orders (List<Order>), as, message
-// GET  /order/detail?id=...         → chi tiết + thanh toán 1 đơn (order-detail.jsp)
-//      Gửi sang JSP: order, itemCards, isBuyer, isSeller, shipment, dispute, refund, payout (+ sellerAddresses), error, message
-//      (lịch sử thanh toán nay là trang riêng /payment/history)
-//      + khi người mua còn sửa được đơn: addresses, quotes (hãng + phí ship), vouchers, codProblem
-// POST /order/detail                → các nút trên trang chi tiết. Field: id, action, + dữ liệu của action
-//      action = address  (addressId)   người mua chọn địa chỉ giao (phí ship tính lại)
-//               carrier  (carrierId)   người mua chọn đơn vị vận chuyển → phí ship cộng vào tổng
-//               voucher  (code)        người mua áp mã giảm giá
-//               payment  (method)      người mua chọn cod (xác nhận đặt hàng) / online (sang trang thanh toán F5)
-//               cancel   (reason)      người mua hoặc người bán huỷ đơn
-//               received               người mua bấm "Đã nhận hàng"
+// Danh sách đơn mua/bán, chi tiết đơn và các nút trên trang đơn (địa chỉ, hãng ship, voucher, thanh toán, huỷ, đã nhận).
 @WebServlet(urlPatterns = {"/order/list", "/order/detail"})
 public class OrderServlet extends HttpServlet {
 
@@ -53,7 +40,7 @@ public class OrderServlet extends HttpServlet {
         req.setAttribute("error", req.getParameter("error"));
         req.setAttribute("message", req.getParameter("message"));
         try {
-            if ("/order/list".equals(req.getServletPath())) {      // 1 Servlet phục vụ 2 URL → xem URL nào được gọi
+            if ("/order/list".equals(req.getServletPath())) {
                 showList(req, resp, userId);
             } else {
                 showDetail(req, resp, userId);
@@ -76,46 +63,33 @@ public class OrderServlet extends HttpServlet {
         // Nút trên trang Đơn mua (Huỷ deal, Đã nhận được hàng) gửi back=list để quay lại danh sách
         boolean fromList = "list".equals(req.getParameter("back"));
         String redirect = fromList ? req.getContextPath() + "/order/list?as=buyer"
-                : req.getContextPath() + "/order/detail?id=" + encode(orderId);
+                : req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId);
         try {
             switch (action == null ? "" : action) {
-                case "address":
-                    orderService.chooseAddress(orderId, userId, req.getParameter("addressId"));
-                    break;
-                case "carrier":
-                    orderService.chooseCarrier(orderId, userId, req.getParameter("carrierId"));
-                    break;
-                case "voucher":
-                    orderService.applyVoucher(orderId, userId, req.getParameter("code"));
-                    break;
-                case "payment": {
+                case "address" -> orderService.chooseAddress(orderId, userId, req.getParameter("addressId"));
+                case "carrier" -> orderService.chooseCarrier(orderId, userId, req.getParameter("carrierId"));
+                case "voucher" -> orderService.applyVoucher(orderId, userId, req.getParameter("code"));
+                case "payment" -> {
                     Order.PaymentMethod method = parseMethod(req.getParameter("method"));
                     orderService.choosePaymentMethod(orderId, userId, method);
-                    if (method == Order.PaymentMethod.ONLINE) {      // sang trang chọn cổng của F5
-                        resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + encode(orderId));
+                    if (method == Order.PaymentMethod.ONLINE) {
+                        resp.sendRedirect(req.getContextPath() + "/payment/checkout?orderId=" + FormUtil.encode(orderId));
                         return;
                     }
-                    break;
                 }
-                case "cancel":
-                    orderService.cancel(orderId, userId, req.getParameter("reason"));
-                    break;
-                case "received":
-                    orderService.confirmReceived(orderId, userId);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                case "cancel" -> orderService.cancel(orderId, userId, req.getParameter("reason"));
+                case "received" -> orderService.confirmReceived(orderId, userId);
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
-            redirect += "&message=" + encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
+            redirect += "&message=" + FormUtil.encode("cancel".equals(action) && fromList ? "Đã huỷ deal" : "Đã cập nhật đơn hàng");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
-            redirect += "&error=" + encode(e.getMessage());
+            redirect += "&error=" + FormUtil.encode(e.getMessage());
         } catch (SQLException e) {
             throw new ServletException(e);
         }
         resp.sendRedirect(redirect);
     }
 
-    // Danh sách đơn mua hoặc đơn bán.
     private void showList(HttpServletRequest req, HttpServletResponse resp, String userId)
             throws SQLException, ServletException, IOException {
         boolean asSeller = "seller".equals(req.getParameter("as"));
@@ -173,9 +147,5 @@ public class OrderServlet extends HttpServlet {
             throw new IllegalArgumentException("Vui lòng chọn phương thức thanh toán");
         }
         return Order.PaymentMethod.valueOf(value.toUpperCase());   // chữ lạ: valueOf ném IllegalArgumentException
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Phương thức nhận tiền giải ngân của Người bán.
- */
 public enum PayoutMethod {
     BANK_TRANSFER("bank_transfer", "Chuyển khoản Ngân hàng"),
     EWALLET("ewallet", "Ví điện tử");

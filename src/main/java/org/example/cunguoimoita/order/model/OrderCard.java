@@ -4,11 +4,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Một thẻ đơn ở trang Đơn mua / Đơn bán (kiểu Shopee): đơn + tên người bên kia + các món + tình trạng giao hàng.
- * Chỉ để hiển thị, không lưu xuống DB.
- */
+/** Thẻ đơn ở trang Đơn mua / Đơn bán, chỉ để hiển thị. */
 public class OrderCard {
+
+    private final Order order;
+    private final boolean seller;          // true: đang xem ở Đơn bán
+    private final List<Line> lines = new ArrayList<>();
+    private String shipmentStatus;         // created / picked_up / in_transit / delivered / returned, null nếu chưa có vận đơn
+    private LocalDate deliveredDate;
+    private boolean cod;                   // đã xác nhận trả khi nhận hàng
 
     /** Một món trong thẻ: tên, ảnh bìa, số lượng, giá đã chốt. */
     public static class Line {
@@ -32,14 +36,6 @@ public class OrderCard {
         public int getQuantity() { return quantity; }
         public double getUnitPrice() { return unitPrice; }
     }
-
-    private final Order order;
-    private final boolean seller;          // true: đang xem ở Đơn bán
-    private final String partnerName;      // người bán (ở Đơn mua) hoặc người mua (ở Đơn bán)
-    private final List<Line> lines = new ArrayList<>();
-    private String shipmentStatus;         // created / picked_up / in_transit / delivered / returned, null nếu chưa có vận đơn
-    private LocalDate deliveredDate;
-    private boolean cod;                   // đã xác nhận trả khi nhận hàng
 
     public OrderCard(Order order, boolean seller, String partnerName) {
         this.order = order;
@@ -77,11 +73,14 @@ public class OrderCard {
 
     /** Dòng trạng thái trong khung xanh nhạt. */
     public String getNotice() {
-        switch (order.getStatus()) {
-            case CANCELLED: return "Đơn đã huỷ";
-            case REFUNDED:  return "Đã hoàn tiền cho người mua";
-            case COMPLETED: return "Đơn đã hoàn tất";
-            default: break;
+        String closed = switch (order.getStatus()) {
+            case CANCELLED -> "Đơn đã huỷ";
+            case REFUNDED -> "Đã hoàn tiền cho người mua";
+            case COMPLETED -> "Đơn đã hoàn tất";
+            default -> null;
+        };
+        if (closed != null) {
+            return closed;
         }
         if (isAwaitingPayment()) {
             return seller ? "Đã chốt giá, chờ người mua thanh toán" : "Đã chốt giá, chờ bạn thanh toán để người bán giao hàng";
@@ -99,4 +98,6 @@ public class OrderCard {
         }
         return seller ? "Bạn cần xác nhận giao hàng cho đơn vị vận chuyển" : "Chờ người bán xác nhận giao hàng";
     }
+
+    private final String partnerName;      // người bán (ở Đơn mua) hoặc người mua (ở Đơn bán)
 }

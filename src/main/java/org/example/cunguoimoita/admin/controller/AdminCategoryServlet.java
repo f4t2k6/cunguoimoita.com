@@ -8,10 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/categories   danh mục cha – con. Attribute gửi sang JSP: categories (List&lt;Category&gt;)
- * POST /admin/categories   field: id (rỗng = thêm mới), name, description, parentId
- */
+/** Quản lý danh mục cha – con. */
 @WebServlet("/admin/categories")
 public class AdminCategoryServlet extends AdminBaseServlet {
 

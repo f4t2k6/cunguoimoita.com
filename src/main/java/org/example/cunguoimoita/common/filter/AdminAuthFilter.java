@@ -7,7 +7,8 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.example.cunguoimoita.account.dao.UserDAO;
+import org.example.cunguoimoita.account.service.AccountService;
+import org.example.cunguoimoita.common.model.UserRole;
 import org.example.cunguoimoita.common.util.CurrentUser;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
 
 @WebFilter("/admin/*")
 public class AdminAuthFilter implements Filter {
-    private final UserDAO userDAO = new UserDAO();
+    private final AccountService accountService = new AccountService();
 
     @Override
     public void doFilter(jakarta.servlet.ServletRequest request,
@@ -29,12 +30,12 @@ public class AdminAuthFilter implements Filter {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        if (!"admin".equals(session.getAttribute("userRole"))) {
+        if (!UserRole.ADMIN.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
         try {
-            if (!userDAO.isActiveAdmin(userId)) {
+            if (!accountService.isActiveAdmin(userId)) {
                 session.invalidate();
                 resp.sendRedirect(req.getContextPath() + "/login?banned=1");
                 return;

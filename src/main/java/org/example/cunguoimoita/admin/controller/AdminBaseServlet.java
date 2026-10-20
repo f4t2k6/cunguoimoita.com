@@ -14,9 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 /**
- * Phần chung của các trang /admin/* (quyền admin đã được AdminAuthFilter kiểm tra trước khi vào đây).
- * Mẫu POST → xử lý → redirect về GET (tránh gửi lại form khi F5); thông báo kết quả cất trong session
- * ("flash") rồi hiện một lần ở trang kế tiếp.
+ * Phần chung của các trang /admin/* (quyền đã được AdminAuthFilter kiểm tra).
+ * POST xử lý xong redirect về GET để F5 không gửi lại form; thông báo hiện một lần qua session.
  */
 public abstract class AdminBaseServlet extends HttpServlet {
 
@@ -24,7 +23,7 @@ public abstract class AdminBaseServlet extends HttpServlet {
 
     @FunctionalInterface
     protected interface Action {
-        String run() throws SQLException;   // trả về câu báo thành công
+        String run() throws SQLException;
     }
 
     /** Chạy một thao tác POST rồi quay về trang redirectPath (không kèm context path). */

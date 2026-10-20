@@ -14,11 +14,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-/**
- * Gửi email qua SMTP (mặc định Gmail). Cấu hình bằng các dòng {@code <Parameter>} trong META-INF/context.xml
- * (file không commit): mail.username, mail.password (App Password của Gmail), tuỳ chọn mail.host, mail.port, mail.from.
- * Chưa cấu hình thì chạy chế độ thử: không gửi, chỉ in nội dung ra log của Tomcat.
- */
+/** Gửi email qua SMTP (mặc định Gmail). Chưa cấu hình mail.username/mail.password thì chỉ in nội dung ra log. */
 public final class MailSender {
     private static final Logger LOG = Logger.getLogger(MailSender.class.getName());
 

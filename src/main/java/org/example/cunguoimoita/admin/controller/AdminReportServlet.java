@@ -4,15 +4,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.cunguoimoita.admin.model.Report;
 
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/reports?status=pending|resolved|rejected|all   danh sách báo cáo vi phạm (mặc định: chờ xử lý)
- *      Attribute gửi sang JSP: reports (List&lt;Report&gt;), status
- * POST /admin/reports  field: id, action = resolve (kèm do = none | hide_product | ban_user) | reject
- */
+/** Xử lý báo cáo vi phạm. */
 @WebServlet("/admin/reports")
 public class AdminReportServlet extends AdminBaseServlet {
 
@@ -20,7 +17,7 @@ public class AdminReportServlet extends AdminBaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String status = req.getParameter("status");
         if (status == null || !status.matches("pending|resolved|rejected|all")) {
-            status = "pending";
+            status = Report.PENDING;
         }
         try {
             req.setAttribute("reports", adminService.reports(status));
@@ -37,14 +34,15 @@ public class AdminReportServlet extends AdminBaseServlet {
         String id = req.getParameter("id");
         handle(req, resp, "/admin/reports" + query(req, "status"), () -> {
             switch (String.valueOf(req.getParameter("action"))) {
-                case "resolve":
+                case "resolve" -> {
                     adminService.resolveReport(id, req.getParameter("do"), adminId(req));
                     return "Đã xử lý báo cáo và báo cho người gửi";
-                case "reject":
+                }
+                case "reject" -> {
                     adminService.rejectReport(id, adminId(req));
                     return "Đã bác bỏ báo cáo";
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         });
     }

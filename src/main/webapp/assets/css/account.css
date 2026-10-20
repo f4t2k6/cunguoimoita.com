@@ -15,7 +15,7 @@
     padding: 0 14.5px;
 }
 
-/* ---------- Tiêu đề trang ---------- */
+/* Tiêu đề trang */
 .account-heading {
     display: flex;
     align-items: flex-end;
@@ -45,7 +45,7 @@
     line-height: 1.5;
 }
 
-/* ---------- Thông báo ---------- */
+/* Thông báo */
 .account-alert {
     margin-bottom: 12.5px;
     padding: 11px 14.5px;
@@ -67,7 +67,7 @@
     color: #b42318;
 }
 
-/* ---------- Lưới thẻ ---------- */
+/* Lưới thẻ */
 .account-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
@@ -109,7 +109,7 @@
     gap: 14.5px;
 }
 
-/* ---------- Ảnh đại diện ---------- */
+/* Ảnh đại diện */
 .account-avatar {
     flex: 0 0 auto;
     width: 75.5px;
@@ -156,7 +156,7 @@
     cursor: pointer;
 }
 
-/* ---------- Form ---------- */
+/* Form */
 .account-form {
     display: flex;
     flex-direction: column;
@@ -244,7 +244,7 @@
     margin-top: 0;
 }
 
-/* ---------- Sổ địa chỉ ---------- */
+/* Sổ địa chỉ */
 .account-empty {
     margin: 0 0 16px;
     padding: 16px;
@@ -389,7 +389,7 @@
     grid-template-columns: 1fr;
 }
 
-/* ---------- Hồ sơ công khai người bán ---------- */
+/* Hồ sơ công khai người bán */
 .public-profile-page {
     max-width: 648px;
 }
@@ -447,7 +447,7 @@
     font-size: 11px;
 }
 
-/* ---------- Màn hình hẹp ---------- */
+/* Màn hình hẹp */
 @media (max-width: 774px) {
     .account-grid {
         grid-template-columns: 1fr;
@@ -506,7 +506,7 @@
     font-size: 11.5px;
 }
 
-/* ---------- Hạng thành viên trong hồ sơ ---------- */
+/* Hạng thành viên trong hồ sơ */
 .account-tier-card { margin-bottom: 18px; scroll-margin-top: 100px; }
 .account-tier-card p { margin: 3.5px 0; }
 .account-muted { color: #666; font-size: 12px; }

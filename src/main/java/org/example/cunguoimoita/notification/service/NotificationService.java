@@ -9,11 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Thông báo cho cả nhóm dùng. Ví dụ F4 báo người bán có đơn mới:
- *   new NotificationService().send(sellerId, NotificationType.ORDER, "Bạn có đơn hàng mới", "/order/detail?id=" + orderId);
- * linkUrl viết không kèm context path (bắt đầu bằng "/").
- */
+/** Gửi thông báo cho người dùng; linkUrl không kèm context path. */
 public class NotificationService {
 
     private final NotificationDAO notificationDAO = new NotificationDAO();
@@ -38,10 +34,6 @@ public class NotificationService {
     /** limit thông báo mới nhất (danh sách xổ xuống ở header lấy 20). */
     public List<Notification> list(String userId, int limit) throws SQLException {
         return notificationDAO.findByUser(userId, limit);
-    }
-
-    public int unreadCount(String userId) throws SQLException {
-        return notificationDAO.countBadges(userId)[0];
     }
 
     /** {thông báo chưa đọc, tin nhắn chưa đọc} cho 2 con số trên header. */

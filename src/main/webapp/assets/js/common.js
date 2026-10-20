@@ -2,7 +2,7 @@
 (function () {
   const ctx = document.body.dataset.ctx || '';
 
-  // Số trên chuông thông báo và mục Tin nhắn (F7): 1 lần gọi /notifications/count trả cả 2 con số.
+  // Số trên chuông thông báo và mục Tin nhắn: 1 lần gọi /notifications/count trả cả 2 con số.
   // Cập nhật mỗi 20 giây, ngừng khi tab bị ẩn, cập nhật ngay khi quay lại tab hoặc khi trang khác báo 'badges:refresh'.
   function setBadge(id, count) {
     const el = document.getElementById(id);
@@ -32,7 +32,7 @@
   });
   document.addEventListener('badges:refresh', refreshBadges);
 
-  // ---- Thông báo (F7): bấm nút Thông báo → danh sách xổ xuống; mỗi dòng có nút "⋯" mở menu ----
+  // Thông báo: bấm nút Thông báo → danh sách xổ xuống; mỗi dòng có nút "⋯" mở menu
   const ago = ms => {
     const s = Math.max(0, (Date.now() - ms) / 1000);
     if (s < 60) return 'Vừa xong';
@@ -156,7 +156,7 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setPanel(false); });
 
-  // ---- Cài đặt ở menu trái: bấm để mở/đóng, bấm ra ngoài hoặc Esc thì đóng ----
+  // Cài đặt ở menu trái: bấm để mở/đóng, bấm ra ngoài hoặc Esc thì đóng
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
   if (settingsBtn) {
@@ -169,7 +169,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') setSettings(false); });
   }
 
-  // ---- Nút "← Quay lại" đầu trang ----
+  // Nút "← Quay lại" đầu trang
   // Đến từ một trang khác trong web thì quay về đúng trang đó (giữ vị trí cuộn, bộ lọc...).
   // Mở thẳng link, hoặc trang trước chính là trang này (vừa lưu form xong) thì đi theo href (trang cha của trang này).
   document.querySelectorAll('[data-back]').forEach(link => link.addEventListener('click', e => {

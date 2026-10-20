@@ -14,11 +14,7 @@ import org.example.cunguoimoita.common.util.MailSender;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Quên mật khẩu ngay trong khung đăng nhập (assets/js/login.js gọi bằng fetch).
- * POST action=send (email) | resend | verify (code) | reset (password, confirmPassword).
- * Trả JSON {"ok":true, ...} hoặc {"ok":false,"error":"..."}.
- */
+/** Quên mật khẩu trong khung đăng nhập (login.js gọi bằng fetch), trả JSON. */
 @WebServlet("/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
     private PasswordResetService reset;

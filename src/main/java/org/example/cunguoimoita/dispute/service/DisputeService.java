@@ -1,6 +1,5 @@
 package org.example.cunguoimoita.dispute.service;
 
-import org.example.cunguoimoita.common.dao.ProductRefDAO;
 import org.example.cunguoimoita.common.db.ConnectionPool;
 import org.example.cunguoimoita.dispute.dao.DisputeDAO;
 import org.example.cunguoimoita.dispute.model.Dispute;
@@ -15,6 +14,8 @@ import org.example.cunguoimoita.order.dao.OrderDAO;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.model.OrderItem;
 import org.example.cunguoimoita.order.service.OrderService;
+import org.example.cunguoimoita.product.dao.ProductDAO;
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.shipping.model.CodStatus;
 import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.service.ShippingService;
@@ -26,26 +27,30 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Nghiệp vụ Phân hệ F9: Xử lý Khiếu nại (Dispute), Thẩm định bằng chứng và Phán quyết Trọng tài.
- * Luồng: người mua mở khiếu nại (đơn đang giao / đã giao) → người bán phản hồi kèm ảnh
- *        → admin xem → hoàn tiền cho người mua (đơn refunded) hoặc trả tiền người bán (đơn completed + payout).
- * Trong lúc khiếu nại còn mở, đơn không tự hoàn tất và người mua không bấm "Đã nhận hàng" được.
+ * Khiếu nại: người mua mở (đơn đã giao) → người bán phản hồi → admin hoàn tiền người mua hoặc trả tiền người bán.
+ * Khiếu nại còn mở thì đơn không tự hoàn tất và người mua không bấm "Đã nhận hàng" được.
  */
 public class DisputeService {
 
     private final DisputeDAO disputeDAO = new DisputeDAO();
     private final OrderDAO orderDAO = new OrderDAO();
-    private final ProductRefDAO productDAO = new ProductRefDAO();
+    private final ProductDAO productDAO = new ProductDAO();
     private final OrderService orderService = new OrderService();
     private final ShippingService shippingService = new ShippingService();
     private final RefundService refundService = new RefundService();
     private final PayoutService payoutService = new PayoutService();
     private final NotificationService notificationService = new NotificationService();
 
-    /**
-     * Dispute.openDispute(): người mua của đơn mở khiếu nại.
-     * Chỉ khi đơn đã giao (vận đơn đã giao xong), và đơn chưa có khiếu nại nào đang mở.
-     */
+    /** Kết quả phán quyết, để gửi thông báo sau khi commit. */
+    private record Resolved(Dispute dispute, Refund refund, Payout payout) {
+    }
+
+    @FunctionalInterface
+    private interface Work<T> {
+        T run(Connection c) throws SQLException;
+    }
+
+    /** Chỉ mở được khi đơn đã giao và chưa có khiếu nại nào đang mở. */
     public Dispute openDispute(String orderId, String buyerId, DisputeReason reason,
                                String description, String evidenceImages) throws SQLException {
         if (description == null || description.isBlank()) {
@@ -125,9 +130,8 @@ public class DisputeService {
     }
 
     /**
-     * Dispute.resolveForBuyer(): người mua thắng.
-     * Đơn → refunded, hoàn tiền người mua (đã trả online, hoặc COD shipper đã thu), sản phẩm được ẩn để người bán tự đăng lại.
-     * @return khoản hoàn tiền (null nếu người mua chưa trả đồng nào, vd COD chưa thu)
+     * Người mua thắng: đơn refunded, hoàn tiền người mua, ẩn sản phẩm để người bán tự đăng lại.
+     * @return khoản hoàn tiền, null nếu người mua chưa trả đồng nào
      */
     public Refund resolveForBuyer(String disputeId, String adminId, String resolutionNote) throws SQLException {
         Resolved r = inTransaction(c -> {
@@ -139,7 +143,7 @@ public class DisputeService {
             order.setStatus(requireRefundable(order));
             orderDAO.update(c, order);
             for (OrderItem item : order.getItems()) {
-                productDAO.updateStatus(c, item.getProductId(), "hidden");
+                productDAO.updateStatus(c, item.getProductId(), ProductStatus.HIDDEN);
             }
             Shipment s = shippingService.findByOrder(c, order.getId());
             boolean codPaid = s != null && (s.getCodStatus() == CodStatus.COLLECTED || s.getCodStatus() == CodStatus.REMITTED);
@@ -158,10 +162,7 @@ public class DisputeService {
         return r.refund();
     }
 
-    /**
-     * Dispute.resolveForSeller(): người bán thắng.
-     * Đơn hoàn tất như bình thường (F4 completeOrder) → tạo khoản trả tiền người bán (F9 Payout).
-     */
+    /** Người bán thắng: đơn hoàn tất như bình thường và tạo khoản trả tiền người bán. */
     public void resolveForSeller(String disputeId, String adminId, String resolutionNote) throws SQLException {
         Resolved r = inTransaction(c -> {
             Dispute d = requireDisputeForUpdate(c, disputeId);
@@ -196,10 +197,7 @@ public class DisputeService {
                 "Khiếu nại đơn hàng của bạn bị từ chối: " + (resolutionNote == null ? "" : resolutionNote), d.getId());
     }
 
-    /**
-     * Người mua, người bán của khiếu nại hoặc admin mới xem được.
-     * @return khiếu nại, ném SecurityException nếu không có quyền
-     */
+    /** Ném SecurityException nếu người xem không phải người mua, người bán của khiếu nại hoặc admin. */
     public Dispute getForUser(String disputeId, String userId, boolean admin) throws SQLException {
         Dispute d = getById(disputeId);
         if (d == null || (!admin && !d.getRaisedById().equals(userId) && !d.getAgainstId().equals(userId))) {
@@ -208,10 +206,7 @@ public class DisputeService {
         return d;
     }
 
-    /**
-     * Đơn này người mua có mở khiếu nại được không (để trang đơn hiện nút "Khiếu nại").
-     * @return null nếu được, ngược lại là lý do
-     */
+    /** @return null nếu người mua mở khiếu nại được, ngược lại là lý do */
     public String openProblem(String orderId, String buyerId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Order order = orderDAO.findById(c, orderId);
@@ -258,12 +253,6 @@ public class DisputeService {
         }
     }
 
-    // ===================== HÀM PHỤ =====================
-
-    /** Kết quả phán quyết, để gửi thông báo sau khi commit. */
-    private record Resolved(Dispute dispute, Refund refund, Payout payout) {
-    }
-
     private Dispute requireDisputeForUpdate(Connection c, String disputeId) throws SQLException {
         Dispute d = disputeId == null ? null : disputeDAO.findByIdForUpdate(c, disputeId);
         if (d == null) {
@@ -295,11 +284,6 @@ public class DisputeService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    @FunctionalInterface
-    private interface Work<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

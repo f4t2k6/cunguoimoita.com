@@ -11,11 +11,10 @@ import org.example.cunguoimoita.chat.model.Message;
 import org.example.cunguoimoita.chat.model.PriceOffer;
 import org.example.cunguoimoita.chat.service.ChatService;
 import org.example.cunguoimoita.chat.service.ChatService.ChatUpdate;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.NewOrder;
 import org.example.cunguoimoita.common.util.CurrentUser;
-import org.example.cunguoimoita.common.util.ImageStore;
 import org.example.cunguoimoita.common.util.JsonUtil;
 import org.example.cunguoimoita.common.util.MediaStore;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderLink;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,19 +23,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
-/**
- * API JSON cho chat.js (khung chat không tải lại trang).
- *  GET  /chat/messages?id=&after=   tin nhắn mới hơn mốc after (epoch ms), after bỏ trống để lấy hết.
- *                                   Có tin mới thì kèm "offers" (mọi offer của cuộc trò chuyện) để cập nhật khung giá cũ.
- *  GET  /chat/unread                số tin chưa đọc (icon tin nhắn trên header)
- *  GET  /chat/list                  các đoạn chat, mới nhất trước (khung chat nổi góc phải dưới, chat-dock.js):
- *                                   tên/ảnh người kia, món đang trao đổi, tin cuối, số tin chưa đọc
- *  POST /chat/send                  conversationId, content
- *                                   Offer đã chấp nhận kèm orderId, orderCode của đơn tạo ra.
- *  POST /chat/offer                 action=make (conversationId, amount) | accept | decline (offerId) | counter (offerId, amount)
- *  POST /chat/image   (multipart)   conversationId, image (1 ảnh ≤ 5 MB) → tin nhắn type "image", content = đường dẫn ảnh
- * Lỗi trả {"ok":false,"error":"..."}.
- */
+/** API JSON cho chat.js và chat-dock.js; lỗi trả {"ok":false,"error":"..."}. */
 @WebServlet(urlPatterns = {"/chat/messages", "/chat/unread", "/chat/list", "/chat/send", "/chat/offer", "/chat/image"})
 @MultipartConfig(maxFileSize = MediaStore.MAX_FILE_SIZE, maxRequestSize = MediaStore.MAX_FILE_SIZE + 64 * 1024)
 public class ChatApiServlet extends HttpServlet {
@@ -107,20 +94,11 @@ public class ChatApiServlet extends HttpServlet {
             } else {
                 String offerId = req.getParameter("offerId");
                 switch (String.valueOf(req.getParameter("action"))) {
-                    case "make":
-                        chatService.makeOffer(req.getParameter("conversationId"), userId, amount(req));
-                        break;
-                    case "accept":
-                        chatService.acceptOffer(offerId, userId);
-                        break;
-                    case "decline":
-                        chatService.declineOffer(offerId, userId);
-                        break;
-                    case "counter":
-                        chatService.counterOffer(offerId, userId, amount(req));
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Thao tác không hợp lệ");
+                    case "make" -> chatService.makeOffer(req.getParameter("conversationId"), userId, amount(req));
+                    case "accept" -> chatService.acceptOffer(offerId, userId);
+                    case "decline" -> chatService.declineOffer(offerId, userId);
+                    case "counter" -> chatService.counterOffer(offerId, userId, amount(req));
+                    default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
                 }
             }
             JsonUtil.write(resp, 200, "{\"ok\":true}");
@@ -172,10 +150,7 @@ public class ChatApiServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Mốc after (epoch ms) → Timestamp. Cộng thêm 0,999999 ms để tin cũ lưu lẻ micro giây
-     * (trước khi làm tròn tới ms) không bị trả lại ở mỗi lần hỏi.
-     */
+    /** Cộng thêm 0,999999 ms để tin cũ lưu lẻ micro giây không bị trả lại ở mỗi lần hỏi. */
     private static Timestamp afterParam(HttpServletRequest req) {
         String after = req.getParameter("after");
         if (after == null || after.isBlank()) {
@@ -194,7 +169,7 @@ public class ChatApiServlet extends HttpServlet {
         return t.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
-    private static void appendMessage(StringBuilder json, Message m, String userId, Map<String, NewOrder> orders) {
+    private static void appendMessage(StringBuilder json, Message m, String userId, Map<String, OrderLink> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(m.getId()))
             .append(",\"mine\":").append(userId.equals(m.getSenderId()))
             .append(",\"type\":").append(JsonUtil.quote(m.getType().dbValue()))
@@ -210,13 +185,13 @@ public class ChatApiServlet extends HttpServlet {
     }
 
     /** Offer đã chấp nhận thì kèm orderId/orderCode của đơn vừa tạo (chat.js hiện nút "Xem đơn"). */
-    private static void appendOffer(StringBuilder json, PriceOffer o, String userId, Map<String, NewOrder> orders) {
+    private static void appendOffer(StringBuilder json, PriceOffer o, String userId, Map<String, OrderLink> orders) {
         json.append("{\"id\":").append(JsonUtil.quote(o.getId()))
             .append(",\"amount\":").append(o.getAmount())
             .append(",\"status\":").append(JsonUtil.quote(o.getStatus().dbValue()))
             .append(",\"canRespond\":").append(o.isPending() && !userId.equals(o.getProposerId()))
             .append(",\"expiresAt\":").append(epochMs(o.getExpiresAt()));
-        NewOrder order = orders.get(o.getId());
+        OrderLink order = orders.get(o.getId());
         if (order != null) {
             json.append(",\"orderId\":").append(JsonUtil.quote(order.id()))
                 .append(",\"orderCode\":").append(JsonUtil.quote(order.code()));

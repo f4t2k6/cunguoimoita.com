@@ -14,14 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- *  GET  /notifications             danh sách thông báo. Attribute gửi sang JSP: notifications (List&lt;Notification&gt;)
- *  GET  /notifications/open?id=    đánh dấu đã đọc rồi chuyển tới linkUrl của thông báo
- *  GET  /notifications/count       JSON {count: thông báo chưa đọc, chat: tin nhắn chưa đọc} cho 2 con số trên header
- *  GET  /notifications/list        JSON 20 thông báo mới nhất (danh sách xổ xuống ở nút Thông báo)
- *  POST /notifications/read?id=    đánh dấu đã đọc 1 thông báo (JSON)
- *  POST /notifications/read-all    đánh dấu đã đọc tất cả (JSON nếu gọi bằng fetch, còn lại quay về /notifications)
- */
+/** Thông báo: trang danh sách, số chưa đọc trên header, đánh dấu đã đọc. */
 @WebServlet(urlPatterns = {"/notifications", "/notifications/open", "/notifications/count", "/notifications/list",
         "/notifications/read", "/notifications/read-all"})
 public class NotificationServlet extends HttpServlet {
@@ -34,7 +27,7 @@ public class NotificationServlet extends HttpServlet {
         if (userId == null) {
             String path = req.getServletPath();
             if ("/notifications".equals(path) || "/notifications/open".equals(path)) {
-                CurrentUser.redirectToLogin(req, resp);   // trang HTML: về trang đăng nhập
+                CurrentUser.redirectToLogin(req, resp);
             } else {
                 JsonUtil.error(resp, HttpServletResponse.SC_UNAUTHORIZED, "Cần đăng nhập");
             }
@@ -42,22 +35,21 @@ public class NotificationServlet extends HttpServlet {
         }
         try {
             switch (req.getServletPath()) {
-                case "/notifications/count":
+                case "/notifications/count" -> {
                     int[] counts = notificationService.badgeCounts(userId);
                     JsonUtil.write(resp, 200, "{\"ok\":true,\"count\":" + counts[0] + ",\"chat\":" + counts[1] + "}");
-                    return;
-                case "/notifications/list":
-                    JsonUtil.write(resp, 200, listJson(notificationService.list(userId, 20)));
-                    return;
-                case "/notifications/open":
+                }
+                case "/notifications/list" -> JsonUtil.write(resp, 200, listJson(notificationService.list(userId, 20)));
+                case "/notifications/open" -> {
                     String link = notificationService.open(userId, req.getParameter("id"));
                     // Chỉ chuyển tới đường dẫn trong trang (bắt đầu bằng một dấu "/"), tránh bị dẫn ra trang ngoài
                     boolean safe = link != null && link.startsWith("/") && !link.startsWith("//");
                     resp.sendRedirect(req.getContextPath() + (safe ? link : "/notifications"));
-                    return;
-                default:
+                }
+                default -> {
                     req.setAttribute("notifications", notificationService.list(userId));
                     req.getRequestDispatcher("/WEB-INF/views/chat/notifications.jsp").forward(req, resp);
+                }
             }
         } catch (SQLException e) {
             throw new ServletException(e);

@@ -3,10 +3,6 @@ package org.example.cunguoimoita.dispute.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * Thực thể Payout ánh xạ từ Class Diagram Final:
- * Payout (id, orderId, sellerId, grossAmount, commissionFee, netAmount, method, status, payoutDate)
- */
 public class Payout implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -39,10 +35,7 @@ public class Payout implements Serializable {
         this.payoutDate = payoutDate;
     }
 
-    /**
-     * Phương thức theo Class Diagram:
-     * Tính toán số tiền thực nhận sau khi trừ hoa hồng sàn (có chiết khấu theo MemberTier)
-     */
+    /** Diagram: Payout.calculateNet(). Phí hoa hồng đã tính theo hạng thành viên của người bán. */
     public static double calculateNetAmount(double grossAmount, double commissionRate) {
         double fee = Math.round(grossAmount * commissionRate);
         return Math.max(0, grossAmount - fee);
@@ -53,7 +46,6 @@ public class Payout implements Serializable {
         this.payoutDate = LocalDateTime.now();
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

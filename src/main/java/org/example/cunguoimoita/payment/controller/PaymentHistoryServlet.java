@@ -15,10 +15,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * GET /payment/history → Lịch sử thanh toán của người đang đăng nhập (mọi đơn), mở từ menu Cài đặt.
- *     JSP nhận: rows (List&lt;Row&gt;: payment + mã đơn), mới nhất trước, tối đa 200 dòng.
- */
+/** Lịch sử thanh toán của người đang đăng nhập. */
 @WebServlet("/payment/history")
 public class PaymentHistoryServlet extends HttpServlet {
 

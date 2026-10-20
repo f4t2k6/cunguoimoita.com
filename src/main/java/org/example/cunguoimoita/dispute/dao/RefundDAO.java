@@ -12,9 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng refunds trong cơ sở dữ liệu.
- */
 public class RefundDAO {
 
     public void insert(Connection c, Refund r) throws SQLException {
@@ -30,26 +27,6 @@ public class RefundDAO {
             ps.setString(7, r.getStatus().dbValue());
             ps.setTimestamp(8, r.getRefundDate() != null ? Timestamp.valueOf(r.getRefundDate()) : new Timestamp(System.currentTimeMillis()));
             ps.executeUpdate();
-        }
-    }
-
-    public void updateStatus(Connection c, String refundId, RefundStatus status) throws SQLException {
-        String sql = "UPDATE refunds SET status = ?, refund_date = ? WHERE id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, status.dbValue());
-            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-            ps.setString(3, refundId);
-            ps.executeUpdate();
-        }
-    }
-
-    public Refund findById(Connection c, String id) throws SQLException {
-        String sql = "SELECT * FROM refunds WHERE id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? map(rs) : null;
-            }
         }
     }
 

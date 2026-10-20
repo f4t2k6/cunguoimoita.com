@@ -14,7 +14,7 @@
   </div>
 
 
-  <%-- ========== HUY HIỆU + THANH TIẾN ĐỘ ========== --%>
+  <%-- HUY HIỆU + THANH TIẾN ĐỘ --%>
   <section class="order-card">
     <p class="tier-badge tier-${p.current().name}">${p.current().name}</p>
     <p><strong>${p.points()}</strong> ecoPoints
@@ -32,7 +32,7 @@
     <p>Ưu đãi hiện tại: <c:out value="${p.current().benefitNote}"/></p>
   </section>
 
-  <%-- ========== ĐIỂM ĐÁNH GIÁ ========== --%>
+  <%-- ĐIỂM ĐÁNH GIÁ --%>
   <section class="order-card">
     <h2>Đánh giá về bạn</h2>
     <p>

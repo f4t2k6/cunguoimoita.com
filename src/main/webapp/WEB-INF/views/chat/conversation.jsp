@@ -28,7 +28,7 @@
           </c:if>
         </span>
       </span>
-      <%-- F10: báo cáo bài đăng (người hỏi mua) hoặc báo cáo người hỏi (người bán) --%>
+      <%-- Báo cáo bài đăng (người hỏi mua) hoặc báo cáo người hỏi (người bán) --%>
       <a class="msgr-report" href="${ctx}/report?type=${conversation.askerId == userId ? 'product' : 'user'}&amp;id=${fn:escapeXml(conversation.askerId == userId ? conversation.productId : conversation.askerId)}">Báo cáo</a>
     </header>
 

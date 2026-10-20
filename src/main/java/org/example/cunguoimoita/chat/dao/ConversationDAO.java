@@ -3,6 +3,7 @@ package org.example.cunguoimoita.chat.dao;
 import org.example.cunguoimoita.chat.model.Conversation;
 import org.example.cunguoimoita.chat.model.ConversationStatus;
 import org.example.cunguoimoita.product.model.ProductCondition;
+import org.example.cunguoimoita.product.model.ProductStatus;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,11 +62,7 @@ public class ConversationDAO {
         }
     }
 
-    /**
-     * Hộp thư: các cuộc trò chuyện của user, mới nhất trước, kèm tin cuối và số tin chưa đọc.
-     * Dùng LEFT JOIN LATERAL: mỗi cuộc trò chuyện đọc tin cuối 1 lần (theo idx_messages_conversation)
-     * thay vì 3 câu SELECT con như trước.
-     */
+    /** Mỗi cuộc trò chuyện đọc tin cuối bằng LEFT JOIN LATERAL để chỉ tốn 1 câu lệnh cho cả hộp thư. */
     public List<Conversation> findInbox(Connection c, String userId) throws SQLException {
         String sql = COLUMNS + ", lm.content AS last_content, lm.type AS last_type, un.unread" + FROM
                 + " LEFT JOIN LATERAL (SELECT m.content, m.type FROM messages m WHERE m.conversation_id = cv.id"
@@ -126,7 +123,7 @@ public class ConversationDAO {
         }
         conv.setProductCondition(ProductCondition.fromCode(rs.getString("product_condition")));
         // "Mua ngay" trong khung chat: món còn bán (chưa có người đặt / chưa bán) và bài có bán lấy tiền
-        conv.setProductBuyable("available".equals(rs.getString("product_status"))
+        conv.setProductBuyable(ProductStatus.AVAILABLE.getCode().equals(rs.getString("product_status"))
                 && !"swap".equals(rs.getString("product_listing_type")));
         return conv;
     }

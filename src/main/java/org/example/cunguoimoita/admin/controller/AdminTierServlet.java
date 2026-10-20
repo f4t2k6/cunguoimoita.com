@@ -8,10 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/tiers   hạng thành viên. Attribute gửi sang JSP: tiers (List&lt;MemberTier&gt;)
- * POST /admin/tiers   field: id, minEcoPoints, discountPercent, benefitNote
- */
+/** Chỉnh hạng thành viên (MemberTier). */
 @WebServlet("/admin/tiers")
 public class AdminTierServlet extends AdminBaseServlet {
 

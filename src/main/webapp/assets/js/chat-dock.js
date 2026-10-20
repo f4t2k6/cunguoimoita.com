@@ -41,7 +41,7 @@
     return a;
   }
 
-  // ---- Nhớ cửa sổ đang mở khi chuyển trang ----
+  // Nhớ cửa sổ đang mở khi chuyển trang
   function save() {
     try {
       sessionStorage.setItem(STORE, JSON.stringify([...windows].map(([id, w]) => ({ id, min: w.minimized }))));
@@ -51,7 +51,7 @@
     try { return JSON.parse(sessionStorage.getItem(STORE) || '[]'); } catch (e) { return []; }
   }
 
-  // ---- Danh sách đoạn chat ----
+  // Danh sách đoạn chat
   async function loadList() {
     try {
       const res = await fetch(ctx + '/chat/list', { headers: { Accept: 'application/json' } });
@@ -125,7 +125,7 @@
     }
   });
 
-  // ---- Cửa sổ chat nhỏ ----
+  // Cửa sổ chat nhỏ
   function productTemplate(c) {
     const tpl = document.createElement('template');
     tpl.setAttribute('data-chat-product', '');

@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Trạng thái giải ngân (PayoutStatus).
- */
 public enum PayoutStatus {
     SCHEDULED("scheduled", "Đã lên lịch (Đang giữ chờ đối soát)"),
     DONE("done", "Đã giải ngân thành công"),

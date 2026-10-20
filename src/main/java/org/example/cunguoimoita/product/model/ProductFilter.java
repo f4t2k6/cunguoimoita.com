@@ -2,14 +2,8 @@ package org.example.cunguoimoita.product.model;
 
 import java.math.BigDecimal;
 
-/**
- * Điều kiện tìm kiếm và lọc ở trang chủ / trang tìm kiếm (F3).
- * Trường nào null là không lọc theo trường đó.
- */
+/** Trường nào null là không lọc theo trường đó. */
 public class ProductFilter {
-
-    /** Cách sắp xếp kết quả. */
-    public enum Sort { NEWEST, PRICE_ASC, PRICE_DESC }
 
     public static final int PAGE_SIZE = 12;
 
@@ -21,6 +15,9 @@ public class ProductFilter {
     private ListingType listingType;
     private Sort sort = Sort.NEWEST;
     private int page = 1;
+
+    /** Cách sắp xếp kết quả. */
+    public enum Sort { NEWEST, PRICE_ASC, PRICE_DESC }
 
     public int getOffset() {
         return (page - 1) * PAGE_SIZE;

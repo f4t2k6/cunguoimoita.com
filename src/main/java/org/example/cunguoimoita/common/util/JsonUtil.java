@@ -17,17 +17,18 @@ public final class JsonUtil {
         StringBuilder sb = new StringBuilder("\"");
         for (char ch : s.toCharArray()) {
             switch (ch) {
-                case '"':  sb.append("\\\""); break;
-                case '\\': sb.append("\\\\"); break;
-                case '\n': sb.append("\\n"); break;
-                case '\r': sb.append("\\r"); break;
-                case '\t': sb.append("\\t"); break;
-                default:
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
                     if (ch < 0x20 || ch == '<' || ch == '>' || ch == '&') {
                         sb.append(String.format("\\u%04x", (int) ch));
                     } else {
                         sb.append(ch);
                     }
+                }
             }
         }
         return sb.append('"').toString();

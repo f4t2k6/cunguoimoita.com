@@ -18,21 +18,21 @@ public enum ShipmentStatus {
 
     /** Chuỗi hợp lệ: created → picked_up → in_transit → delivered, hoặc chuyển returned khi chưa giao xong. */
     public boolean canMoveTo(ShipmentStatus next) {
-        switch (this) {
-            case CREATED:    return next == PICKED_UP || next == RETURNED;
-            case PICKED_UP:  return next == IN_TRANSIT || next == RETURNED;
-            case IN_TRANSIT: return next == DELIVERED || next == RETURNED;
-            default:         return false;
-        }
+        return switch (this) {
+            case CREATED -> next == PICKED_UP || next == RETURNED;
+            case PICKED_UP -> next == IN_TRANSIT || next == RETURNED;
+            case IN_TRANSIT -> next == DELIVERED || next == RETURNED;
+            default -> false;
+        };
     }
 
     public String label() {
-        switch (this) {
-            case CREATED:    return "Chờ người bán xác nhận";
-            case PICKED_UP:  return "Chuẩn bị vận chuyển";
-            case IN_TRANSIT: return "Đang vận chuyển";
-            case DELIVERED:  return "Đã giao thành công";
-            default:         return "Hoàn hàng";
-        }
+        return switch (this) {
+            case CREATED -> "Chờ người bán xác nhận";
+            case PICKED_UP -> "Chuẩn bị vận chuyển";
+            case IN_TRANSIT -> "Đang vận chuyển";
+            case DELIVERED -> "Đã giao thành công";
+            default -> "Hoàn hàng";
+        };
     }
 }

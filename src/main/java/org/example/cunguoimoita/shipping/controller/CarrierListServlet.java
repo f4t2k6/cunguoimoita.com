@@ -10,12 +10,7 @@ import org.example.cunguoimoita.shipping.service.ShippingService;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /shipping/carriers  → danh sách đơn vị vận chuyển, kèm phí và số ngày dự kiến.
- *      Tham số tuỳ chọn: from, to (tỉnh/thành) để tính phí.
- *      Attribute gửi sang JSP: carriers (List&lt;ShippingCarrier&gt;), from, to, error
- * Người mua chọn hãng ngay trên trang chi tiết đơn (/order/detail), trang này chỉ để tra cứu.
- */
+/** Tra cứu đơn vị vận chuyển và phí theo tuyến. */
 @WebServlet("/shipping/carriers")
 public class CarrierListServlet extends HttpServlet {
 

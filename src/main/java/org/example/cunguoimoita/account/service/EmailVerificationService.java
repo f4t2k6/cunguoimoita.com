@@ -20,11 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.logging.Logger;
 
-/**
- * Đăng ký có xác nhận email: lưu thông tin vào email_verifications, gửi mã 6 số,
- * nhập đúng mã thì mới tạo tài khoản trong users.
- * Lỗi người dùng cần biết được ném ra bằng VerificationException kèm câu thông báo.
- */
+/** Đăng ký có xác nhận email: gửi mã 6 số, nhập đúng mã mới tạo tài khoản. */
 public class EmailVerificationService {
     public static final int VALID_MINUTES = 10;
     public static final int MAX_ATTEMPTS = 5;
@@ -91,9 +87,7 @@ public class EmailVerificationService {
         sendCode(email, fullName, code);
     }
 
-    /**
-     * Bước 2: kiểm tra mã. Đúng thì tạo tài khoản khách hàng và trả về User để đăng nhập luôn.
-     */
+    /** Nhập đúng mã thì tạo tài khoản khách hàng và trả về User để đăng nhập luôn. */
     public User verify(String email, String code) throws SQLException {
         code = code == null ? "" : code.replaceAll("\\s", "");
         if (!code.matches("\\d{6}")) {
@@ -143,13 +137,6 @@ public class EmailVerificationService {
             }
         }
         return userDAO.findByEmail(email);
-    }
-
-    /** Email có lượt đăng ký đang chờ không (để trang xác nhận biết còn hiệu lực). */
-    public boolean isPending(String email) throws SQLException {
-        try (Connection c = ConnectionPool.getInstance().getConnection()) {
-            return dao.findForUpdate(c, email) != null;
-        }
     }
 
     public boolean isMailConfigured() {

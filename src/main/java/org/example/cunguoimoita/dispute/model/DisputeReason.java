@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Lý do khiếu nại (Ánh xạ từ Class Diagram Final).
- */
 public enum DisputeReason {
     NOT_RECEIVED("not_received", "Chưa nhận được hàng"),
     WRONG_ITEM("wrong_item", "Giao sai sản phẩm / khác mô tả"),

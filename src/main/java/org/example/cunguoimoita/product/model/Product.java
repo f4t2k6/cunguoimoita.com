@@ -5,11 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Class Product trong class diagram: một món đồ người bán đăng lên sàn.
- * Ngoài các cột của bảng products còn mang theo vài thông tin để hiển thị
- * (tên người bán, tên danh mục, đã lưu vào Bucket List chưa).
- */
+/** Ngoài các cột của bảng products còn mang thông tin hiển thị: tên người bán, tên danh mục, đã lưu chưa. */
 public class Product {
 
     private String id;
@@ -37,9 +33,7 @@ public class Product {
     private String parentCategoryName;
     private boolean saved;
 
-    // ---------------------------------------------------------------
     // Trạng thái nhìn từ phía người dùng (gộp status, verifiedStatus và việc admin đã duyệt chưa)
-    // ---------------------------------------------------------------
 
     /** Admin đã duyệt bài này ít nhất một lần. */
     public boolean isApproved() {
@@ -85,12 +79,12 @@ public class Product {
     }
 
     public String getStateLabel() {
-        switch (getStateCode()) {
-            case "rejected": return "Bị từ chối";
-            case "pending":  return "Chờ duyệt";
-            case "paused":   return "Đang tạm ẩn";
-            default:         return status.getLabel();
-        }
+        return switch (getStateCode()) {
+            case "rejected" -> "Bị từ chối";
+            case "pending" -> "Chờ duyệt";
+            case "paused" -> "Đang tạm ẩn";
+            default -> status.getLabel();
+        };
     }
 
     /** Người bán chỉ sửa được khi bài chưa có ai đặt và chưa bị admin ẩn. */
@@ -106,9 +100,6 @@ public class Product {
         return isPaused();
     }
 
-    // ---------------------------------------------------------------
-    // Tiện ích cho giao diện
-    // ---------------------------------------------------------------
 
     /** Ảnh bìa: ảnh đầu tiên, null nếu bài không có ảnh. */
     public String getCoverImage() {
@@ -128,10 +119,6 @@ public class Product {
     public BigDecimal getSwapValue() {
         return estimatedValue != null ? estimatedValue : price;
     }
-
-    // ---------------------------------------------------------------
-    // Getter / setter
-    // ---------------------------------------------------------------
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

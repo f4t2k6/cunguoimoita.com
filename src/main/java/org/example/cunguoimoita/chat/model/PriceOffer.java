@@ -3,11 +3,7 @@ package org.example.cunguoimoita.chat.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Class PriceOffer trong class diagram.
- * Ràng buộc: mỗi Conversation chỉ có 1 PriceOffer pending. Khi một offer được accept, Product chuyển
- * sang reserved và các offer pending khác của cùng Product tự động chuyển declined (ChatService làm).
- */
+/** Mỗi Conversation chỉ có 1 offer pending; accept một offer thì Product chuyển reserved và các offer pending khác bị declined. */
 public class PriceOffer {
 
     /** Offer hết hạn sau 24 giờ nếu không ai trả lời. */
@@ -15,7 +11,7 @@ public class PriceOffer {
 
     private String id;
     private String conversationId;
-    private String proposerId;    // người đưa ra giá
+    private String proposerId;
     private double amount;
     private OfferStatus status = OfferStatus.PENDING;
     private LocalDateTime createdAt;
@@ -35,10 +31,7 @@ public class PriceOffer {
         return o;
     }
 
-    /**
-     * + accept(): Order
-     * Ở đây chỉ đổi trạng thái; ChatService.acceptOffer() gọi OrderService.createFromOffer() của F4 (TV3) để ra Order.
-     */
+    /** Chỉ đổi trạng thái; ChatService.acceptOffer() tạo Order. */
     public void accept(String userId) {
         requireRespondable(userId);
         status = OfferStatus.ACCEPTED;
@@ -72,16 +65,6 @@ public class PriceOffer {
         return false;
     }
 
-    private void requireRespondable(String userId) {
-        expireIfDue();
-        if (status != OfferStatus.PENDING) {
-            throw new IllegalStateException("Offer này đã " + status.dbValue() + ", không trả lời được nữa");
-        }
-        if (proposerId.equals(userId)) {
-            throw new IllegalStateException("Bạn không thể tự trả lời offer của mình");
-        }
-    }
-
     public boolean isPending() {
         return status == OfferStatus.PENDING;
     }
@@ -100,4 +83,14 @@ public class PriceOffer {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+
+    private void requireRespondable(String userId) {
+        expireIfDue();
+        if (status != OfferStatus.PENDING) {
+            throw new IllegalStateException("Offer này đã " + status.dbValue() + ", không trả lời được nữa");
+        }
+        if (proposerId.equals(userId)) {
+            throw new IllegalStateException("Bạn không thể tự trả lời offer của mình");
+        }
+    }
 }

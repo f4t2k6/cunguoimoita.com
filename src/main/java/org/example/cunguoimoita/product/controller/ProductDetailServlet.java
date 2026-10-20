@@ -14,11 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * GET /product?id=  → trang chi tiết bài đăng (F3): ảnh lớn, thông tin, người bán,
- *                     nút Lưu / Nhắn tin / Thêm vào giỏ, gợi ý trao đổi (F2) và bài khác của người bán.
- * JSP nhận: product, isOwner, matches (List<Product>), sellerOthers (List<Product>), message, error
- */
+/** Chi tiết bài đăng, gợi ý trao đổi và bài khác của người bán. */
 @WebServlet("/product")
 public class ProductDetailServlet extends HttpServlet {
 

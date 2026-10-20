@@ -7,22 +7,19 @@ import org.example.cunguoimoita.order.dao.VoucherDAO;
 import org.example.cunguoimoita.order.model.Voucher;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// Admin phát voucher cho khách (F4 + F10). Mỗi voucher thuộc đúng 1 khách (vouchers.customer_id),
+// Admin phát voucher cho khách. Mỗi voucher thuộc đúng 1 khách (vouchers.customer_id),
 // nên "phát cho tất cả" = tạo cho mỗi khách 1 voucher riêng, mã = tiền tố + 4 ký tự ngẫu nhiên.
 public class VoucherService {
 
     private final VoucherDAO voucherDAO = new VoucherDAO();
     private final NotificationService notificationService = new NotificationService();
 
-    // Voucher mới phát gần đây cho trang admin.
     public List<VoucherDAO.VoucherRow> listRecent() throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             return voucherDAO.findRecent(c, 200);
@@ -30,10 +27,8 @@ public class VoucherService {
     }
 
     /**
-     * Phát voucher.
-     * @param code       mã (chữ in hoa, số, gạch ngang). Phát cho tất cả thì đây là tiền tố.
-     * @param ownerEmail email khách nhận; để trống = phát cho mọi khách đang hoạt động
-     * @return số voucher đã tạo
+     * @param code phát cho mọi khách thì đây là tiền tố
+     * @param ownerEmail để trống = phát cho mọi khách đang hoạt động
      */
     public int issue(String code, String ownerEmail, double discountValue, double minOrderValue, LocalDate expiryDate)
             throws SQLException {
@@ -53,7 +48,7 @@ public class VoucherService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             c.setAutoCommit(false);
             try {
-                List<String> owners = toAll ? activeCustomers(c) : List.of(requireCustomer(c, ownerEmail.trim()));
+                List<String> owners = toAll ? voucherDAO.findActiveCustomerIds(c) : List.of(requireCustomer(c, ownerEmail.trim()));
                 for (String owner : owners) {
                     String voucherCode = toAll ? prefix + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase() : prefix;
                     if (voucherDAO.codeExists(c, voucherCode)) {
@@ -90,27 +85,18 @@ public class VoucherService {
         return created.size();
     }
 
-    private List<String> activeCustomers(Connection c) throws SQLException {
-        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE u.status = 'active'";
-        List<String> ids = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                ids.add(rs.getString(1));
-            }
+    /** Đánh dấu expired các voucher quá hạn chưa dùng. @return số voucher vừa hết hạn */
+    public int expireOverdue() throws SQLException {
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            return voucherDAO.expireOverdue(c);
         }
-        return ids;
     }
 
     private String requireCustomer(Connection c, String email) throws SQLException {
-        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE LOWER(u.email) = LOWER(?)";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    throw new IllegalArgumentException("Không có khách hàng nào dùng email " + email);
-                }
-                return rs.getString(1);
-            }
+        String customerId = voucherDAO.findCustomerIdByEmail(c, email);
+        if (customerId == null) {
+            throw new IllegalArgumentException("Không có khách hàng nào dùng email " + email);
         }
+        return customerId;
     }
 }

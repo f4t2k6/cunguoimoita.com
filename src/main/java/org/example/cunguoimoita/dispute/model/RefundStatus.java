@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Trạng thái hoàn tiền cho người mua.
- */
 public enum RefundStatus {
     PENDING("pending", "Đang xử lý hoàn tiền"),
     DONE("done", "Đã hoàn tất chuyển tiền về ví"),

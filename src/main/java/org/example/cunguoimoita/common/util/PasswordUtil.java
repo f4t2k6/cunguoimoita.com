@@ -1,10 +1,10 @@
 package org.example.cunguoimoita.common.util;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 /** Hash mật khẩu bằng PBKDF2 của JDK, không lưu mật khẩu gốc. */
 public final class PasswordUtil {
@@ -22,10 +22,8 @@ public final class PasswordUtil {
     }
 
     /**
-     * Kiểm tra mật khẩu mới có đủ mạnh không (dùng khi đăng ký và đổi mật khẩu).
-     * Luật: 8–128 ký tự, có ít nhất 1 chữ cái và 1 chữ số, không có khoảng trắng.
-     * Trang web cũng kiểm tra y hệt bằng assets/js/password.js, nhưng server vẫn phải kiểm tra lại.
-     * @return câu báo lỗi cho người dùng, hoặc null nếu hợp lệ
+     * 8–128 ký tự, có ít nhất 1 chữ cái và 1 chữ số, không có khoảng trắng (password.js kiểm tra giống hệt).
+     * @return câu báo lỗi, hoặc null nếu hợp lệ
      */
     public static String checkStrength(String password) {
         if (password == null || password.length() < MIN_LENGTH) {

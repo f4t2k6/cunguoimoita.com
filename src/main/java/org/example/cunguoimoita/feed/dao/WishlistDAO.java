@@ -8,10 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Bucket List (class Wishlist): mỗi khách hàng có 0..1 wishlist,
- * danh sách bài đã lưu nằm ở bảng phụ wishlist_products.
- */
+/** Bucket List (Wishlist): bài đã lưu nằm ở bảng phụ wishlist_products. */
 public class WishlistDAO {
 
     /** id wishlist của khách hàng; chưa có thì tạo mới. */

@@ -8,11 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET  /admin/users?q=&status=active|banned   tìm người dùng
- *      Attribute gửi sang JSP: users (List&lt;AdminUserRow&gt;), q, status
- * POST /admin/users  field: id, action = ban | unban
- */
+/** Tìm, khoá và mở khoá người dùng. */
 @WebServlet("/admin/users")
 public class AdminUserServlet extends AdminBaseServlet {
 
@@ -34,14 +30,15 @@ public class AdminUserServlet extends AdminBaseServlet {
         String id = req.getParameter("id");
         handle(req, resp, "/admin/users" + query(req, "q", "status"), () -> {
             switch (String.valueOf(req.getParameter("action"))) {
-                case "ban":
+                case "ban" -> {
                     adminService.banUser(id, adminId(req));
                     return "Đã khoá tài khoản và ẩn các bài đang bán của người này";
-                case "unban":
+                }
+                case "unban" -> {
                     adminService.unbanUser(id);
                     return "Đã mở khoá tài khoản";
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         });
     }

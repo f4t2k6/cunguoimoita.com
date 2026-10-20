@@ -46,11 +46,7 @@ public class NotificationDAO {
         return list;
     }
 
-    /**
-     * Số thông báo chưa đọc và số tin nhắn chưa đọc (F7) trong 1 câu lệnh,
-     * để common.js cập nhật cả 2 con số trên header chỉ với 1 lần gọi server.
-     * @return {thông báo chưa đọc, tin nhắn chưa đọc}
-     */
+    /** Đếm thông báo và tin nhắn chưa đọc trong 1 câu lệnh. @return {thông báo, tin nhắn} */
     public int[] countBadges(String userId) throws SQLException {
         String sql = "SELECT (SELECT COUNT(*) FROM notifications WHERE user_id = ? AND NOT is_read),"
                 + " (SELECT COUNT(*) FROM messages m JOIN conversations cv ON cv.id = m.conversation_id"
@@ -67,10 +63,7 @@ public class NotificationDAO {
         }
     }
 
-    /**
-     * Đánh dấu đã đọc một thông báo của user và trả về linkUrl của nó trong cùng một câu lệnh.
-     * @return linkUrl, hoặc null nếu thông báo không tồn tại / không phải của user
-     */
+    /** @return linkUrl của thông báo, hoặc null nếu không tồn tại hay không phải của user */
     public String markRead(String userId, String id) throws SQLException {
         String sql = "UPDATE notifications SET is_read = TRUE WHERE user_id = ? AND id = ? RETURNING link_url";
         try (Connection c = ConnectionPool.getInstance().getConnection();

@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.common.util;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.example.cunguoimoita.common.model.UserRole;
 
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -18,10 +19,7 @@ public final class FormUtil {
         return v == null || v.isBlank() ? null : v.trim();
     }
 
-    /**
-     * Số tiền người dùng gõ, chấp nhận cả kiểu "1.700.000" hay "1,700,000".
-     * Ô trống trả null; gõ chữ thì báo lỗi.
-     */
+    /** Chấp nhận cả "1.700.000" và "1,700,000"; ô trống trả null. */
     public static BigDecimal money(HttpServletRequest req, String name, String fieldLabel) {
         String v = text(req, name);
         if (v == null) {
@@ -48,13 +46,10 @@ public final class FormUtil {
     public static boolean isCustomer(HttpServletRequest req) {
         var session = req.getSession(false);
         return session != null && session.getAttribute(CurrentUser.SESSION_KEY) != null
-                && "customer".equals(session.getAttribute("userRole"));
+                && UserRole.CUSTOMER.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY));
     }
 
-    /**
-     * Đường dẫn quay lại sau khi xử lý form. Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/"
-     * (không nhận "//host" hay "http://...") để không bị lợi dụng chuyển hướng sang trang lạ.
-     */
+    /** Chỉ nhận đường dẫn nội bộ bắt đầu bằng "/" để không bị lợi dụng chuyển hướng sang trang lạ. */
     public static String safeBack(HttpServletRequest req, String fallback) {
         String back = req.getParameter("back");
         if (back == null || !back.startsWith("/") || back.startsWith("//") || back.contains("\\")
@@ -64,7 +59,8 @@ public final class FormUtil {
         return back;
     }
 
-    public static String encode(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    /** Mã hoá giá trị để đặt lên query string; null thành chuỗi rỗng. */
+    public static String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

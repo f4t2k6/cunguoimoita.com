@@ -7,7 +7,8 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.example.cunguoimoita.account.dao.UserDAO;
+import org.example.cunguoimoita.account.service.AccountService;
+import org.example.cunguoimoita.common.model.UserRole;
 import org.example.cunguoimoita.common.util.CurrentUser;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
 
 @WebFilter("/account/*")
 public class AccountAuthFilter implements Filter {
-    private final UserDAO userDAO = new UserDAO();
+    private final AccountService accountService = new AccountService();
 
     @Override
     public void doFilter(jakarta.servlet.ServletRequest request,
@@ -28,7 +29,7 @@ public class AccountAuthFilter implements Filter {
             // Nhớ trang đang mở để đăng nhập xong quay lại (giống LoginRequiredFilter)
             if ("GET".equals(req.getMethod())) {
                 String query = req.getQueryString();
-                req.getSession(true).setAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN,
+                req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN,
                         req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo())
                                 + (query == null ? "" : "?" + query));
             }
@@ -36,12 +37,12 @@ public class AccountAuthFilter implements Filter {
             return;
         }
         HttpSession session = req.getSession(false);
-        if (!"customer".equals(session.getAttribute("userRole"))) {
+        if (!UserRole.CUSTOMER.databaseValue().equals(session.getAttribute(CurrentUser.ROLE_KEY))) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
         try {
-            if (!userDAO.isActive(userId)) {
+            if (!accountService.isActive(userId)) {
                 invalidate(session);
                 resp.sendRedirect(req.getContextPath() + "/login?banned=1");
                 return;

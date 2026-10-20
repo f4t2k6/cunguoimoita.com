@@ -4,6 +4,10 @@ import java.time.LocalDateTime;
 
 /** Class Report trong class diagram: người dùng báo cáo bài đăng hoặc người dùng vi phạm. */
 public class Report {
+    public static final String PENDING = "pending";
+    public static final String RESOLVED = "resolved";
+    public static final String REJECTED = "rejected";
+
 
     private String id;
     private String reporterId;
@@ -12,7 +16,7 @@ public class Report {
     private ReportReason reason;
     private String description;
     private String evidenceImages;
-    private String status;          // pending | resolved | rejected
+    private String status;
     private LocalDateTime createdDate;
     private String handledByAdminId;
 
@@ -21,7 +25,7 @@ public class Report {
     private String targetName;      // tên bài đăng hoặc tên người bị báo cáo
     private String targetOwnerId;   // người bán của bài, hoặc chính người bị báo cáo
 
-    public boolean isPending() { return "pending".equals(status); }
+    public boolean isPending() { return PENDING.equals(status); }
     public boolean isProductTarget() { return "product".equals(targetType); }
 
     /** Ảnh bằng chứng dạng danh sách (cột evidence_images lưu các đường dẫn cách nhau bởi dấu phẩy). */

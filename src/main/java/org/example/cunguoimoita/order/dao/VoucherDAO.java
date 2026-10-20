@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// Chạy SQL trên bảng vouchers.
 public class VoucherDAO {
+
+    // 1 dòng ở trang quản lý voucher của admin: voucher + email của khách sở hữu.
+    public record VoucherRow(Voucher voucher, String ownerEmail, String ownerName) {
+    }
 
     // Tìm voucher theo mã người dùng nhập (vd SALE50K). Không có → null.
     public Voucher findByCode(Connection c, String code) throws SQLException {
@@ -23,21 +26,6 @@ public class VoucherDAO {
                 return rs.next() ? map(rs) : null;
             }
         }
-    }
-
-    // Danh sách voucher của 1 khách (để hiện ở trang thanh toán).
-    public List<Voucher> findByCustomer(Connection c, String customerId) throws SQLException {
-        String sql = "SELECT * FROM vouchers WHERE customer_id = ? ORDER BY issued_date DESC";
-        List<Voucher> list = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
-            }
-        }
-        return list;
     }
 
     // Voucher của khách còn dùng được (chưa dùng, chưa hết hạn), để trang đơn gợi ý mã.
@@ -54,10 +42,6 @@ public class VoucherDAO {
             }
         }
         return list;
-    }
-
-    // 1 dòng ở trang quản lý voucher của admin: voucher + email của khách sở hữu.
-    public record VoucherRow(Voucher voucher, String ownerEmail, String ownerName) {
     }
 
     // Voucher mới phát gần đây (trang admin). Voucher quá hạn nhưng chưa dùng hiện là "expired".
@@ -95,7 +79,6 @@ public class VoucherDAO {
         }
     }
 
-    // Phát voucher mới cho khách (admin dùng).
     public void insert(Connection c, Voucher v) throws SQLException {
         v.setId(UUID.randomUUID().toString());
         String sql = "INSERT INTO vouchers (id, code, customer_id, discount_value, min_order_value, status, expiry_date)"
@@ -106,8 +89,8 @@ public class VoucherDAO {
             ps.setString(3, v.getCustomerId());
             ps.setDouble(4, v.getDiscountValue());
             ps.setDouble(5, v.getMinOrderValue());
-            ps.setString(6, v.getStatus().name().toLowerCase());   // enum ISSUED → chữ "issued" trong DB
-            ps.setObject(7, v.getExpiryDate());                    // setObject chấp nhận cả null
+            ps.setString(6, v.getStatus().name().toLowerCase());
+            ps.setObject(7, v.getExpiryDate());
             ps.executeUpdate();
         }
     }
@@ -122,7 +105,28 @@ public class VoucherDAO {
         }
     }
 
-    // Chuyển 1 dòng ResultSet → object Voucher
+    public List<String> findActiveCustomerIds(Connection c) throws SQLException {
+        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE u.status = 'active'";
+        List<String> ids = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getString(1));
+            }
+        }
+        return ids;
+    }
+
+    /** @return id khách hàng có email này, null nếu không có */
+    public String findCustomerIdByEmail(Connection c, String email) throws SQLException {
+        String sql = "SELECT cu.user_id FROM customers cu JOIN users u ON u.id = cu.user_id WHERE LOWER(u.email) = LOWER(?)";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
     private Voucher map(ResultSet rs) throws SQLException {
         Voucher v = new Voucher();
         v.setId(rs.getString("id"));
@@ -130,7 +134,7 @@ public class VoucherDAO {
         v.setCustomerId(rs.getString("customer_id"));
         v.setDiscountValue(rs.getDouble("discount_value"));
         v.setMinOrderValue(rs.getDouble("min_order_value"));
-        v.setStatus(Voucher.VoucherStatus.valueOf(rs.getString("status").toUpperCase()));   // "issued" → ISSUED
+        v.setStatus(Voucher.VoucherStatus.valueOf(rs.getString("status").toUpperCase()));
         v.setIssuedDate(rs.getObject("issued_date", LocalDate.class));
         v.setExpiryDate(rs.getObject("expiry_date", LocalDate.class));
         return v;

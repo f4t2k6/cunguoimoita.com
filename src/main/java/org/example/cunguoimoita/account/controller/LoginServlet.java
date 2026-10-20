@@ -6,21 +6,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.example.cunguoimoita.account.dao.UserDAO;
 import org.example.cunguoimoita.account.model.User;
+import org.example.cunguoimoita.account.service.AccountService;
 import org.example.cunguoimoita.account.service.LoginAttemptLimiter;
-import org.example.cunguoimoita.common.filter.LoginRequiredFilter;
 import org.example.cunguoimoita.common.model.AccountStatus;
 import org.example.cunguoimoita.common.model.UserRole;
-import org.example.cunguoimoita.common.util.PasswordUtil;
+import org.example.cunguoimoita.common.util.CurrentUser;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Locale;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-    private final UserDAO userDAO = new UserDAO();
+    private final AccountService accountService = new AccountService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -45,7 +43,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        String key = email.trim().toLowerCase(Locale.ROOT);
+        String key = AccountService.normalizeEmail(email);
         LoginAttemptLimiter limiter = LoginAttemptLimiter.getInstance();
         long locked = limiter.secondsLocked(key);
         if (locked > 0) {
@@ -55,8 +53,8 @@ public class LoginServlet extends HttpServlet {
         }
 
         try {
-            User user = userDAO.findByEmail(key);
-            if (user == null || !PasswordUtil.verifyPassword(password, user.getPasswordHash())) {
+            User user = accountService.authenticate(key, password);
+            if (user == null) {
                 int left = limiter.recordFailure(key);
                 showForm(req, resp, left > 0
                         ? "Email hoặc mật khẩu không đúng. Bạn còn " + left + " lần thử."
@@ -70,23 +68,9 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            HttpSession session = req.getSession(true);
-            Object wanted = session.getAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
-            session.removeAttribute(LoginRequiredFilter.REDIRECT_AFTER_LOGIN);
-            req.changeSessionId();
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("userRole", user.getRole().databaseValue());
-            session.setAttribute("fullName", user.getFullName());
-            session.setAttribute("avatarPath", user.getAvatarPath());
-            if (user.getRole() == UserRole.ADMIN) {
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
-            } else if (wanted instanceof String && ((String) wanted).startsWith("/")
-                    && !((String) wanted).startsWith("//")) {
-                // Quay lại trang đã định mở trước khi bị yêu cầu đăng nhập
-                resp.sendRedirect(req.getContextPath() + wanted);
-            } else {
-                resp.sendRedirect(req.getContextPath() + "/home");
-            }
+            String wanted = CurrentUser.logIn(req, user.getId(), user.getRole().databaseValue(),
+                    user.getFullName(), user.getAvatarPath());
+            CurrentUser.redirectAfterLogin(req, resp, user.getRole() == UserRole.ADMIN, wanted);
         } catch (SQLException e) {
             throw new ServletException("Không thể đăng nhập lúc này.", e);
         }

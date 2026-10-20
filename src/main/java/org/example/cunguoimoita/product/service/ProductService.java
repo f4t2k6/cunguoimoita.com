@@ -4,10 +4,11 @@ import jakarta.servlet.http.Part;
 import org.example.cunguoimoita.admin.dao.CategoryDAO;
 import org.example.cunguoimoita.admin.model.Category;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.common.util.MediaStore;
+import org.example.cunguoimoita.common.util.Texts;
 import org.example.cunguoimoita.product.dao.ProductDAO;
 import org.example.cunguoimoita.product.model.Product;
 import org.example.cunguoimoita.product.model.ProductStatus;
-import org.example.cunguoimoita.common.util.MediaStore;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -17,25 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ đăng và quản lý bài (F2).
- * Servlet chỉ đọc form rồi gọi các hàm ở đây; mọi kiểm tra quyền và dữ liệu đều nằm trong service.
- * Lỗi người dùng nhập sai ném IllegalArgumentException, thao tác không hợp với trạng thái bài ném
- * IllegalStateException; servlet bắt hai loại này để hiện thông báo trên trang.
- */
+/** Lỗi nhập liệu ném IllegalArgumentException, sai trạng thái ném IllegalStateException; servlet bắt để hiện thông báo. */
 public class ProductService {
 
     public static final int MAX_IMAGES = 8;
-    private static final BigDecimal MAX_MONEY = new BigDecimal("9999999999");   // vừa cột NUMERIC(12,2)
+    private static final BigDecimal MAX_MONEY = new BigDecimal("9999999999");
     private static final double SWAP_TOLERANCE = 0.3;                             // gợi ý món lệch giá trị tối đa 30%
 
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
     private final MediaStore imageStore = new MediaStore();
 
-    // ==================================================================
-    // Đọc
-    // ==================================================================
 
     /** Danh mục cha trước, con ngay sau cha (dùng cho ô chọn danh mục và thanh danh mục). */
     public List<Category> categories() throws SQLException {
@@ -58,13 +51,9 @@ public class ProductService {
         }
     }
 
-    /**
-     * Bài cho trang chi tiết. Khách chỉ xem được bài đã duyệt đang hiện;
-     * người bán và admin xem được cả bài chờ duyệt / đang ẩn để kiểm tra.
-     * @return null nếu không có hoặc người xem không được phép xem
-     */
+    /** Khách chỉ xem bài đã duyệt; người bán và admin xem được cả bài chờ duyệt / đang ẩn. @return null nếu không được xem */
     public Product detail(String productId, String viewerId, boolean viewerIsAdmin) throws SQLException {
-        if (isBlank(productId)) {
+        if (Texts.isBlank(productId)) {
             return null;
         }
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -94,14 +83,8 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Đăng / sửa
-    // ==================================================================
 
-    /**
-     * Customer.postProduct(): lưu ảnh rồi tạo bài ở trạng thái chờ duyệt.
-     * @return id bài mới
-     */
+    /** Customer.postProduct(): lưu ảnh rồi tạo bài ở trạng thái chờ duyệt. */
     public String post(String sellerId, Product input, List<Part> photos) throws SQLException, IOException {
         validate(input);
         List<Part> uploads = nonEmpty(photos);
@@ -125,10 +108,7 @@ public class ProductService {
         return input.getId();
     }
 
-    /**
-     * Sửa bài. keepImages là các ảnh cũ người bán giữ lại (theo thứ tự trên form), photos là ảnh mới thêm.
-     * Bài đang bị từ chối thì sửa xong tự gửi duyệt lại.
-     */
+    /** Bài đang bị từ chối thì sửa xong tự gửi duyệt lại. */
     public void update(String sellerId, String productId, Product input, List<String> keepImages, List<Part> photos)
             throws SQLException, IOException {
         validate(input);
@@ -184,9 +164,6 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Ẩn / hiện / xoá (người bán)
-    // ==================================================================
 
     /** Người bán tạm ẩn bài đang bán: bài về draft nhưng vẫn giữ trạng thái đã duyệt. */
     public void pause(String sellerId, String productId) throws SQLException {
@@ -238,43 +215,14 @@ public class ProductService {
         }
     }
 
-    // ==================================================================
-    // Cho chức năng khác gọi (F4 đặt hàng, F7 chốt giá)
+    // Cho đặt hàng và chốt giá trong chat gọi
     // Nhận Connection để chạy chung transaction với nghiệp vụ gọi tới.
-    // ==================================================================
 
-    /** Product.reserve(): có người đặt, món không còn bán cho người khác. */
-    public void reserve(Connection c, String productId) throws SQLException {
-        Product p = productDAO.findByIdForUpdate(c, productId);
-        if (p == null || !p.isAvailable()) {
-            throw new IllegalStateException("Món này không còn để đặt");
-        }
-        productDAO.updateStatus(c, productId, ProductStatus.RESERVED);
-    }
-
-    /** Huỷ đơn: trả món về đang bán. */
-    public void release(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.AVAILABLE);
-    }
-
-    /** Product.markSold() */
-    public void markSold(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.SOLD);
-    }
-
-    /** Đổi đồ xong. */
-    public void markExchanged(Connection c, String productId) throws SQLException {
-        productDAO.updateStatus(c, productId, ProductStatus.EXCHANGED);
-    }
-
-    // ==================================================================
-    // Kiểm tra dữ liệu
-    // ==================================================================
 
     private void validate(Product p) {
-        p.setName(trimToNull(p.getName()));
-        p.setDescription(trimToNull(p.getDescription()));
-        p.setDesiredExchangeNote(trimToNull(p.getDesiredExchangeNote()));
+        p.setName(Texts.trimToNull(p.getName()));
+        p.setDescription(Texts.trimToNull(p.getDescription()));
+        p.setDesiredExchangeNote(Texts.trimToNull(p.getDesiredExchangeNote()));
         if (p.getName() == null || p.getName().length() < 3) {
             throw new IllegalArgumentException("Tên món đồ cần ít nhất 3 ký tự");
         }
@@ -284,7 +232,7 @@ public class ProductService {
         if (p.getDescription() != null && p.getDescription().length() > 5000) {
             throw new IllegalArgumentException("Mô tả tối đa 5000 ký tự");
         }
-        if (isBlank(p.getCategoryId())) {
+        if (Texts.isBlank(p.getCategoryId())) {
             throw new IllegalArgumentException("Hãy chọn danh mục");
         }
         if (p.getCondition() == null) {
@@ -357,13 +305,5 @@ public class ProductService {
             }
         }
         return list;
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
-    }
-
-    private static String trimToNull(String s) {
-        return isBlank(s) ? null : s.trim();
     }
 }

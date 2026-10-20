@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.payment.service;
 
 import jakarta.servlet.ServletContext;
+
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -17,13 +18,7 @@ import java.util.logging.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * Cấu hình kết nối cổng VNPay Sandbox v2.1.0 (HMAC-SHA512).
- * Hỗ trợ nạp cấu hình linh hoạt từ:
- *   1. context.xml: <Parameter name="vnpay.tmnCode" .../> và <Parameter name="vnpay.hashSecret" .../>
- *   2. Biến môi trường: VNP_TMN_CODE, VNP_HASH_SECRET
- *   3. File tài nguyên vnpay.properties trong classpath
- */
+/** Cấu hình VNPay Sandbox (HMAC-SHA512), đọc từ context.xml, biến môi trường hoặc vnpay.properties. */
 public class VNPayConfig {
 
     private static final Logger LOG = Logger.getLogger(VNPayConfig.class.getName());
@@ -42,19 +37,18 @@ public class VNPayConfig {
     }
 
     private static synchronized void loadDefaults() {
-        // 1. Biến môi trường
         String envTmn = System.getenv("VNP_TMN_CODE");
         String envSec = System.getenv("VNP_HASH_SECRET");
         if (envTmn != null && !envTmn.isBlank()) tmnCode = envTmn.trim();
         if (envSec != null && !envSec.isBlank()) hashSecret = envSec.trim();
 
-        // 2. System properties (-Dvnpay.tmnCode=... -Dvnpay.hashSecret=...)
+        // System properties (-Dvnpay.tmnCode=... -Dvnpay.hashSecret=...)
         String propTmn = System.getProperty("vnpay.tmnCode");
         String propSec = System.getProperty("vnpay.hashSecret");
         if (propTmn != null && !propTmn.isBlank()) tmnCode = propTmn.trim();
         if (propSec != null && !propSec.isBlank()) hashSecret = propSec.trim();
 
-        // 3. File vnpay.properties trong classpath (nếu có)
+        // File vnpay.properties trong classpath (nếu có)
         try (InputStream in = VNPayConfig.class.getClassLoader().getResourceAsStream("vnpay.properties")) {
             if (in != null) {
                 Properties p = new Properties();
@@ -68,7 +62,6 @@ public class VNPayConfig {
             LOG.fine("Không tìm thấy vnpay.properties: " + e.getMessage());
         }
 
-        // Mặc định sandbox demo
         if (tmnCode == null || tmnCode.isBlank()) {
             tmnCode = "CNMTDEMO";
         }
@@ -93,11 +86,6 @@ public class VNPayConfig {
 
     public static synchronized String getHashSecret() {
         return (hashSecret != null && !hashSecret.isBlank()) ? hashSecret : "RAKHMOSUPOIKZAGACFOPURKVAARZNLOP";
-    }
-
-    public static synchronized void setCredentials(String newTmnCode, String newHashSecret) {
-        if (newTmnCode != null && !newTmnCode.isBlank()) tmnCode = newTmnCode.trim();
-        if (newHashSecret != null && !newHashSecret.isBlank()) hashSecret = newHashSecret.trim();
     }
 
     /** Kiểm tra xem đã cấu hình mã merchant thật của VNPay chưa (khác mã demo rỗng). */

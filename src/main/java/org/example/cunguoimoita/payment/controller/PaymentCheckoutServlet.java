@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.order.service.OrderService;
 import org.example.cunguoimoita.payment.model.Payment;
@@ -14,19 +15,9 @@ import org.example.cunguoimoita.payment.service.PaymentService;
 import org.example.cunguoimoita.payment.service.VNPayConfig;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
-/**
- * Trang chọn cổng thanh toán online (F5). Phải đăng nhập và là người mua của đơn.
- * GET  /payment/checkout?orderId=...  → đơn phải đang "chờ thanh toán" (người mua chọn "Thanh toán online" ở trang đơn).
- *      Attribute gửi sang JSP: order, gateways, vnpayReal (true nếu đã cấu hình khoá VNPay thật), error
- * POST /payment/checkout  field: orderId, gateway (vnpay | momo | bank_transfer)
- *      → tạo Payment với số tiền = tổng đơn trong DB, rồi chuyển sang VNPay thật (nếu có khoá)
- *        hoặc trang giả lập cổng /payment/sandbox.
- * COD không đi qua đây: người mua chọn COD ngay ở trang chi tiết đơn.
- */
+/** Chọn cổng thanh toán online; số tiền luôn lấy từ tổng đơn trong DB. */
 @WebServlet(name = "PaymentCheckoutServlet", urlPatterns = {"/payment/checkout"})
 public class PaymentCheckoutServlet extends HttpServlet {
 
@@ -52,8 +43,8 @@ public class PaymentCheckoutServlet extends HttpServlet {
         }
         if (!userId.equals(order.getBuyerId()) || order.getStatus() != Order.Status.AWAITING_PAYMENT) {
             // Đơn đã trả rồi / đang COD / không phải đơn của mình → về trang đơn
-            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId)
-                    + "&error=" + encode("Đơn này không ở bước thanh toán online"));
+            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId)
+                    + "&error=" + FormUtil.encode("Đơn này không ở bước thanh toán online"));
             return;
         }
         req.setAttribute("order", order);
@@ -90,15 +81,11 @@ public class PaymentCheckoutServlet extends HttpServlet {
                 return;
             }
             // Các cổng khác (MoMo / Bank Transfer chưa nối API thật) → chuyển sang sandbox nội bộ
-            resp.sendRedirect(req.getContextPath() + "/payment/sandbox?paymentId=" + encode(p.getId()));
+            resp.sendRedirect(req.getContextPath() + "/payment/sandbox?paymentId=" + FormUtil.encode(p.getId()));
         } catch (IllegalStateException | SecurityException e) {
-            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + encode(orderId) + "&error=" + encode(e.getMessage()));
+            resp.sendRedirect(req.getContextPath() + "/order/detail?id=" + FormUtil.encode(orderId) + "&error=" + FormUtil.encode(e.getMessage()));
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

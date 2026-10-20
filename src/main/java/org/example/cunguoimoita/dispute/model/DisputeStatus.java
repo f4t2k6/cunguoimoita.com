@@ -1,8 +1,5 @@
 package org.example.cunguoimoita.dispute.model;
 
-/**
- * Trạng thái hồ sơ tranh chấp / khiếu nại.
- */
 public enum DisputeStatus {
     OPEN("open", "Mới gửi (Chờ bên bị khiếu nại phản hồi)"),
     REVIEWING("reviewing", "Đang thẩm định chứng cứ"),

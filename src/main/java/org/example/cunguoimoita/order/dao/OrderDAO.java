@@ -11,15 +11,24 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Chạy SQL trên bảng orders và order_items.
 public class OrderDAO {
 
     // Lưu đơn mới kèm toàn bộ món (Order ◆── OrderItem: lưu đơn là lưu luôn món).
+    /** Vài cột của đơn cho vận chuyển, kèm thành phố gửi (địa chỉ mặc định người bán) và thành phố nhận. */
+    public record OrderRef(String id, String code, String buyerId, String sellerId, Order.Status status,
+                           String fromCity, String toCity) {
+    }
+
+    /** Id và mã đơn, để gắn nút "Xem đơn" trong chat. */
+    public record OrderLink(String id, String code) {
+    }
+
     public void insert(Connection c, Order o) throws SQLException {
         String sql = "INSERT INTO orders (id, code, buyer_id, seller_id, shipping_address_id, voucher_id, offer_id,"
                 + " payment_method, sub_total, shipping_fee, discount_amount, total_amount, status, order_date)"
@@ -30,14 +39,14 @@ public class OrderDAO {
             ps.setString(3, o.getBuyerId());
             ps.setString(4, o.getSellerId());
             ps.setString(5, o.getShippingAddressId());
-            ps.setString(6, o.getVoucherId());             // null được: cột cho phép NULL
+            ps.setString(6, o.getVoucherId());
             ps.setString(7, o.getOfferId());
-            ps.setString(8, o.getPaymentMethod().name().toLowerCase());   // COD → "cod"
+            ps.setString(8, o.getPaymentMethod().name().toLowerCase());
             ps.setDouble(9, o.getSubTotal());
             ps.setDouble(10, o.getShippingFee());
             ps.setDouble(11, o.getDiscountAmount());
             ps.setDouble(12, o.getTotalAmount());
-            ps.setString(13, o.getStatus().name().toLowerCase());          // NEW → "new"
+            ps.setString(13, o.getStatus().name().toLowerCase());
             ps.setObject(14, o.getOrderDate());
             ps.executeUpdate();
         }
@@ -46,7 +55,6 @@ public class OrderDAO {
         }
     }
 
-    // Tìm 1 đơn theo id (kèm món). Không có → null.
     public Order findById(Connection c, String orderId) throws SQLException {
         return findOne(c, "SELECT * FROM orders WHERE id = ?", orderId);
     }
@@ -57,17 +65,7 @@ public class OrderDAO {
         return findOne(c, "SELECT * FROM orders WHERE id = ? FOR UPDATE", orderId);
     }
 
-    // Đơn mua của tôi (mới nhất trước). Danh sách không cần món nên không nạp items.
-    public List<Order> findByBuyer(Connection c, String buyerId) throws SQLException {
-        return findMany(c, "SELECT * FROM orders WHERE buyer_id = ? ORDER BY order_date DESC", buyerId);
-    }
-
-    // Đơn bán của tôi.
-    public List<Order> findBySeller(Connection c, String sellerId) throws SQLException {
-        return findMany(c, "SELECT * FROM orders WHERE seller_id = ? ORDER BY order_date DESC", sellerId);
-    }
-
-    // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất (F6).
+    // Đơn đã giao từ "days" ngày trước trở về trước và không có khiếu nại đang mở → để tự hoàn tất.
     public List<String> findDeliveredIdsForAutoComplete(Connection c, int days) throws SQLException {
         String sql = "SELECT o.id FROM orders o JOIN shipments s ON s.order_id = o.id"
                 + " WHERE o.status = 'delivered' AND s.delivered_date <= CURRENT_DATE - ?"
@@ -104,7 +102,69 @@ public class OrderDAO {
         }
     }
 
-    // Sinh id và mã đơn cho đơn mới (vd ORD-1A2B3C4D).
+    public OrderRef findRef(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT o.id, o.code, o.buyer_id, o.seller_id, o.status, sa.city AS from_city, ta.city AS to_city"
+                + " FROM orders o"
+                + " JOIN addresses ta ON ta.id = o.shipping_address_id"
+                + " LEFT JOIN addresses sa ON sa.customer_id = o.seller_id AND sa.is_default"
+                + " WHERE o.id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return new OrderRef(rs.getString("id"), rs.getString("code"), rs.getString("buyer_id"),
+                        rs.getString("seller_id"), Order.Status.valueOf(rs.getString("status").toUpperCase()),
+                        rs.getString("from_city"), rs.getString("to_city"));
+            }
+        }
+    }
+
+    /** Đơn tạo từ các offer của một cuộc trò chuyện, theo id offer. */
+    public Map<String, OrderLink> findByConversationOffers(Connection c, String conversationId) throws SQLException {
+        String sql = "SELECT o.offer_id, o.id, o.code FROM orders o"
+                + " JOIN price_offers po ON po.id = o.offer_id"
+                + " WHERE po.conversation_id = ?";
+        Map<String, OrderLink> orders = new HashMap<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, conversationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    orders.put(rs.getString("offer_id"), new OrderLink(rs.getString("id"), rs.getString("code")));
+                }
+            }
+        }
+        return orders;
+    }
+
+    /** Đổi trạng thái đơn chỉ khi đơn đang ở một trong các trạng thái from. @return true nếu có đổi */
+    public boolean updateStatusIfIn(Connection c, String orderId, Order.Status newStatus, Order.Status... from)
+            throws SQLException {
+        String[] codes = new String[from.length];
+        for (int i = 0; i < from.length; i++) {
+            codes[i] = from[i].name().toLowerCase();
+        }
+        try (PreparedStatement ps = c.prepareStatement("UPDATE orders SET status = ? WHERE id = ? AND status = ANY (?)")) {
+            ps.setString(1, newStatus.name().toLowerCase());
+            ps.setString(2, orderId);
+            ps.setArray(3, c.createArrayOf("varchar", codes));
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Đơn có món mà người bán tắt nhận COD. */
+    public boolean hasItemWithoutCod(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id"
+                   + " WHERE oi.order_id = ? AND NOT p.accept_cod";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public static String newId() {
         return UUID.randomUUID().toString();
     }
@@ -113,73 +173,7 @@ public class OrderDAO {
         return "ORD-" + orderId.substring(0, 8).toUpperCase();
     }
 
-    // ===================== HÀM PHỤ =====================
-
-    private void insertItem(Connection c, OrderItem item) throws SQLException {
-        String sql = "INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, item.getId());
-            ps.setString(2, item.getOrderId());
-            ps.setString(3, item.getProductId());
-            ps.setInt(4, item.getQuantity());
-            ps.setDouble(5, item.getUnitPrice());
-            ps.executeUpdate();
-        }
-    }
-
-    private List<OrderItem> findItems(Connection c, String orderId) throws SQLException {
-        String sql = "SELECT * FROM order_items WHERE order_id = ?";
-        List<OrderItem> items = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    OrderItem item = new OrderItem();
-                    item.setId(rs.getString("id"));
-                    item.setOrderId(rs.getString("order_id"));
-                    item.setProductId(rs.getString("product_id"));
-                    item.setQuantity(rs.getInt("quantity"));
-                    item.setUnitPrice(rs.getDouble("unit_price"));
-                    items.add(item);
-                }
-            }
-        }
-        return items;
-    }
-
-    // Chạy câu SELECT trả về 1 đơn (có nạp món).
-    private Order findOne(Connection c, String sql, String param) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, param);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                Order o = map(rs);
-                o.setItems(findItems(c, o.getId()));
-                return o;
-            }
-        }
-    }
-
-    // Chạy câu SELECT trả về nhiều đơn (không nạp món).
-    private List<Order> findMany(Connection c, String sql, String param) throws SQLException {
-        List<Order> list = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, param);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
-            }
-        }
-        return list;
-    }
-
-    /**
-     * Thẻ đơn cho trang Đơn mua (asSeller = false) / Đơn bán (asSeller = true), mới nhất trước.
-     * 3 câu SELECT cho cả danh sách: đơn + tên người bên kia, các món + tên/ảnh sản phẩm, vận đơn.
-     */
+    /** 3 câu SELECT cho cả danh sách: đơn, các món, vận đơn. */
     public List<OrderCard> findCards(Connection c, String userId, boolean asSeller) throws SQLException {
         String mine = asSeller ? "seller_id" : "buyer_id";
         String partner = asSeller ? "buyer_id" : "seller_id";
@@ -231,7 +225,65 @@ public class OrderDAO {
         return new ArrayList<>(cards.values());
     }
 
-    // Chuyển 1 dòng ResultSet → object Order.
+    private void insertItem(Connection c, OrderItem item) throws SQLException {
+        String sql = "INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, item.getId());
+            ps.setString(2, item.getOrderId());
+            ps.setString(3, item.getProductId());
+            ps.setInt(4, item.getQuantity());
+            ps.setDouble(5, item.getUnitPrice());
+            ps.executeUpdate();
+        }
+    }
+
+    private List<OrderItem> findItems(Connection c, String orderId) throws SQLException {
+        String sql = "SELECT * FROM order_items WHERE order_id = ?";
+        List<OrderItem> items = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setId(rs.getString("id"));
+                    item.setOrderId(rs.getString("order_id"));
+                    item.setProductId(rs.getString("product_id"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setUnitPrice(rs.getDouble("unit_price"));
+                    items.add(item);
+                }
+            }
+        }
+        return items;
+    }
+
+    private Order findOne(Connection c, String sql, String param) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, param);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                Order o = map(rs);
+                o.setItems(findItems(c, o.getId()));
+                return o;
+            }
+        }
+    }
+
+    private List<Order> findMany(Connection c, String sql, String param) throws SQLException {
+        List<Order> list = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, param);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     private Order map(ResultSet rs) throws SQLException {
         Order o = new Order();
         o.setId(rs.getString("id"));

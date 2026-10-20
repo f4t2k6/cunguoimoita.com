@@ -7,17 +7,16 @@ import java.time.LocalDateTime;
 //          Review → 1 Customer (tác giả), Review → 1 Customer (người được đánh giá).
 public class Review {
 
-    public static final int MAX_CONTENT = 1000;   // giới hạn độ dài nhận xét
+    public static final int MAX_CONTENT = 1000;
 
     private String id;
     private String orderId;
-    private String authorId;        // người viết đánh giá
-    private String targetUserId;    // người được đánh giá (bên còn lại của đơn)
+    private String authorId;
     private int rating;             // 1 – 5 sao
     private String content;         // nhận xét, có thể để trống
     private LocalDateTime createdDate;
 
-    // + create(): void — kiểm tra dữ liệu hợp lệ trước khi lưu (ReviewDAO mới là bên ghi DB)
+    // Kiểm tra dữ liệu hợp lệ trước khi lưu (ReviewDAO mới là bên ghi DB)
     public void create() {
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Số sao phải từ 1 đến 5");
@@ -34,7 +33,7 @@ public class Review {
         createdDate = LocalDateTime.now();
     }
 
-    // + delete(): void — chỉ tác giả được xoá đánh giá của mình (ReviewService gọi rồi mới xoá trong DB)
+    // Chỉ tác giả được xoá đánh giá của mình (ReviewService gọi rồi mới xoá trong DB)
     public void delete(String userId) {
         if (!authorId.equals(userId)) {
             throw new SecurityException("Bạn chỉ xoá được đánh giá của chính mình");
@@ -55,4 +54,6 @@ public class Review {
     public void setContent(String content) { this.content = content; }
     public LocalDateTime getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+
+    private String targetUserId;    // người được đánh giá (bên còn lại của đơn)
 }

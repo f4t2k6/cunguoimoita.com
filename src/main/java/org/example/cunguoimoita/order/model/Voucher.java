@@ -4,15 +4,16 @@ import java.time.LocalDate;
 
 /** Class Voucher trong class diagram. Chỉ chứa luật nghiệp vụ, việc lưu DB do VoucherDAO làm. */
 public class Voucher {
-    public enum VoucherStatus {ISSUED, USED, EXPIRED}
     private String id;
     private String code;
-    private String customerId;          // khách sở hữu voucher
-    private double discountValue;       // số tiền được giảm
+    private String customerId;
+    private double discountValue;
     private double minOrderValue;       // đơn phải từ mức này trở lên mới dùng được
     private VoucherStatus status = VoucherStatus.ISSUED;
-    private LocalDate issuedDate;       // ngày phát hành
+    private LocalDate issuedDate;
     private LocalDate expiryDate;       // ngày hết hạn;  null = không hết hạn
+
+    public enum VoucherStatus {ISSUED, USED, EXPIRED}
 
     /** + checkValidity(): boolean — còn dùng được không: chưa dùng và chưa hết hạn. */
     public boolean checkValidity() {
@@ -25,6 +26,7 @@ public class Voucher {
         }
         return true;
     }
+
     /** + redeem(String orderId): void - đánh dấu voucher đã được dùng cho một đơn */
     public void redeem (String orderId) {
         if (!checkValidity()) {

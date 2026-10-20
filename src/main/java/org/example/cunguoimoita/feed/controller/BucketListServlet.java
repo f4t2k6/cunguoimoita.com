@@ -12,10 +12,7 @@ import org.example.cunguoimoita.feed.service.FeedService;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET /feed/bucket-list → các bài người dùng đã lưu (menu "Đã lưu").
- *     JSP nhận: products, error (bỏ lưu xong thì có tham số removed=1)
- */
+/** Các bài người dùng đã lưu (Bucket List). */
 @WebServlet("/feed/bucket-list")
 public class BucketListServlet extends HttpServlet {
 

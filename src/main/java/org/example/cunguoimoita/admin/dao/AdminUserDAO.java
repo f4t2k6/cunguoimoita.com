@@ -1,6 +1,7 @@
 package org.example.cunguoimoita.admin.dao;
 
 import org.example.cunguoimoita.admin.model.AdminUserRow;
+import org.example.cunguoimoita.common.model.AccountStatus;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -10,7 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Người dùng phía admin (F10): tìm kiếm, khoá / mở khoá. Bảng users do TV1 tạo. */
+/** Người dùng phía admin: tìm kiếm, khoá / mở khoá. */
 public class AdminUserDAO {
 
     private static final String SELECT = "SELECT u.id, u.fullname, u.email, u.phone, u.user_role, u.status, u.join_date,"
@@ -22,8 +23,8 @@ public class AdminUserDAO {
             + " LEFT JOIN member_tiers mt ON mt.id = cu.tier_id";
 
     /**
-     * @param keyword tìm theo tên, email, số điện thoại; null để lấy tất cả
-     * @param status active | banned | null (tất cả)
+     * @param keyword tên, email hoặc số điện thoại, null để lấy tất cả
+     * @param status active | banned | null
      */
     public List<AdminUserRow> search(Connection c, String keyword, String status) throws SQLException {
         boolean search = keyword != null && !keyword.isBlank();
@@ -63,9 +64,9 @@ public class AdminUserDAO {
     }
 
     /** User.banUser() / mở khoá: status = banned | active. */
-    public void updateStatus(Connection c, String userId, String status) throws SQLException {
+    public void updateStatus(Connection c, String userId, AccountStatus status) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("UPDATE users SET status = ? WHERE id = ?")) {
-            ps.setString(1, status);
+            ps.setString(1, status.databaseValue());
             ps.setString(2, userId);
             ps.executeUpdate();
         }

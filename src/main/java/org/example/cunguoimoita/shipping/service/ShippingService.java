@@ -2,11 +2,13 @@ package org.example.cunguoimoita.shipping.service;
 
 import org.example.cunguoimoita.account.dao.AddressDAO;
 import org.example.cunguoimoita.account.model.Address;
-import org.example.cunguoimoita.common.dao.OrderRefDAO;
-import org.example.cunguoimoita.common.dao.OrderRefDAO.OrderRef;
 import org.example.cunguoimoita.common.db.ConnectionPool;
+import org.example.cunguoimoita.common.util.Texts;
 import org.example.cunguoimoita.notification.model.NotificationType;
 import org.example.cunguoimoita.notification.service.NotificationService;
+import org.example.cunguoimoita.order.dao.OrderDAO;
+import org.example.cunguoimoita.order.dao.OrderDAO.OrderRef;
+import org.example.cunguoimoita.order.model.Order;
 import org.example.cunguoimoita.shipping.dao.ShipmentDAO;
 import org.example.cunguoimoita.shipping.dao.ShippingCarrierDAO;
 import org.example.cunguoimoita.shipping.model.CodStatus;
@@ -14,39 +16,48 @@ import org.example.cunguoimoita.shipping.model.Shipment;
 import org.example.cunguoimoita.shipping.model.ShipmentStatus;
 import org.example.cunguoimoita.shipping.model.ShippingCarrier;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/**
- * Nghiệp vụ F6. Các chức năng khác gọi vào đây, không gọi thẳng DAO:
- *  - F4 trang chi tiết đơn: quoteForOrder(orderId) để hiện các hãng kèm phí ship của đúng tuyến
- *  - F4 Order.chooseCarrier(carrierId): chooseCarrier(c, orderId, carrierId) tạo/đổi vận đơn trong transaction của F4
- *  - F4 xác nhận COD / thanh toán online: setCodAmount(c, orderId, amount)
- * Mỗi thao tác dùng 1 kết nối (1 transaction) cho mọi câu lệnh, thông báo gửi sau khi commit.
- */
+/** Vận chuyển. Các thao tác chạy trong 1 transaction, thông báo gửi sau khi commit. */
 public class ShippingService {
 
     /** Danh sách hãng vận chuyển rất ít đổi nên giữ trong bộ nhớ 5 phút, khỏi hỏi DB mỗi lần tính phí. */
     private static final long CARRIER_CACHE_MS = 5 * 60 * 1000;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private static volatile List<ShippingCarrier> carrierCache;
     private static volatile long carrierCacheAt;
 
     private final ShippingCarrierDAO carrierDAO = new ShippingCarrierDAO();
     private final ShipmentDAO shipmentDAO = new ShipmentDAO();
-    private final OrderRefDAO orderDAO = new OrderRefDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
     private final NotificationService notificationService = new NotificationService();
     private final AddressDAO addressDAO = new AddressDAO();
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /** Cách người bán bàn giao hàng cho đơn vị vận chuyển. */
     public enum Handover { DROPOFF, PICKUP }
+
+    /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
+    public record CarrierQuote(ShippingCarrier carrier, double fee) {
+    }
+
+    /** Đơn vừa đổi trạng thái theo vận đơn, để báo người mua sau khi commit. */
+    private record StatusChange(OrderRef order, ShipmentStatus status) {
+    }
+
+    @FunctionalInterface
+    private interface TxWork<T> {
+        T run(Connection c) throws SQLException;
+    }
 
     /** Các hãng đang hoạt động, rẻ trước. */
     public List<ShippingCarrier> listCarriers() throws SQLException {
@@ -69,17 +80,9 @@ public class ShippingService {
         return carrierId;
     }
 
-    /** Admin vừa sửa danh sách hãng (F10): bỏ bản lưu tạm để trang thanh toán thấy ngay. */
+    /** Admin vừa sửa danh sách hãng: bỏ bản lưu tạm để trang thanh toán thấy ngay. */
     public static void clearCarrierCache() {
         carrierCache = null;
-    }
-
-    public double calculateFee(String carrierId, String fromCity, String toCity) throws SQLException {
-        return requireCarrier(carrierId).calculateFee(fromCity, toCity);
-    }
-
-    /** 1 dòng trong bảng chọn hãng của trang đơn: hãng + phí cho tuyến của đơn. */
-    public record CarrierQuote(ShippingCarrier carrier, double fee) {
     }
 
     /** Các hãng đang hoạt động kèm phí ship tính theo tỉnh người bán → tỉnh giao của đơn. */
@@ -95,12 +98,7 @@ public class ShippingService {
         return quotes;
     }
 
-    /**
-     * Người mua chọn (hoặc đổi) hãng vận chuyển ở trang đơn, trước khi thanh toán.
-     * Chưa có vận đơn → tạo mới; đã có nhưng chưa gửi hàng → đổi hãng và tính lại phí.
-     * Chạy trên Connection của OrderService để chung transaction với việc ghi phí vào đơn.
-     * @return vận đơn sau khi chọn (phí ship nằm trong getShippingFee())
-     */
+    /** Chưa có vận đơn thì tạo, chưa gửi hàng thì đổi hãng và tính lại phí; chạy chung transaction với OrderService. */
     public Shipment chooseCarrier(Connection c, String orderId, String carrierId) throws SQLException {
         ShippingCarrier carrier = requireCarrier(carrierId);
         OrderRef order = requireOrder(c, orderId);
@@ -131,10 +129,7 @@ public class ShippingService {
         return s == null ? null : chooseCarrier(c, orderId, s.getCarrierId());
     }
 
-    /**
-     * Ghi số tiền shipper phải thu: COD → tổng đơn (chờ thu), trả online → 0.
-     * Gọi khi người mua xác nhận COD hoặc chuyển sang thanh toán online.
-     */
+    /** COD → số tiền shipper phải thu = tổng đơn; trả online → 0. */
     public void setCodAmount(Connection c, String orderId, double codAmount) throws SQLException {
         Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
         if (s == null) {
@@ -157,16 +152,12 @@ public class ShippingService {
         }
     }
 
-    /** Vận đơn của đơn, trên Connection có sẵn (F4/F9 dùng trong transaction của mình). */
+    /** Vận đơn của đơn, trên Connection có sẵn (dùng trong transaction của nơi gọi). */
     public Shipment findByOrder(Connection c, String orderId) throws SQLException {
         return shipmentDAO.findByOrderId(c, orderId);
     }
 
-    /**
-     * Kiểm tra userId được xem / thao tác với đơn: người mua hoặc người bán của đơn (admin luôn được).
-     * sellerOnly = true thì chỉ người bán (dùng cho tạo vận đơn, "Đã gửi hàng", các nút giả lập).
-     * @return đơn hàng nếu được phép
-     */
+    /** sellerOnly = true thì chỉ người bán của đơn (admin luôn được). @return đơn nếu được phép */
     public OrderRef requireAccess(String orderId, String userId, boolean admin, boolean sellerOnly)
             throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
@@ -186,42 +177,20 @@ public class ShippingService {
         }
     }
 
-    /**
-     * Người mua thanh toán xong (online thành công hoặc đặt COD) → tự sinh mã vận đơn theo hãng đã chọn,
-     * vận đơn vẫn ở "Chờ người bán xác nhận" (created). Chạy trong transaction của nơi gọi (F4, F5).
-     * Đã có mã thì giữ nguyên. @return mã vận đơn (null nếu đơn chưa có vận đơn)
-     */
+    /** Tự sinh mã vận đơn khi người mua đã thanh toán hoặc đặt COD; đã có mã thì giữ nguyên. */
     public String assignTrackingCode(Connection c, String orderId) throws SQLException {
         Shipment s = shipmentDAO.findByOrderIdForUpdate(c, orderId);
         if (s == null) {
             return null;
         }
-        if (isBlank(s.getTrackingCode())) {
+        if (Texts.isBlank(s.getTrackingCode())) {
             s.setTrackingCode(newTrackingCode(s.getCarrierId()));
             shipmentDAO.update(c, s);
         }
         return s.getTrackingCode();
     }
 
-    /** Mã vận đơn: tiền tố theo hãng + 9 số ngẫu nhiên, VD GHN482913570. */
-    private static String newTrackingCode(String carrierId) {
-        String prefix = carrierId == null ? "VD" : switch (carrierId) {
-            case "ghn" -> "GHN";
-            case "ghtk" -> "GHTK";
-            case "ahamove" -> "AHA";
-            case "viettel" -> "VTP";
-            default -> carrierId.replaceAll("[^A-Za-z]", "").toUpperCase(Locale.ROOT);
-        };
-        return prefix + String.format("%09d", RANDOM.nextInt(1_000_000_000));
-    }
-
-    /**
-     * Người bán xác nhận bàn giao hàng (mã vận đơn đã tự sinh khi người mua thanh toán):
-     *  - DROPOFF: tự mang đến bưu cục gần nhất của hãng
-     *  - PICKUP:  nhân viên hãng đến lấy tại 1 địa chỉ trong sổ địa chỉ của người bán (pickupAddressId)
-     * Vận đơn chuyển sang "Chuẩn bị vận chuyển" (picked_up), đơn chuyển "Đang giao", người mua nhận thông báo.
-     * @return dòng mô tả cách bàn giao để hiện cho người bán
-     */
+    /** Người bán mang hàng ra bưu cục hoặc hẹn lấy tại địa chỉ: vận đơn picked_up, đơn chuyển đang giao. */
     public String confirmHandover(String orderId, String sellerId, Handover method, String pickupAddressId)
             throws SQLException {
         if (method == null) {
@@ -241,13 +210,13 @@ public class ShippingService {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             OrderRef order = requireOrder(c, orderId);
             Shipment s = shipmentDAO.findByOrderId(c, orderId);
-            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
-            if (!"paid".equals(order.status()) && !codConfirmed) {
+            boolean codConfirmed = order.status() == Order.Status.NEW && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (order.status() != Order.Status.PAID && !codConfirmed) {
                 throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa giao hàng được");
             }
         }
         changeShipment(orderId, s -> {
-            if (isBlank(s.getTrackingCode())) {
+            if (Texts.isBlank(s.getTrackingCode())) {
                 s.setTrackingCode(newTrackingCode(s.getCarrierId()));   // đơn cũ trước khi có tự sinh mã
             }
             s.updateStatus(ShipmentStatus.PICKED_UP);
@@ -255,29 +224,16 @@ public class ShippingService {
         return where;
     }
 
-    private static String addressText(Address a) {
-        StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
-        for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
-            if (!isBlank(part)) {
-                sb.append(sb.length() > 0 ? ", " : "").append(part);
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Người bán bấm "Đã gửi hàng" và nhập mã vận đơn.
-     * Chỉ gửi được khi người mua đã trả tiền online (đơn paid) hoặc đã xác nhận COD (đơn new, COD chờ thu).
-     */
+    /** Chỉ gửi được khi đơn đã trả online (paid) hoặc đã xác nhận COD. */
     public void markShipped(String orderId, String trackingCode) throws SQLException {
-        if (isBlank(trackingCode)) {
+        if (Texts.isBlank(trackingCode)) {
             throw new IllegalArgumentException("Vui lòng nhập mã vận đơn");
         }
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             OrderRef order = requireOrder(c, orderId);
             Shipment s = shipmentDAO.findByOrderId(c, orderId);
-            boolean codConfirmed = "new".equals(order.status()) && s != null && s.getCodStatus() == CodStatus.PENDING;
-            if (!"paid".equals(order.status()) && !codConfirmed) {
+            boolean codConfirmed = order.status() == Order.Status.NEW && s != null && s.getCodStatus() == CodStatus.PENDING;
+            if (order.status() != Order.Status.PAID && !codConfirmed) {
                 throw new IllegalStateException("Người mua chưa thanh toán hoặc chưa xác nhận COD, chưa gửi hàng được");
             }
         }
@@ -306,6 +262,28 @@ public class ShippingService {
         changeShipment(orderId, Shipment::confirmCodRemitted, false);
     }
 
+    /** Mã vận đơn: tiền tố theo hãng + 9 số ngẫu nhiên, VD GHN482913570. */
+    private static String newTrackingCode(String carrierId) {
+        String prefix = carrierId == null ? "VD" : switch (carrierId) {
+            case "ghn" -> "GHN";
+            case "ghtk" -> "GHTK";
+            case "ahamove" -> "AHA";
+            case "viettel" -> "VTP";
+            default -> carrierId.replaceAll("[^A-Za-z]", "").toUpperCase(Locale.ROOT);
+        };
+        return prefix + String.format("%09d", RANDOM.nextInt(1_000_000_000));
+    }
+
+    private static String addressText(Address a) {
+        StringBuilder sb = new StringBuilder(a.getAddressLine() == null ? "" : a.getAddressLine());
+        for (String part : new String[]{a.getWard(), a.getDistrict(), a.getProvince()}) {
+            if (!Texts.isBlank(part)) {
+                sb.append(sb.length() > 0 ? ", " : "").append(part);
+            }
+        }
+        return sb.toString();
+    }
+
     /**
      * Đọc vận đơn, đổi theo luật trong Shipment, lưu lại; syncOrder = true thì cập nhật luôn trạng thái Order
      * và báo người mua. Tất cả trên 1 kết nối, thông báo gửi sau khi commit.
@@ -327,36 +305,28 @@ public class ShippingService {
         if (done != null) {
             notificationService.send(done.order().buyerId(), NotificationType.SHIPMENT,
                     "Đơn " + done.order().code() + ": " + done.status().label(),
-                    "/order/detail?id=" + done.order().id());      // người mua xem ở trang chi tiết đơn
+                    "/order/detail?id=" + done.order().id());
         }
     }
 
-    /** Đơn vừa đổi trạng thái theo vận đơn, để báo người mua sau khi commit. */
-    private record StatusChange(OrderRef order, ShipmentStatus status) {
-    }
-
     /**
-     * Cập nhật trạng thái Order theo vận đơn:
-     * picked_up / in_transit → shipping (Order.confirmShipped), delivered → delivered.
-     * returned chưa đổi đơn: TV4 xử lý hoàn tiền / khiếu nại.
-     * TODO: khi TV3 có OrderService thì gọi confirmShipped()/... của TV3 thay cho OrderRefDAO.
-     * @return đơn hàng (để báo người mua), null nếu không tìm thấy
+     * picked_up / in_transit → shipping, delivered → delivered; returned chưa đổi đơn (xử lý qua khiếu nại).
+     * @return đơn hàng để báo người mua, null nếu không tìm thấy
      */
     private OrderRef syncOrder(Connection c, Shipment s) throws SQLException {
-        OrderRef order = orderDAO.find(c, s.getOrderId());
+        OrderRef order = orderDAO.findRef(c, s.getOrderId());
         if (order == null) {
             return null;
         }
         switch (s.getStatus()) {
-            case PICKED_UP:
-            case IN_TRANSIT:
-                orderDAO.updateStatus(c, order.id(), "shipping", "new", "awaiting_payment", "paid");
-                break;
-            case DELIVERED:
-                orderDAO.updateStatus(c, order.id(), "delivered", "new", "awaiting_payment", "paid", "shipping");
-                break;
-            default:
-                break;
+            case PICKED_UP, IN_TRANSIT -> {
+                orderDAO.updateStatusIfIn(c, order.id(), Order.Status.SHIPPING,
+                        Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID);
+            }
+            case DELIVERED -> {
+                orderDAO.updateStatusIfIn(c, order.id(), Order.Status.DELIVERED,
+                        Order.Status.NEW, Order.Status.AWAITING_PAYMENT, Order.Status.PAID, Order.Status.SHIPPING);
+            }
         }
         return order;
     }
@@ -371,20 +341,11 @@ public class ShippingService {
     }
 
     private OrderRef requireOrder(Connection c, String orderId) throws SQLException {
-        OrderRef order = orderId == null ? null : orderDAO.find(c, orderId);
+        OrderRef order = orderId == null ? null : orderDAO.findRef(c, orderId);
         if (order == null) {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng " + orderId);
         }
         return order;
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run(Connection c) throws SQLException;
     }
 
     /** Chạy trong một transaction: lỗi thì rollback toàn bộ. */

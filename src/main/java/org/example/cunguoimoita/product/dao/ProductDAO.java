@@ -17,11 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Đọc / ghi bảng products (F2, F3).
- * Mọi hàm nhận Connection từ ConnectionPool để service có thể gộp nhiều câu lệnh vào một transaction.
- * Chỉ dùng PreparedStatement; điều kiện lọc ghép bằng dấu ? chứ không ghép chuỗi giá trị người dùng nhập.
- */
+/** Bảng products; mọi hàm nhận Connection để service gộp nhiều câu lệnh vào một transaction. */
 public class ProductDAO {
 
     /** Cột images lưu danh sách đường dẫn ảnh, ngăn cách bằng dấu phẩy. */
@@ -37,9 +33,45 @@ public class ProductDAO {
             + " JOIN categories cg ON cg.id = p.category_id"
             + " LEFT JOIN categories pc ON pc.id = cg.parent_category_id";
 
-    // ------------------------------------------------------------------
-    // Đọc
-    // ------------------------------------------------------------------
+
+    /** Vài cột của bài đăng cho giỏ hàng, đơn hàng và chat. */
+    public record ProductRef(String id, String sellerId, String name, ProductStatus status) {
+        public boolean isAvailable() {
+            return status == ProductStatus.AVAILABLE;
+        }
+
+        /** Còn hiện trên sàn để người khác hỏi mua. */
+        public boolean isOpenForChat() {
+            return status == ProductStatus.AVAILABLE || status == ProductStatus.RESERVED;
+        }
+    }
+
+    /** Tên và ảnh bìa của món để hiện trong trang đơn hàng. */
+    public record ProductCard(String id, String name, String coverImage) {
+    }
+
+    public ProductRef findRef(Connection c, String productId) throws SQLException {
+        return queryRef(c, "SELECT id, seller_id, name, status FROM products WHERE id = ?", productId);
+    }
+
+    /** Khoá dòng sản phẩm tới hết transaction để 2 người không cùng chốt 1 món. */
+    public ProductRef findRefForUpdate(Connection c, String productId) throws SQLException {
+        return queryRef(c, "SELECT id, seller_id, name, status FROM products WHERE id = ? FOR UPDATE", productId);
+    }
+
+    public ProductCard findCard(Connection c, String productId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement("SELECT id, name, images FROM products WHERE id = ?")) {
+            ps.setString(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return new ProductCard(productId, productId, null);
+                }
+                String images = rs.getString("images");
+                String cover = images == null || images.isBlank() ? null : images.split(",")[0].trim();
+                return new ProductCard(rs.getString("id"), rs.getString("name"), cover);
+            }
+        }
+    }
 
     public Product findById(Connection c, String id) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement(SELECT + " WHERE p.id = ?")) {
@@ -119,10 +151,7 @@ public class ProductDAO {
         }
     }
 
-    /**
-     * Product.suggestMatches(): các bài khác có nhận trao đổi, giá trị ước tính lệch không quá tolerance
-     * (ví dụ 0.3 = 30%), gần giá trị nhất xếp trước. Không gợi ý bài của chính người bán.
-     */
+    /** Product.suggestMatches(): bài nhận trao đổi có giá trị ước tính lệch không quá tolerance, gần nhất xếp trước. */
     public List<Product> findSwapMatches(Connection c, Product p, double tolerance, int limit) throws SQLException {
         BigDecimal value = p.getSwapValue();
         if (value == null) {
@@ -160,9 +189,6 @@ public class ProductDAO {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Ghi
-    // ------------------------------------------------------------------
 
     /** Customer.postProduct(): bài mới luôn ở trạng thái draft, chưa duyệt. */
     public void insert(Connection c, Product p) throws SQLException {
@@ -215,9 +241,6 @@ public class ProductDAO {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Hỗ trợ
-    // ------------------------------------------------------------------
 
     /** Gán các cột người bán nhập trong form, bắt đầu từ vị trí start; trả về vị trí dấu ? tiếp theo. */
     private int bindEditable(PreparedStatement ps, Product p, int start) throws SQLException {
@@ -272,11 +295,11 @@ public class ProductDAO {
     }
 
     private String orderBy(ProductFilter f) {
-        switch (f.getSort()) {
-            case PRICE_ASC:  return " ORDER BY COALESCE(p.price, p.estimated_value) ASC NULLS LAST, p.id";
-            case PRICE_DESC: return " ORDER BY COALESCE(p.price, p.estimated_value) DESC NULLS LAST, p.id";
-            default:         return " ORDER BY p.posted_date DESC, p.id DESC";
-        }
+        return switch (f.getSort()) {
+            case PRICE_ASC -> " ORDER BY COALESCE(p.price, p.estimated_value) ASC NULLS LAST, p.id";
+            case PRICE_DESC -> " ORDER BY COALESCE(p.price, p.estimated_value) DESC NULLS LAST, p.id";
+            default -> " ORDER BY p.posted_date DESC, p.id DESC";
+        };
     }
 
     /** Dấu % và _ người dùng gõ vào ô tìm kiếm được hiểu là ký tự thường, không phải ký tự đại diện. */
@@ -336,5 +359,18 @@ public class ProductDAO {
         p.setParentCategoryId(rs.getString("parent_category_id"));
         p.setParentCategoryName(rs.getString("parent_category_name"));
         return p;
+    }
+
+    private ProductRef queryRef(Connection c, String sql, String productId) throws SQLException {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                return new ProductRef(rs.getString("id"), rs.getString("seller_id"),
+                        rs.getString("name"), ProductStatus.fromCode(rs.getString("status")));
+            }
+        }
     }
 }

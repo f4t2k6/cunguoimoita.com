@@ -11,10 +11,7 @@ import org.example.cunguoimoita.common.util.CurrentUser;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * GET /chat/inbox → hộp thư.
- *     Attribute gửi sang JSP: conversations (List&lt;Conversation&gt;, có lastMessagePreview, unreadCount), userId
- */
+/** Hộp thư: các cuộc trò chuyện của người dùng. */
 @WebServlet("/chat/inbox")
 public class InboxServlet extends HttpServlet {
 

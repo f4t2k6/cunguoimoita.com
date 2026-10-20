@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <fmt:setLocale value="vi_VN" scope="request"/>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Cổng thanh toán giả lập (F5), dùng khi chưa có khoá VNPay/MoMo thật. Dữ liệu từ PaymentCallbackServlet: payment --%>
+<%-- Cổng thanh toán giả lập, dùng khi chưa có khoá VNPay/MoMo thật. Dữ liệu từ PaymentCallbackServlet: payment --%>
 <c:set var="pageTitle" value="Cổng thanh toán (giả lập)"/>
 <c:set var="pageCss" value="order.css"/>
 <c:set var="hideBack" value="${true}"/>

@@ -12,11 +12,7 @@ import org.example.cunguoimoita.common.util.CurrentUser;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * POST /chat/start  — nút "Nhắn tin" trên trang chi tiết bài đăng (F3 của TV2 đặt form này).
- *      Field: productId (người bán lấy từ bài đăng)
- *      → chuyển tới /chat/conversation?id=...
- */
+/** Nút "Nhắn tin" trên trang chi tiết bài đăng: mở (hoặc tạo) cuộc trò chuyện với người bán. */
 @WebServlet("/chat/start")
 public class StartChatServlet extends HttpServlet {
 

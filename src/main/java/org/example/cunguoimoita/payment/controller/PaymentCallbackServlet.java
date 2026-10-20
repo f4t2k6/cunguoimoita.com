@@ -6,27 +6,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
+import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.payment.model.Payment;
 import org.example.cunguoimoita.payment.model.PaymentStatus;
 import org.example.cunguoimoita.payment.service.PaymentService;
 import org.example.cunguoimoita.payment.service.VNPayConfig;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Kết quả từ cổng thanh toán (F5).
- * GET /payment/vnpay-return   VNPay chuyển người mua về: kiểm tra chữ ký + số tiền rồi mới ghi nhận đã thanh toán.
- * GET /payment/sandbox?paymentId=...   trang giả lập cổng (khi chưa có khoá VNPay/MoMo thật). Chỉ người trả tiền mở được.
- * POST /payment/sandbox   field: paymentId, result (success | fail) → ghi nhận kết quả, chuyển sang /payment/result
- * GET /payment/result?paymentId=...    CHỈ HIỂN THỊ kết quả (không đổi dữ liệu). Người trả tiền mở được.
- *      Attribute gửi sang JSP: payment, payStatus (paid | failed | pending | refunded)
- */
+/** Kết quả từ cổng thanh toán: VNPay trả về, trang giả lập sandbox và trang hiển thị kết quả. */
 @WebServlet(name = "PaymentCallbackServlet", urlPatterns = {"/payment/vnpay-return", "/payment/result", "/payment/sandbox"})
 public class PaymentCallbackServlet extends HttpServlet {
 
@@ -48,7 +40,7 @@ public class PaymentCallbackServlet extends HttpServlet {
             req.setAttribute("payment", p);
             if ("/payment/sandbox".equals(req.getServletPath())) {
                 if (p.getStatus() != PaymentStatus.PENDING) {
-                    resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + encode(p.getId()));
+                    resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + FormUtil.encode(p.getId()));
                     return;
                 }
                 req.getRequestDispatcher("/WEB-INF/views/payment/sandbox.jsp").forward(req, resp);
@@ -80,7 +72,7 @@ public class PaymentCallbackServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException(e);
         }
-        resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + encode(paymentId));
+        resp.sendRedirect(req.getContextPath() + "/payment/result?paymentId=" + FormUtil.encode(paymentId));
     }
 
     /** Return URL của VNPay: chữ ký đúng + mã 00 + số tiền khớp → markPaid; còn lại → markFailed. */
@@ -120,9 +112,5 @@ public class PaymentCallbackServlet extends HttpServlet {
         req.setAttribute("payment", fresh);
         req.setAttribute("payStatus", fresh.getStatus().dbValue());
         req.getRequestDispatcher("/WEB-INF/views/payment/payment-result.jsp").forward(req, resp);
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 }

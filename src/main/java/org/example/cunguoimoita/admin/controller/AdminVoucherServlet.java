@@ -11,11 +11,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
-/**
- * Quản lý voucher (F4 + F10). Quyền admin do AdminAuthFilter kiểm tra.
- * GET  /admin/vouchers → form phát voucher + danh sách đã phát. Attribute gửi sang JSP: vouchers (List&lt;VoucherRow&gt;)
- * POST /admin/vouchers  field: code, email (trống = mọi khách), discountValue, minOrderValue, expiryDate (yyyy-MM-dd, trống = không hạn)
- */
+/** Phát voucher cho một khách hoặc mọi khách. */
 @WebServlet("/admin/vouchers")
 public class AdminVoucherServlet extends AdminBaseServlet {
 

@@ -8,7 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/** Chỉ trả trường công khai; số liệu F8 được đọc từ view do nhóm F8 cung cấp. */
+/** Chỉ trả trường công khai; điểm và đánh giá đọc từ các bảng của phần hạng thành viên. */
 public class PublicSellerProfileDAO {
     public PublicSellerProfile findByUserId(String userId) throws SQLException {
         String profileSql = "SELECT u.id, u.fullname, u.avatar_url FROM users u "

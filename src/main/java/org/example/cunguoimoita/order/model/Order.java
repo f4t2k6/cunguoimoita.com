@@ -23,39 +23,39 @@ public class Order {
     private Status status = Status.NEW;
     private LocalDateTime orderDate;
     private LocalDateTime completedDate;
+
+    private List<OrderItem> items = new ArrayList<>();
+
     public enum Status {
         NEW, AWAITING_PAYMENT, PAID, SHIPPING, DELIVERED, COMPLETED, CANCELLED, REFUNDED;
 
         public boolean canMoveTo(Status next) {
-            switch (this) {
-                case NEW: return next == AWAITING_PAYMENT || next == PAID
+            return switch (this) {
+                case NEW -> next == AWAITING_PAYMENT || next == PAID
                         || next == SHIPPING || next == CANCELLED;
-                case AWAITING_PAYMENT: return next == PAID || next == CANCELLED;
-                case PAID: return next == SHIPPING || next == CANCELLED || next == REFUNDED;
-                case SHIPPING: return next == DELIVERED || next == REFUNDED;
-                case DELIVERED: return next == COMPLETED || next == REFUNDED;
-                default: return false ;
-            }
+                case AWAITING_PAYMENT -> next == PAID || next == CANCELLED;
+                case PAID -> next == SHIPPING || next == CANCELLED || next == REFUNDED;
+                case SHIPPING -> next == DELIVERED || next == REFUNDED;
+                case DELIVERED -> next == COMPLETED || next == REFUNDED;
+                default -> false;
+            };
         }
-        // Chữ hiển thị trên giao diện
         public String label() {
-            switch (this) {
-                case NEW:              return "Mới tạo";
-                case AWAITING_PAYMENT: return "Chờ thanh toán";
-                case PAID:             return "Đã thanh toán";
-                case SHIPPING:         return "Đang giao";
-                case DELIVERED:        return "Đã giao";
-                case COMPLETED:        return "Hoàn tất";
-                case CANCELLED:        return "Đã huỷ";
-                default:               return "Đã hoàn tiền";
-            }
+            return switch (this) {
+                case NEW -> "Mới tạo";
+                case AWAITING_PAYMENT -> "Chờ thanh toán";
+                case PAID -> "Đã thanh toán";
+                case SHIPPING -> "Đang giao";
+                case DELIVERED -> "Đã giao";
+                case COMPLETED -> "Hoàn tất";
+                case CANCELLED -> "Đã huỷ";
+                default -> "Đã hoàn tiền";
+            };
         }
     }
+
     public enum PaymentMethod {ONLINE, COD}
 
-    private List<OrderItem> items = new ArrayList<>();
-    // ================== METHODS =============================
-    // + calculateTotal(): double
     // subTotal = Σ (số lượng × giá chốt); totalAmount = subTotal + shippingFee − discountAmount
     public double calculateTotal() {
         if (!items.isEmpty()) {
@@ -68,7 +68,8 @@ public class Order {
         totalAmount = Math.max(0, subTotal + shippingFee - discountAmount);  // không để tổng bị âm
         return totalAmount;
     }
-    // + chooseAddress(addressId): void — chỉ đổi được khi đơn chưa thanh toán / chưa giao
+
+    // Chỉ đổi được khi đơn chưa thanh toán / chưa giao
     public void chooseAddress(String addressId) {
         requireEditable();
         if (addressId == null || addressId.isBlank()) {
@@ -76,8 +77,8 @@ public class Order {
         }
         this.shippingAddressId = addressId;
     }
-    // + chooseCarrier(carrierId): Shipment
-    // Phí ship do ShippingCarrier.calculateFee() của F6 tính, nên truyền thêm fee vào.
+
+    // Phí ship do ShippingCarrier.calculateFee() tính, nên truyền thêm fee vào.
     // Tạo Shipment (vận đơn) và ghi phí ship vào đơn, rồi tính lại tổng.
     public Shipment chooseCarrier (String carrierId, double fee) {
         requireEditable();
@@ -90,7 +91,7 @@ public class Order {
         calculateTotal();
         return shipment;
     }
-    // + choosePaymentMethod(method): void
+
     // online → chuyển sang "chờ thanh toán"; COD → giữ "new", chờ người bán gửi hàng
     public void choosePaymentMethod (PaymentMethod method) {
         requireEditable();
@@ -102,7 +103,6 @@ public class Order {
         this.status = (method == PaymentMethod.ONLINE) ? Status.AWAITING_PAYMENT : Status.NEW;
     }
 
-    // + applyVoucher(code): void
     public void applyVoucher(Voucher voucher) {
         requireEditable();
         if (voucherId != null) {
@@ -125,11 +125,18 @@ public class Order {
         this.discountAmount= Math.min(voucher.getDiscountValue(), subTotal); // giảm không quá tiền hàng
         calculateTotal();
     }
-    // + confirmShipped(): void — người bán đã gửi hàng
+
+    /** Thanh toán online thành công (Payment.markPaid). */
+    public void markPaid() {
+        moveTo(Status.PAID);
+    }
+
+    // Người bán đã gửi hàng
     public void confirmShipped() {
         moveTo(Status.SHIPPING);
     }
-    // + confirmReceived(): void — người mua bấm "Đã nhận hàng" → đơn hoàn tất
+
+    // Người mua bấm "Đã nhận hàng" → đơn hoàn tất
     public void confirmReceived() {
         if (status == Status.SHIPPING) {
             moveTo(Status.DELIVERED);     // shipper chưa báo giao nhưng người mua đã nhận
@@ -137,34 +144,16 @@ public class Order {
         complete();
     }
 
-    // + complete(): void
     public void complete() {
         moveTo(Status.COMPLETED);
         this.completedDate = LocalDateTime.now();
     }
 
-    // + cancel(reason): void
     public void cancel(String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập lý do huỷ đơn");
         }
         moveTo(Status.CANCELLED);
-    }
-    // ===================== HÀM PHỤ (private, chỉ dùng trong class) =====================
-
-    // Đổi trạng thái, nhưng phải qua luật canMoveTo() → không ai đổi bậy được (đóng gói)
-    private void moveTo(Status next) {
-        if (!status.canMoveTo(next)) {
-            throw new IllegalStateException("Không thể chuyển đơn từ " + status + " sang " + next);
-        }
-        this.status = next;
-    }
-
-    // Chỉ được sửa địa chỉ / vận chuyển / thanh toán / voucher khi đơn chưa thanh toán
-    private void requireEditable() {
-        if (status != Status.NEW && status != Status.AWAITING_PAYMENT) {
-            throw new IllegalStateException("Đơn đã thanh toán hoặc đang xử lý, không sửa được nữa");
-        }
     }
 
     public String getId() { return id; }
@@ -200,4 +189,18 @@ public class Order {
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
 
+    // Đổi trạng thái, nhưng phải qua luật canMoveTo() → không ai đổi bậy được (đóng gói)
+    private void moveTo(Status next) {
+        if (!status.canMoveTo(next)) {
+            throw new IllegalStateException("Không thể chuyển đơn từ " + status + " sang " + next);
+        }
+        this.status = next;
+    }
+
+    // Chỉ được sửa địa chỉ / vận chuyển / thanh toán / voucher khi đơn chưa thanh toán
+    private void requireEditable() {
+        if (status != Status.NEW && status != Status.AWAITING_PAYMENT) {
+            throw new IllegalStateException("Đơn đã thanh toán hoặc đang xử lý, không sửa được nữa");
+        }
+    }
 }

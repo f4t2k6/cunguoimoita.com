@@ -1,12 +1,8 @@
 package org.example.cunguoimoita.product.model;
 
 /**
- * Vòng đời của một bài đăng (Product.status):
- *   draft      chưa hiện trên sàn: đang chờ admin duyệt, bị từ chối, hoặc người bán tự tạm ẩn
- *   available  đã duyệt, đang bán
- *   reserved   có người đã đặt (F4 gọi reserve()), chờ giao dịch xong
- *   sold / exchanged  đã bán / đã đổi xong
- *   hidden     admin ẩn vì vi phạm, người bán không tự mở lại được
+ * draft: chờ duyệt, bị từ chối hoặc người bán tự ẩn; available: đang bán; reserved: có người đặt;
+ * sold/exchanged: đã xong; hidden: admin ẩn vì vi phạm, người bán không tự mở lại được.
  */
 public enum ProductStatus {
     DRAFT("draft", "Chưa hiện"),

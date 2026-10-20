@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.cunguoimoita.common.util.CurrentUser;
 import org.example.cunguoimoita.common.util.FormUtil;
 import org.example.cunguoimoita.product.model.Product;
+import org.example.cunguoimoita.product.model.ProductStatus;
 import org.example.cunguoimoita.product.service.ProductService;
 
 import java.io.IOException;
@@ -17,12 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * "Bài đăng của tôi" (F2).
- *   GET  /product/mine?tab=all|pending|selling|paused|done|rejected
- *        JSP nhận: products (đã lọc theo tab), tab, tabCounts (Map tab → số bài), message, error
- *   POST /product/mine  field: id, action = pause | resume | delete
- */
+/** Bài đăng của tôi: lọc theo tab, tạm ẩn, hiện lại, xoá. */
 @WebServlet("/product/mine")
 public class MyProductsServlet extends HttpServlet {
 
@@ -33,8 +29,9 @@ public class MyProductsServlet extends HttpServlet {
         TABS.put("all", p -> true);
         TABS.put("pending", Product::isPending);
         TABS.put("selling", Product::isListed);
-        TABS.put("paused", p -> p.isPaused() || "hidden".equals(p.getStateCode()));
-        TABS.put("done", p -> "sold".equals(p.getStateCode()) || "exchanged".equals(p.getStateCode()));
+        TABS.put("paused", p -> p.isPaused() || ProductStatus.HIDDEN.getCode().equals(p.getStateCode()));
+        TABS.put("done", p -> ProductStatus.SOLD.getCode().equals(p.getStateCode())
+                || ProductStatus.EXCHANGED.getCode().equals(p.getStateCode()));
         TABS.put("rejected", p -> "rejected".equals(p.getStateCode()));
     }
 
@@ -74,20 +71,19 @@ public class MyProductsServlet extends HttpServlet {
         try {
             String action = String.valueOf(req.getParameter("action"));
             switch (action) {
-                case "pause":
+                case "pause" -> {
                     productService.pause(sellerId, id);
                     back += sep + "message=" + FormUtil.encode("Đã ẩn bài, khách sẽ không thấy bài này nữa");
-                    break;
-                case "resume":
+                }
+                case "resume" -> {
                     productService.resume(sellerId, id);
                     back += sep + "message=" + FormUtil.encode("Bài đã hiện lại trên bảng tin");
-                    break;
-                case "delete":
+                }
+                case "delete" -> {
                     productService.delete(sellerId, id);
                     back = req.getContextPath() + "/product/mine?message=" + FormUtil.encode("Đã xoá bài");
-                    break;
-                default:
-                    throw new IllegalArgumentException("Thao tác không hợp lệ");
+                }
+                default -> throw new IllegalArgumentException("Thao tác không hợp lệ");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             back += sep + "error=" + FormUtil.encode(e.getMessage());

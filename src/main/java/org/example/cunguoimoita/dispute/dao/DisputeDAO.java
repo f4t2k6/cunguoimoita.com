@@ -13,9 +13,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng disputes trong cơ sở dữ liệu.
- */
 public class DisputeDAO {
 
     public void insert(Connection c, Dispute d) throws SQLException {

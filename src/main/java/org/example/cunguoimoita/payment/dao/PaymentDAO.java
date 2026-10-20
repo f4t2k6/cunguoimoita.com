@@ -12,10 +12,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Quản lý đọc/ghi bảng payments trong cơ sở dữ liệu.
- * Mọi hàm nhận Connection để chạy chung transaction với PaymentService / OrderService.
- */
 public class PaymentDAO {
 
     public void insert(Connection c, Payment p) throws SQLException {
@@ -91,21 +87,6 @@ public class PaymentDAO {
                 return rs.next() ? map(rs) : null;
             }
         }
-    }
-
-    /** Lịch sử thanh toán của 1 đơn, mới nhất trước (hiện ở trang chi tiết đơn). */
-    public List<Payment> findAllByOrderId(Connection c, String orderId) throws SQLException {
-        String sql = "SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC";
-        List<Payment> list = new ArrayList<>();
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, orderId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(map(rs));
-                }
-            }
-        }
-        return list;
     }
 
     /** Huỷ các lần thanh toán còn đang chờ của đơn (người mua bắt đầu lần mới hoặc đổi sang COD). */

@@ -3,10 +3,6 @@ package org.example.cunguoimoita.dispute.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * Thực thể Refund:
- * Refund (id, orderId, paymentId, buyerId, amount, reason, status, refundDate)
- */
 public class Refund implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -36,12 +32,6 @@ public class Refund implements Serializable {
         this.refundDate = refundDate;
     }
 
-    public void processRefund() {
-        this.status = RefundStatus.DONE;
-        this.refundDate = LocalDateTime.now();
-    }
-
-    // Getters and Setters
     public String getId() {
         return id;
     }

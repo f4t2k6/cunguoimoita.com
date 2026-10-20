@@ -15,11 +15,8 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Chế độ khách: chưa đăng nhập vẫn xem được bảng tin (/home), tìm kiếm, chi tiết bài đăng và ảnh.
- * Mọi thao tác khác (lưu bài, giỏ hàng, mua, nhắn tin, trả giá, đăng bài, hồ sơ, đơn hàng...) chuyển về /login;
- * fetch/AJAX nhận 401 + JSON {"error", "login"}.
- * Trang đang xem được nhớ lại (redirectAfterLogin) để đăng nhập xong quay về đúng chỗ.
- * Đã đăng nhập mà mở /login hoặc /register thì chuyển về trang chính.
+ * Khách chưa đăng nhập chỉ xem được bảng tin, tìm kiếm, chi tiết bài và ảnh; thao tác khác chuyển về /login (AJAX nhận 401).
+ * Trang đang xem được nhớ lại để đăng nhập xong quay về đúng chỗ.
  */
 @WebFilter("/*")
 public class LoginRequiredFilter implements Filter {
@@ -45,7 +42,6 @@ public class LoginRequiredFilter implements Filter {
             "/assets/", "/oauth/", "/media/", "/uploads/", "/product-image/", "/avatar/"};
 
     /** Session lưu trang người dùng định mở trước khi bị chuyển sang đăng nhập. */
-    public static final String REDIRECT_AFTER_LOGIN = "redirectAfterLogin";
 
     /** Request attribute: trang khách đang xem (path + query), header.jsp gắn vào link Đăng nhập / Đăng ký. */
     public static final String LOGIN_NEXT = "loginNext";
@@ -74,7 +70,7 @@ public class LoginRequiredFilter implements Filter {
             // Link Đăng nhập / Đăng ký mang ?next=trang đang xem → đăng nhập xong quay về trang đó
             String next = req.getParameter("next");
             if (isGet && isSafeLocal(next)) {
-                req.getSession(true).setAttribute(REDIRECT_AFTER_LOGIN, next);
+                req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN, next);
             }
             chain.doFilter(request, response);
             return;
@@ -111,7 +107,7 @@ public class LoginRequiredFilter implements Filter {
             wanted = refererPath(req);
         }
         if (isSafeLocal(wanted)) {
-            req.getSession(true).setAttribute(REDIRECT_AFTER_LOGIN, wanted);
+            req.getSession(true).setAttribute(CurrentUser.REDIRECT_AFTER_LOGIN, wanted);
         }
         resp.sendRedirect(loginUrl);
     }

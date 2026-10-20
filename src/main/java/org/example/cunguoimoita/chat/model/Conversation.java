@@ -6,10 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Class Conversation trong class diagram.
- * start(), sendMessage(), makeOffer(), markAllRead() cần đọc/ghi DB nên nằm trong ChatService cùng tên.
- */
+/** Các method start/sendMessage/makeOffer/markAllRead của diagram nằm trong ChatService vì cần DB. */
 public class Conversation {
 
     private String id;
@@ -22,16 +19,14 @@ public class Conversation {
 
     // Chỉ để hiển thị ở hộp thư, không lưu DB
     private String lastMessagePreview;
+
     private int unreadCount;
     private String askerName;
     private String sellerName;
-    private String askerAvatar;                // users.avatar_url (khung chat nổi hiện ảnh thay cho chữ cái đầu)
     private String sellerAvatar;
     private String productName;
     private Double productPrice;
-    private String productImage;               // ảnh bìa của món (khung sản phẩm đầu đoạn chat)
     private ProductCondition productCondition;
-    private boolean productBuyable;            // món còn mua ngay được với giá đăng (còn hàng, bài có bán)
 
     /** + close(): void  (khi món đã bán) */
     public void close() {
@@ -116,4 +111,8 @@ public class Conversation {
     public void setProductImage(String productImage) { this.productImage = productImage; }
     public ProductCondition getProductCondition() { return productCondition; }
     public void setProductCondition(ProductCondition productCondition) { this.productCondition = productCondition; }
+
+    private String askerAvatar;                // users.avatar_url (khung chat nổi hiện ảnh thay cho chữ cái đầu)
+    private String productImage;               // ảnh bìa của món (khung sản phẩm đầu đoạn chat)
+    private boolean productBuyable;            // món còn mua ngay được với giá đăng (còn hàng, bài có bán)
 }

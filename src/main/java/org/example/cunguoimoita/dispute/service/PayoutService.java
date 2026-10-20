@@ -10,53 +10,36 @@ import org.example.cunguoimoita.notification.service.NotificationService;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Nghiệp vụ Phân hệ F9: Giải ngân tiền bán hàng (Payout), Tự động tính phí hoa hồng
- * theo Hạng thành viên (F8 MemberTier) và Xuất báo cáo đối soát CSV (Chương 18).
- */
+/** Trả tiền người bán (Payout), phí hoa hồng theo hạng thành viên, xuất CSV đối soát. */
 public class PayoutService {
+
+    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán. */
+    public static final double BASE_COMMISSION = 0.05;
 
     private final PayoutDAO payoutDAO = new PayoutDAO();
     private final NotificationService notificationService = new NotificationService();
 
-    /** Phí sàn cơ bản 5% tiền hàng, được giảm theo ưu đãi hạng thành viên của người bán (F8). */
-    public static final double BASE_COMMISSION = 0.05;
+    /** Hạng, tỷ lệ phí thực tế và tài khoản nhận tiền của người bán (trang Thu nhập). */
+    public record SellerInfo(String tierName, double commissionRate, String payoutAccount) {
+    }
 
     /**
-     * Tạo khoản trả tiền người bán khi đơn hoàn tất (người mua bấm "Đã nhận hàng", tự hoàn tất sau 7 ngày,
-     * hoặc admin xử khiếu nại cho người bán). Chạy trên Connection của nghiệp vụ gọi nó (chung transaction).
-     * 1. Mỗi đơn chỉ 1 khoản: đơn đã có payout thì bỏ qua (trả về null).
-     * 2. Phí hoa hồng = tiền hàng × 5% × (1 − discount_rate của hạng người bán).
-     * 3. Người bán đã khai tài khoản nhận tiền → chuyển ngay (giả lập, status done);
-     *    chưa khai → để scheduled, tác vụ định kỳ chuyển khi người bán khai tài khoản.
-     * Thông báo cho người bán gọi notifyCreated(...) sau khi commit.
-     * @param grossAmount tiền hàng của đơn (sub_total), không gồm phí ship
+     * Mỗi đơn 1 khoản; phí = tiền hàng × BASE_COMMISSION × (1 − discount_rate của hạng). Người bán chưa khai tài khoản
+     * nhận tiền thì để scheduled, tác vụ định kỳ chuyển sau. Gọi notifyCreated(...) sau khi commit.
      */
     public Payout createForOrder(Connection c, String orderId, String sellerId, double grossAmount) throws SQLException {
         if (payoutDAO.findByOrderId(c, orderId) != null || grossAmount <= 0) {
             return null;
         }
-        double discountRate = 0.0;
-        String account = null;
-        String sql = "SELECT mt.discount_rate, cu.payout_account_ref FROM customers cu "
-                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
-        try (PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, sellerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    discountRate = rs.getDouble("discount_rate");
-                    account = rs.getString("payout_account_ref");
-                }
-            }
-        }
+        PayoutDAO.SellerTier tier = payoutDAO.findSellerTier(c, sellerId);
+        double discountRate = tier == null ? 0.0 : tier.discountRate();
+        String account = tier == null ? null : tier.payoutAccountRef();
 
         double commissionFee = Math.round(grossAmount * BASE_COMMISSION * (1.0 - discountRate));
         boolean hasAccount = account != null && !account.isBlank();
@@ -103,18 +86,6 @@ public class PayoutService {
         return due.size();
     }
 
-    // Tài khoản nhận tiền ghi kiểu "MoMo 09..." hay "Ví ..." thì coi là ví điện tử, còn lại là ngân hàng.
-    private static boolean isEwallet(String account) {
-        if (account == null) {
-            return false;
-        }
-        String a = account.toLowerCase();
-        return a.contains("momo") || a.contains("zalo") || a.contains("ví") || a.contains("vi dien tu");
-    }
-
-    /**
-     * Xác nhận giải ngân thành công cho người bán.
-     */
     public void processPayout(String payoutId) throws SQLException {
         try (Connection c = ConnectionPool.getInstance().getConnection()) {
             Payout p = payoutDAO.findById(c, payoutId);
@@ -130,24 +101,11 @@ public class PayoutService {
         }
     }
 
-    /** Hạng, tỷ lệ phí thực tế và tài khoản nhận tiền của người bán (trang Thu nhập). */
-    public record SellerInfo(String tierName, double commissionRate, String payoutAccount) {
-    }
-
     public SellerInfo getSellerInfo(String sellerId) throws SQLException {
-        String sql = "SELECT mt.name, mt.discount_rate, cu.payout_account_ref FROM customers cu "
-                   + "JOIN member_tiers mt ON cu.tier_id = mt.id WHERE cu.user_id = ?";
-        try (Connection c = ConnectionPool.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, sellerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                return new SellerInfo(rs.getString("name"),
-                        BASE_COMMISSION * (1.0 - rs.getDouble("discount_rate")),
-                        rs.getString("payout_account_ref"));
-            }
+        try (Connection c = ConnectionPool.getInstance().getConnection()) {
+            PayoutDAO.SellerTier tier = payoutDAO.findSellerTier(c, sellerId);
+            return tier == null ? null
+                    : new SellerInfo(tier.tierName(), BASE_COMMISSION * (1.0 - tier.discountRate()), tier.payoutAccountRef());
         }
     }
 
@@ -169,11 +127,8 @@ public class PayoutService {
         }
     }
 
-    /**
-     * Xuất dữ liệu đối soát giải ngân ra định dạng CSV (Chương 18 kỹ thuật Servlet Response Header).
-     */
     public void exportCsv(PrintWriter out, String sellerId) throws SQLException {
-        out.write('\ufeff'); // UTF-8 BOM
+        out.write('\ufeff');
         out.println("Mã Payout,Mã Đơn Hàng,Doanh Thu Gốc (VND),Phí Sàn (VND),Thực Nhận (VND),Hình Thức,Trạng Thái,Ngày Giải Ngân");
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -191,5 +146,14 @@ public class PayoutService {
                     dateStr
             );
         }
+    }
+
+    // Tài khoản nhận tiền ghi kiểu "MoMo 09..." hay "Ví ..." thì coi là ví điện tử, còn lại là ngân hàng.
+    private static boolean isEwallet(String account) {
+        if (account == null) {
+            return false;
+        }
+        String lower = account.toLowerCase();
+        return lower.contains("momo") || lower.contains("zalo") || lower.contains("ví") || lower.contains("vi dien tu");
     }
 }
