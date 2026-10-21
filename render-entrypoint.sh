@@ -26,8 +26,8 @@ cat > /usr/local/tomcat/conf/Catalina/localhost/ROOT.xml <<EOF
               rollbackOnReturn="true"
               jdbcInterceptors="ConnectionState"/>
 
-    <Parameter name="mail.username" value="${MAIL_USERNAME:-ĐỔI_EMAIL_GỬI@gmail.com}" override="false"/>
-    <Parameter name="mail.password" value="${MAIL_PASSWORD:-ĐỔI_MẬT_KHẨU_ỨNG_DỤNG}" override="false"/>
+    <Parameter name="mail.username" value="${MAIL_USERNAME}" override="false"/>
+    <Parameter name="mail.password" value="${MAIL_PASSWORD}" override="false"/>
 
     <Parameter name="app.baseUrl" value="${APP_BASE_URL}" override="false"/>
 </Context>
